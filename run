@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+
+import os
+import argparse
+
+import bcell_utils
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-g', '--gen-initial', action='store_true', help="Generate initial boolean network state and functions. Otherwise use existing.")
+args = parser.parse_args()
+
+MODEL_DIR = "model/"
+BIOCELLION_DIR = "biocellion/"
+BIOCELLION_BIN = BIOCELLION_DIR + "framework/main/biocellion.DP.SPAGENT.OPT"
+OUTPUT_DIR = "output/"
+BIOCELLION_OUTPUT = OUTPUT_DIR + "biocellion_output"
+PARAMS_FILE = MODEL_DIR + "params.xml"
+NV_FILE = MODEL_DIR + "nv"
+VARF_FILE = MODEL_DIR + "varf"
+TT_FILE = MODEL_DIR + "tt"
+BN_INITIAL_STATE_FILE = MODEL_DIR + "bn_initial_state"
+NUM_GENES = 4
+
+# Simulation parameters
+SIMULATION_STEPS = 100
+
+ADDITIONAL_PARAMS = ""
+
+LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
+
+if args.gen_initial:
+  bcell_utils.generate_gene_functions(NV_FILE, VARF_FILE, TT_FILE, NUM_GENES)
+  bcell_utils.generate_bn_initial_state(BN_INITIAL_STATE_FILE, NUM_GENES)
+bcell_utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS)
+
+os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT)

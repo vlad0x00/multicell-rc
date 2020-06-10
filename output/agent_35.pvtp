@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<VTKFile type="PPolyData" version="1.0" byte_order="LittleEndian">
+<PPolyData GhostLevel="0">
+<PPointData>
+<PDataArray type="Float64" Name="radius" format="appended"/>
+<PDataArray type="Float64" Name="color" format="appended"/>
+</PPointData>
+<PPoints>
+<PDataArray type="Float64" NumberOfComponents="3" format="appended"/>
+</PPoints>
+<Piece Source="agent_0_0_0_35.vtp"/>
+</PPolyData>
+</VTKFile>
