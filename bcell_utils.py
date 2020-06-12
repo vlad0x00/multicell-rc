@@ -8,17 +8,14 @@ import csv
 def generate_gene_functions(nv_file, varf_file, tt_file, num_genes):
   nv = np.random.randint(num_genes, size=num_genes)
 
-  max_nv = np.max(nv)
-  varf = np.ones((num_genes, max_nv), dtype=np.int32) * -1
+  varf = np.ones((num_genes, num_genes), dtype=np.int32) * -1
   for i, n in enumerate(nv):
     varf[i, :n] = random.sample(range(0, num_genes), n)
-  varf = np.transpose(varf)
 
-  tt = np.ones((num_genes, 2 ** max_nv), dtype=np.int32) * -1
+  tt = np.ones((num_genes, 2 ** num_genes), dtype=np.int32) * -1
   for i, n in enumerate(nv):
     if n == 0: continue
     tt[i, :(2 ** n)] = np.random.randint(2, size=(2 ** n))
-  tt = np.transpose(tt)
 
   with open(nv_file, 'w') as f:
     f.write(' '.join([str(x) for x in nv]))
@@ -35,6 +32,11 @@ def generate_bn_initial_state(state_file, num_genes):
   state = np.random.randint(2, size=num_genes)
   with open(state_file, 'w') as f:
     f.write(' '.join([str(x) for x in state]))
+
+def generate_input_array(array_file, array_len):
+  arr = np.random.randint(2, size=array_len)
+  with open(array_file, 'w') as f:
+    f.write(' '.join([str(x) for x in arr]))
 
 def prettify(elem):
   """Return a pretty-printed XML string for the Element.

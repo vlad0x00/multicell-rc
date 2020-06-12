@@ -20,6 +20,30 @@ NOTICE:  These data were produced by Battelle Memorial Institute (BATTELLE) unde
 
 using namespace std;
 
+#include <fstream>
+#include <sstream>
+
+static Vector<string> readXMLParameters() {
+	Vector<string> v_modelParam; // This will be returned
+
+	std::string paramsString = Info::getModelParam();
+	std::string delimiter = " ";
+
+	size_t pos = 0;
+	std::string token;
+	while ((pos = paramsString.find(delimiter)) != std::string::npos) {
+		token = paramsString.substr(0, pos);
+		if (token == "") { continue; }
+		v_modelParam.push_back(token);
+		paramsString.erase(0, pos + delimiter.length());
+	}
+	if (!paramsString.empty()) {
+		v_modelParam.push_back(paramsString);
+	}
+
+	return v_modelParam;
+}
+
 void ModelRoutine::updateIfGridSpacing( REAL& ifGridSpacing ) {
 	/* MODEL START */
 
@@ -97,13 +121,15 @@ void ModelRoutine::updateSyncMethod( sync_method_e& mechIntrctSyncMethod, sync_m
 void ModelRoutine::updateSpAgentInfo( Vector<SpAgentInfo>& v_spAgentInfo ) {/* set the mechanical interaction range & the numbers of model specific variables */
 	/* MODEL START */
 
+	auto params = readXMLParameters();
+
 	/* Provide information about the discrete agent types in the user model */
 	SpAgentInfo info;
 
 	info.dMax = IF_GRID_SPACING;
-	info.numBoolVars = 0;
+	info.numBoolVars = std::stoi(params[0]);
 	info.numStateModelReals = 0;
-	info.numStateModelInts = 1;
+	info.numStateModelInts = 0;
 	info.v_mechIntrctModelRealInfo.clear();
 	info.v_mechIntrctModelIntInfo.clear();
 	info.v_odeNetInfo.clear();
@@ -204,13 +230,18 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
 		value. summary type e is used to set the reduction method. Choose one of these summary types:
 		{SUMMARY_TYPE_SUM, SUMMARY_TYPE_AVG, SUMMARY_TYPE_MIN, SUMMARY_TYPE_MAX} */      
 
-	SummaryOutputInfo info;        
-	v_summaryOutputIntInfo.resize(1);
-	v_summaryOutputRealInfo.clear();
-	info.name = "Test summary:";
-	info.type = SUMMARY_TYPE_SUM;
-	v_summaryOutputIntInfo[0] = info;
+	Vector<string> v_modelParam = readXMLParameters();
+	S32 numGenes = std::stoi(v_modelParam[0]);
 
+	SummaryOutputInfo info;        
+	v_summaryOutputIntInfo.resize(numGenes);
+	v_summaryOutputRealInfo.clear();
+	for (S32 i = 0; i < numGenes; i++) {
+		info.name = "Gene " + std::to_string(i);
+		info.type = SUMMARY_TYPE_SUM;
+		v_summaryOutputIntInfo[i] = info;
+	}
+	
 	/* MODEL END */
 
 	return;
@@ -219,7 +250,92 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
 void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	/* MODEL START */
 
-	// Empty
+	Vector<string> v_modelParam = readXMLParameters();
+
+	S32 param = 0;
+	const S32 numGenes = std::stoi(v_modelParam[param++]);
+	const S32 numCells = std::stoi(v_modelParam[param++]);
+  auto nvFile = std::ifstream(v_modelParam[param++]);
+	auto varfFile = std::ifstream(v_modelParam[param++]);
+	auto ttFile = std::ifstream(v_modelParam[param++]);
+	auto bnInitialStateFile = std::ifstream(v_modelParam[param++]);
+	auto inputArrayFile = std::ifstream(v_modelParam[param++]);
+	const S32 windowSize = std::stoi(v_modelParam[param++]);
+
+	Vector<S32> nv;
+	Vector<Vector<S32>> varf;
+	Vector<Vector<S32>> tt;
+	Vector<S32> bnInitialState;
+	Vector<S32> inputArray;
+
+	S32 i;
+	std::string line;
+
+	while (nvFile >> i) {
+		nv.push_back(i);
+	}
+	
+	while (std::getline(varfFile, line)) {
+		varf.push_back({});
+		std::stringstream ss(line);
+		while (ss >> i) {
+			varf.back().push_back(i);
+		}
+	}
+
+	while (std::getline(ttFile, line)) {
+		tt.push_back({});
+		std::stringstream ss(line);
+		while (ss >> i) {
+			tt.back().push_back(i);
+		}
+	}
+
+	while (bnInitialStateFile >> i) {
+		bnInitialState.push_back(i);
+	}
+
+	while (inputArrayFile >> i) {
+		inputArray.push_back(i);
+	}
+
+	GlobalDataFormat format;
+	S64 size = sizeof(format);
+	format.numGenes = size;
+	size += sizeof(numGenes);
+	format.numCells = size;
+	size += sizeof(numCells);
+	format.nv = size;
+	size += numGenes * sizeof(S32); // nv
+	format.varf = size;
+	size += numGenes * numGenes * sizeof(S32); // varf
+	format.tt = size;
+	size += numGenes * std::pow(2, numGenes) * sizeof(S32); // tt
+	format.bnInitialState = size;
+	size += numGenes * sizeof(S32); // bn initial state
+	format.inputArray = size;
+	size += inputArray.size() * sizeof(S32); // input array
+	format.windowSize = size;
+	size += sizeof(windowSize);
+
+	v_globalData.resize(size);
+	memcpy(&(v_globalData[0]), &format, sizeof(format));
+	memcpy(&(v_globalData[format.numGenes]), &numGenes, sizeof(numGenes));
+	memcpy(&(v_globalData[format.numCells]), &numCells, sizeof(numCells));
+	memcpy(&(v_globalData[format.nv]), &(nv[0]), nv.size() * sizeof(S32));
+	i = 0;
+	for (const auto& v : varf) {
+		memcpy(&(v_globalData[format.varf + i * v.size() * sizeof(S32)]), &(v[0]), v.size() * sizeof(S32));
+		i++;
+	}
+	i = 0;
+	for (const auto& v : tt) {
+		memcpy(&(v_globalData[format.tt + i * v.size() * sizeof(S32)]), &(v[0]), v.size() * sizeof(S32));
+		i++;
+	}
+	memcpy(&(v_globalData[format.bnInitialState]), &(bnInitialState[0]), bnInitialState.size() * sizeof(S32));
+	memcpy(&(v_globalData[format.inputArray]), &(inputArray[0]), inputArray.size() * sizeof(S32));
+	memcpy(&(v_globalData[format.windowSize]), &windowSize, sizeof(windowSize));
 
 	/* MODEL END */
 
@@ -266,4 +382,3 @@ void ModelRoutine::setHabitable( const VIdx& vIdx, BOOL& isHabitable ) {
 
 	return;
 }
-

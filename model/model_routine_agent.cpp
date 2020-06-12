@@ -68,7 +68,10 @@ void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& jun
 	/* MODEL START */
 
 	S32 baselineStep = Info::getCurBaselineTimeStep();
-	state.setModelInt(0, baselineStep + 700);
+
+	for (S32 i = 0; i < getNumGenes(); i++) {
+		state.setBoolVal(i, true);
+	}
 
 	/* MODEL END */
 

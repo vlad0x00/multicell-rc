@@ -19,18 +19,24 @@ NV_FILE = MODEL_DIR + "nv"
 VARF_FILE = MODEL_DIR + "varf"
 TT_FILE = MODEL_DIR + "tt"
 BN_INITIAL_STATE_FILE = MODEL_DIR + "bn_initial_state"
-NUM_GENES = 4
+NUM_GENES = 10
+NUM_CELLS = 1
 
 # Simulation parameters
-SIMULATION_STEPS = 100
+SIMULATION_STEPS = 50
 
-ADDITIONAL_PARAMS = ""
+INPUT_ARRAY_FILE = MODEL_DIR + "input_array"
+WINDOW_SIZE = 5
+INPUT_ARRAY_LENGTH = SIMULATION_STEPS + WINDOW_SIZE - 1
+
+ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + BN_INITIAL_STATE_FILE + " " + INPUT_ARRAY_FILE + " " + str(WINDOW_SIZE)
 
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 
 if args.gen_initial:
   bcell_utils.generate_gene_functions(NV_FILE, VARF_FILE, TT_FILE, NUM_GENES)
   bcell_utils.generate_bn_initial_state(BN_INITIAL_STATE_FILE, NUM_GENES)
+  bcell_utils.generate_input_array(INPUT_ARRAY_FILE, INPUT_ARRAY_LENGTH)
 bcell_utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS)
 
 os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT)

@@ -20,9 +20,9 @@ NOTICE:  These data were produced by Battelle Memorial Institute (BATTELLE) unde
 /* A Uniform Random Number Generator. One should not use c++ function, rand(), as it is not thread-safe
  Instead, users should use Biocellion's built-in RNG */
 typedef enum _model_rng_type_e {
-        MODEL_RNG_UNIFORM,
-        MODEL_RNG_GAUSSIAN,
-        NUM_MODEL_RNGS
+  MODEL_RNG_UNIFORM,
+  MODEL_RNG_GAUSSIAN,
+  NUM_MODEL_RNGS
 } model_rng_type_e;
 
 const REAL CELL_RADIUS = 2.0;
@@ -36,6 +36,72 @@ const REAL IF_GRID_SPACING = 10.0; // Micrometers
  Users can split a baseline time step into one or more state-and-grid time steps */
 const REAL BASELINE_TIME_STEP_DURATION = 1.0;
 const S32 NUM_STATE_AND_GRID_TIME_STEPS_PER_BASELINE = 1;
+
+typedef struct {
+  S64 numGenes;
+  S64 numCells;
+  S64 nv;
+  S64 varf;
+  S64 tt;
+  S64 bnInitialState;
+  S64 inputArray;
+  S64 windowSize;
+} GlobalDataFormat;
+
+static inline GlobalDataFormat getGlobalDataFormat() {
+	auto g = Info::getGlobalDataRef();
+	GlobalDataFormat format;
+	memcpy(&format, &(g[0]), sizeof(format));
+	return format;
+}
+
+static inline S32 getNumGenes() {
+	auto g = Info::getGlobalDataRef();
+	auto f = getGlobalDataFormat();	
+	return *((S32*)(&(g[f.numGenes])));
+}
+
+static inline S32 getNumCells() { 
+	auto g = Info::getGlobalDataRef();
+	auto f = getGlobalDataFormat();	
+	return *((S32*)(&(g[f.numCells])));
+}
+
+static inline S32* getNv() {
+	auto g = Info::getGlobalDataRef();
+	auto f = getGlobalDataFormat();	
+	return (S32*)(&(g[f.nv]));
+}
+
+static inline S32* getVarf(S32 gene) {
+	auto g = Info::getGlobalDataRef();
+	auto f = getGlobalDataFormat();	
+	return (S32*)(&(g[f.varf])) + gene * getNumGenes();
+}
+
+static inline S32* getTt(S32 gene) {
+	auto g = Info::getGlobalDataRef();
+	auto f = getGlobalDataFormat();	
+	return (S32*)(&(g[f.tt])) + gene * getNumGenes();
+}
+
+static inline S32* getBnInitialState() {
+	auto g = Info::getGlobalDataRef();
+	auto f = getGlobalDataFormat();	
+	return (S32*)(&(g[f.bnInitialState]));
+}
+
+static inline S32* getInputArray() {
+	auto g = Info::getGlobalDataRef();
+	auto f = getGlobalDataFormat();	
+	return (S32*)(&(g[f.inputArray]));
+}
+
+static inline S32 getWindowSize() { 
+	auto g = Info::getGlobalDataRef();
+	auto f = getGlobalDataFormat();	
+	return *((S32*)(&(g[f.windowSize])));
+}
 
 /* MODEL END */
 

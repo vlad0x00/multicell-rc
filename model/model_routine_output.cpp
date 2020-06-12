@@ -37,15 +37,22 @@ void ModelRoutine::updateSpAgentOutput( const VIdx& vIdx, const SpAgent& spAgent
 void ModelRoutine::updateSummaryVar( const VIdx& vIdx, const NbrUBAgentData& nbrUBAgentData, const NbrUBEnv& nbrUBEnv, Vector<REAL>& v_realVal/* [elemIdx] */, Vector<S32>& v_intVal/* [elemIdx] */ ) {
 	/* MODEL START */
 
-	CHECK(v_realVal.size() == 0);
-	CHECK(v_intVal.size() == 1);
-	
-  const UBAgentData& ubAgentData = *(nbrUBAgentData.getConstPtr( 0, 0, 0 ));
+	S32 numGenes = getNumGenes();
 
-	v_intVal[0] = 0;
-	for (auto agent : ubAgentData.v_spAgent) {
-		v_intVal[0] += agent.state.getModelInt(0);
-  }
+	CHECK(v_realVal.size() == 0);
+	CHECK(v_intVal.size() == (U32)numGenes);
+
+	const UBAgentData& ubAgentData = *(nbrUBAgentData.getConstPtr(0, 0, 0));
+
+	for (S32 i = 0; i < numGenes; i++) {
+		v_intVal[i] = 0;
+	}
+
+	for (S32 i = 0; i < numGenes; i++) {
+		for (auto agent : ubAgentData.v_spAgent) {
+			v_intVal[i] = agent.state.getBoolVal(i);
+		}
+	}
   
 	/* MODEL END */
 
