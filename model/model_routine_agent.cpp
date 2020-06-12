@@ -42,6 +42,11 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 		state.setType(0);                                                     
 		state.setRadius(CELL_RADIUS);
 
+		auto bnInitialState = getBnInitialState();
+		for (S32 i = 0; i < getNumGenes(); i++) {
+			state.setBoolVal(i, bnInitialState[i]);
+		}
+
 		/* Initialize return vectors {v_spAgentState, v_spAgentVIdx, v_spAgentOffset} by using .push_back() */
 		CHECK(ifGridHabitableBoxData.get(vIdx) == true);
 		v_spAgentVIdx.push_back(vIdx);
@@ -67,11 +72,39 @@ void ModelRoutine::spAgentCRNODERHS( const S32 odeNetIdx, const VIdx& vIdx, cons
 void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& junctionData, const VReal& vOffset, const NbrUBEnv& nbrUBEnv, SpAgentState& state/* INOUT */ ) {
 	/* MODEL START */
 
-	S32 baselineStep = Info::getCurBaselineTimeStep();
+	Vector<BOOL> newBools;
 
-	for (S32 i = 0; i < getNumGenes(); i++) {
-		state.setBoolVal(i, true);
+	const S32 baselineStep = Info::getCurBaselineTimeStep();
+	newBools.push_back(getInputArray()[baselineStep]);
+
+	for (S32 i = 1; i < getNumGenes(); i++) {
+		const auto nv = getNv()[i];
+		CHECK(nv != -1);
+
+		if (nv > 0 ) {
+			const auto varf = getVarf(i);
+			const auto tt = getTt(i);
+
+			U32 ttEntry = 0;
+			for (U32 j = 0; j < (U32)nv; j++) {
+				const auto var_val = state.getBoolVal(varf[j]);
+				CHECK(var_val != -1);
+				CHECK(nv == getNumGenes() || varf[nv] == -1);
+				if (var_val) {
+					ttEntry |= (1 << j);
+				}
+			}
+
+			const auto tt_val = tt[ttEntry];
+			CHECK(tt_val != -1);
+			CHECK(nv == getNumGenes() || tt[(U64)std::pow(2, nv)] == -1);
+			newBools.push_back(tt_val);
+		} else {
+			newBools.push_back(state.getBoolVal(i));
+		}		
 	}
+
+	state.setBoolValArray(newBools);
 
 	/* MODEL END */
 

@@ -260,7 +260,6 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	auto ttFile = std::ifstream(v_modelParam[param++]);
 	auto bnInitialStateFile = std::ifstream(v_modelParam[param++]);
 	auto inputArrayFile = std::ifstream(v_modelParam[param++]);
-	const S32 windowSize = std::stoi(v_modelParam[param++]);
 
 	Vector<S32> nv;
 	Vector<Vector<S32>> varf;
@@ -315,8 +314,6 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	size += numGenes * sizeof(S32); // bn initial state
 	format.inputArray = size;
 	size += inputArray.size() * sizeof(S32); // input array
-	format.windowSize = size;
-	size += sizeof(windowSize);
 
 	v_globalData.resize(size);
 	memcpy(&(v_globalData[0]), &format, sizeof(format));
@@ -335,7 +332,6 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	}
 	memcpy(&(v_globalData[format.bnInitialState]), &(bnInitialState[0]), bnInitialState.size() * sizeof(S32));
 	memcpy(&(v_globalData[format.inputArray]), &(inputArray[0]), inputArray.size() * sizeof(S32));
-	memcpy(&(v_globalData[format.windowSize]), &windowSize, sizeof(windowSize));
 
 	/* MODEL END */
 

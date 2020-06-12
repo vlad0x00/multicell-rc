@@ -45,62 +45,54 @@ typedef struct {
   S64 tt;
   S64 bnInitialState;
   S64 inputArray;
-  S64 windowSize;
 } GlobalDataFormat;
 
 static inline GlobalDataFormat getGlobalDataFormat() {
-	auto g = Info::getGlobalDataRef();
-	GlobalDataFormat format;
-	memcpy(&format, &(g[0]), sizeof(format));
+	const auto& g = Info::getGlobalDataRef();
+	GlobalDataFormat format = *((GlobalDataFormat*)(&(g[0])));
 	return format;
 }
 
 static inline S32 getNumGenes() {
-	auto g = Info::getGlobalDataRef();
-	auto f = getGlobalDataFormat();	
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();
 	return *((S32*)(&(g[f.numGenes])));
 }
 
 static inline S32 getNumCells() { 
-	auto g = Info::getGlobalDataRef();
-	auto f = getGlobalDataFormat();	
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();	
 	return *((S32*)(&(g[f.numCells])));
 }
 
 static inline S32* getNv() {
-	auto g = Info::getGlobalDataRef();
-	auto f = getGlobalDataFormat();	
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();	
 	return (S32*)(&(g[f.nv]));
 }
 
 static inline S32* getVarf(S32 gene) {
-	auto g = Info::getGlobalDataRef();
-	auto f = getGlobalDataFormat();	
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();	
 	return (S32*)(&(g[f.varf])) + gene * getNumGenes();
 }
 
 static inline S32* getTt(S32 gene) {
-	auto g = Info::getGlobalDataRef();
-	auto f = getGlobalDataFormat();	
-	return (S32*)(&(g[f.tt])) + gene * getNumGenes();
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();	
+	return (S32*)(&(g[f.tt])) + gene * (U64)std::pow(2, getNumGenes());
 }
 
 static inline S32* getBnInitialState() {
-	auto g = Info::getGlobalDataRef();
-	auto f = getGlobalDataFormat();	
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();	
 	return (S32*)(&(g[f.bnInitialState]));
 }
 
 static inline S32* getInputArray() {
-	auto g = Info::getGlobalDataRef();
-	auto f = getGlobalDataFormat();	
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();	
 	return (S32*)(&(g[f.inputArray]));
-}
-
-static inline S32 getWindowSize() { 
-	auto g = Info::getGlobalDataRef();
-	auto f = getGlobalDataFormat();	
-	return *((S32*)(&(g[f.windowSize])));
 }
 
 /* MODEL END */
