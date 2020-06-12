@@ -6,7 +6,7 @@ from xml.dom import minidom
 import csv
 
 def generate_gene_functions(nv_file, varf_file, tt_file, num_genes):
-  nv = np.random.randint(num_genes, size=num_genes)
+  nv = np.random.randint(low=2, high=7, size=num_genes)
 
   varf = np.ones((num_genes, num_genes), dtype=np.int32) * -1
   for i, n in enumerate(nv):
