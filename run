@@ -2,6 +2,11 @@
 
 import os
 import argparse
+import pandas as pd
+import numpy as np
+
+from sklearn.linear_model import Lasso
+from sklearn.model_selection import train_test_split
 
 import bcell_utils
 
@@ -13,20 +18,24 @@ MODEL_DIR = "model/"
 BIOCELLION_DIR = "biocellion/"
 BIOCELLION_BIN = BIOCELLION_DIR + "framework/main/biocellion.DP.SPAGENT.OPT"
 OUTPUT_DIR = "output/"
-BIOCELLION_OUTPUT = OUTPUT_DIR + "biocellion_output"
+BIOCELLION_OUTPUT_FILE = OUTPUT_DIR + "biocellion_output"
 PARAMS_FILE = MODEL_DIR + "params.xml"
 NV_FILE = MODEL_DIR + "nv"
 VARF_FILE = MODEL_DIR + "varf"
 TT_FILE = MODEL_DIR + "tt"
 BN_INITIAL_STATE_FILE = MODEL_DIR + "bn_initial_state"
-NUM_GENES = 5
+NUM_GENES = 20
+NUM_OUTPUT_GENES = 16
 NUM_CELLS = 1
 
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 # Simulation parameters
-SIMULATION_STEPS = 10
+SIMULATION_STEPS = 200
 
 INPUT_ARRAY_FILE = MODEL_DIR + "input_array"
 INPUT_ARRAY_LENGTH = SIMULATION_STEPS
+WINDOW_SIZE = 3
 
 ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + BN_INITIAL_STATE_FILE + " " + INPUT_ARRAY_FILE
 
@@ -38,4 +47,60 @@ if args.gen_initial:
   bcell_utils.generate_input_array(INPUT_ARRAY_FILE, INPUT_ARRAY_LENGTH)
 bcell_utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS)
 
-os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT)
+os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE)
+
+with open(INPUT_ARRAY_FILE) as f:
+  input_array = [ int(x) for x in f.readline().split() ]
+parity = []
+for i in range(WINDOW_SIZE, len(input_array) + 1):
+  bitsum = 0
+  for bit in input_array[(i - WINDOW_SIZE):i]:
+    bitsum += bit
+  if bitsum % 2 == 0: 
+    parity.append(0)
+  else:
+    parity.append(1)
+
+output_genes = []
+for _ in range(NUM_OUTPUT_GENES):
+  output_genes.append([])
+
+with open(BIOCELLION_OUTPUT_FILE) as f:
+  i = 0
+  for line in f.readlines():
+    if "summary" in line:
+      i += 1
+      if ((i + NUM_GENES - 1) / NUM_GENES < WINDOW_SIZE + 1): continue # Ignore initial state and data before full window
+
+      tokens = line.split()[4].split(":")
+      gene = int(tokens[0])
+      val = int(tokens[1])
+      if gene in range(NUM_GENES - 1, NUM_GENES - 1 - NUM_OUTPUT_GENES, -1):
+        output_genes[NUM_GENES - 1 - gene].append(val)
+
+assert len(output_genes[0]) == INPUT_ARRAY_LENGTH - WINDOW_SIZE + 1
+for i in range(NUM_OUTPUT_GENES):
+  assert len(output_genes[i]) == len(output_genes[0])
+
+x = pd.DataFrame()
+for gene in range(NUM_OUTPUT_GENES):
+  x[str(gene)] = output_genes[gene]
+
+y = pd.DataFrame()
+y['parity'] = parity
+
+for gene in range(NUM_OUTPUT_GENES):
+  len(x[str(gene)]) == len(y['parity'])
+
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
+
+lasso = Lasso(alpha=0.2)
+lasso.fit(x_train, y_train)
+
+train_score = lasso.score(x_train, y_train)
+test_score = lasso.score(x_test, y_test)
+coeff_used = np.sum(lasso.coef_!=0)
+
+print("Training score:", train_score)
+print("Testing score:", test_score)
+print("Number of features used:", coeff_used)
