@@ -41,6 +41,8 @@ typedef struct {
   S64 numGenes;
   S64 numCells;
   S64 nv;
+	S64 varfOffsets;
+	S64 ttOffsets;
   S64 varf;
   S64 tt;
   S64 bnInitialState;
@@ -71,16 +73,16 @@ static inline S32* getNv() {
 	return (S32*)(&(g[f.nv]));
 }
 
-static inline S32* getVarf(S32 gene) {
+static inline S32* getGeneVarf(S32 gene) {
 	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();	
-	return (S32*)(&(g[f.varf])) + gene * getNumGenes();
+	const auto f = getGlobalDataFormat();
+	return (S32*)(&(g[f.varf])) + ((S32*)(&(g[f.varfOffsets])))[gene];
 }
 
-static inline S32* getTt(S32 gene) {
+static inline S32* getGeneTt(S32 gene) {
 	const auto& g = Info::getGlobalDataRef();
 	const auto f = getGlobalDataFormat();	
-	return (S32*)(&(g[f.tt])) + gene * (U64)std::pow(2, getNumGenes());
+	return (S32*)(&(g[f.tt])) + ((S32*)(&(g[f.ttOffsets])))[gene];
 }
 
 static inline S32* getBnInitialState() {

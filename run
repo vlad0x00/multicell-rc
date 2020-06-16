@@ -4,7 +4,7 @@ import os
 import argparse
 import pandas as pd
 import numpy as np
-
+import networkx
 from sklearn.linear_model import Lasso
 from sklearn.model_selection import train_test_split
 
@@ -24,16 +24,20 @@ NV_FILE = MODEL_DIR + "nv"
 VARF_FILE = MODEL_DIR + "varf"
 TT_FILE = MODEL_DIR + "tt"
 BN_INITIAL_STATE_FILE = MODEL_DIR + "bn_initial_state"
-NUM_GENES = 20
-NUM_OUTPUT_GENES = 14
+DOT_FILE = MODEL_DIR + "boolean_network.dot"
+NUM_GENES = 10
+CONNECTIVITY = 2
+INPUT_CONNECTIONS = NUM_GENES // 2
+NUM_OUTPUT_GENES = NUM_GENES
 NUM_CELLS = 1
+MAKE_DOT = True
 
 LASSO_ALPHA = 0.05
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Simulation parameters
-SIMULATION_STEPS = 200
+SIMULATION_STEPS = 50
 
 INPUT_ARRAY_FILE = MODEL_DIR + "input_array"
 INPUT_ARRAY_LENGTH = SIMULATION_STEPS
@@ -44,7 +48,11 @@ ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + NV_FILE + " " 
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 
 if args.gen_initial:
-  bcell_utils.generate_gene_functions(NV_FILE, VARF_FILE, TT_FILE, NUM_GENES)
+  if not MAKE_DOT:
+    if os.path.isfile(DOT_FILE):
+       os.remove(DOT_FILE)
+    DOT_FILE = None
+  bcell_utils.generate_gene_functions(NV_FILE, VARF_FILE, TT_FILE, DOT_FILE, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS)
   bcell_utils.generate_bn_initial_state(BN_INITIAL_STATE_FILE, NUM_GENES)
   bcell_utils.generate_input_array(INPUT_ARRAY_FILE, INPUT_ARRAY_LENGTH)
 bcell_utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS)
@@ -87,6 +95,30 @@ for i in range(NUM_OUTPUT_GENES):
 x = pd.DataFrame()
 for gene in range(NUM_OUTPUT_GENES):
   x[str(gene)] = output_genes[gene]
+
+def make_dot():
+  class Node:
+
+    def __init__(self, name):
+      self.name = name
+
+    def __str__(self):
+      return self.name
+
+    def __hash__(self):
+      return self.name.__hash__()
+
+  for index, row in x.iterrows():
+    graph = networkx.DiGraph()
+    for i, bit in enumerate(row):
+      graph.add_node(Node(str(i)), label=bit)
+
+    pydot_graph = networkx.drawing.nx_pydot.to_pydot(graph)
+    pydot_graph.set_strict(False)
+    pydot_graph.set_name("state" + str(index))
+    pydot_graph.write(OUTPUT_DIR + "state" + str(index).zfill(3) + ".dot", prog='dot')
+if MAKE_DOT:
+  make_dot()
 
 y = pd.DataFrame()
 y['parity'] = parity

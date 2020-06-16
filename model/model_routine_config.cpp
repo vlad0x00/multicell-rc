@@ -262,8 +262,10 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	auto inputArrayFile = std::ifstream(v_modelParam[param++]);
 
 	Vector<S32> nv;
-	Vector<Vector<S32>> varf;
-	Vector<Vector<S32>> tt;
+	Vector<S32> varfOffsets;
+	Vector<S32> ttOffsets;
+	Vector<S32> varf;
+	Vector<S32> tt;
 	Vector<S32> bnInitialState;
 	Vector<S32> inputArray;
 
@@ -273,21 +275,27 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	while (nvFile >> i) {
 		nv.push_back(i);
 	}
-	
-	while (std::getline(varfFile, line)) {
-		varf.push_back({});
-		std::stringstream ss(line);
-		while (ss >> i) {
-			varf.back().push_back(i);
+
+	S32 currentVarfOffset = 0;
+	for (const auto v : nv) {
+		varfOffsets.push_back(currentVarfOffset);
+		currentVarfOffset += v;
+	}
+
+	S32 currentTtOffset = 0;
+	for (const auto v : nv) {
+		ttOffsets.push_back(currentTtOffset);
+		if (v > 0) {
+			currentTtOffset += std::pow(2, v);
 		}
 	}
 
-	while (std::getline(ttFile, line)) {
-		tt.push_back({});
-		std::stringstream ss(line);
-		while (ss >> i) {
-			tt.back().push_back(i);
-		}
+	while (varfFile >> i) {
+		varf.push_back(i);
+	}
+
+	while (ttFile >> i) {
+		tt.push_back(i);
 	}
 
 	while (bnInitialStateFile >> i) {
@@ -300,38 +308,45 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 
 	GlobalDataFormat format;
 	S64 size = sizeof(format);
+
 	format.numGenes = size;
 	size += sizeof(numGenes);
+
 	format.numCells = size;
 	size += sizeof(numCells);
+
 	format.nv = size;
-	size += numGenes * sizeof(S32); // nv
+	size += nv.size() * sizeof(nv[0]);
+
+	format.varfOffsets = size;
+	size += varfOffsets.size() * sizeof(varfOffsets[0]);
+
+	format.ttOffsets = size;
+	size += ttOffsets.size() * sizeof(ttOffsets[0]);
+
 	format.varf = size;
-	size += numGenes * numGenes * sizeof(S32); // varf
+	size += varf.size() * sizeof(varf[0]);
+
 	format.tt = size;
-	size += numGenes * std::pow(2, numGenes) * sizeof(S32); // tt
+	size += tt.size() * sizeof(tt[0]);
+
 	format.bnInitialState = size;
-	size += numGenes * sizeof(S32); // bn initial state
+	size += bnInitialState.size() * sizeof(bnInitialState[0]);
+
 	format.inputArray = size;
-	size += inputArray.size() * sizeof(S32); // input array
+	size += inputArray.size() * sizeof(inputArray[0]);
 
 	v_globalData.resize(size);
 	memcpy(&(v_globalData[0]), &format, sizeof(format));
 	memcpy(&(v_globalData[format.numGenes]), &numGenes, sizeof(numGenes));
 	memcpy(&(v_globalData[format.numCells]), &numCells, sizeof(numCells));
-	memcpy(&(v_globalData[format.nv]), &(nv[0]), nv.size() * sizeof(S32));
-	i = 0;
-	for (const auto& v : varf) {
-		memcpy(&(v_globalData[format.varf + i * v.size() * sizeof(S32)]), &(v[0]), v.size() * sizeof(S32));
-		i++;
-	}
-	i = 0;
-	for (const auto& v : tt) {
-		memcpy(&(v_globalData[format.tt + i * v.size() * sizeof(S32)]), &(v[0]), v.size() * sizeof(S32));
-		i++;
-	}
-	memcpy(&(v_globalData[format.bnInitialState]), &(bnInitialState[0]), bnInitialState.size() * sizeof(S32));
-	memcpy(&(v_globalData[format.inputArray]), &(inputArray[0]), inputArray.size() * sizeof(S32));
+	memcpy(&(v_globalData[format.nv]), &(nv[0]), nv.size() * sizeof(nv[0]));
+	memcpy(&(v_globalData[format.varfOffsets]), &(varfOffsets[0]), varfOffsets.size() * sizeof(varfOffsets[0]));
+	memcpy(&(v_globalData[format.ttOffsets]), &(ttOffsets[0]), ttOffsets.size() * sizeof(ttOffsets[0]));
+	memcpy(&(v_globalData[format.varf]), &(varf[0]), varf.size() * sizeof(varf[0]));
+	memcpy(&(v_globalData[format.tt]), &(tt[0]), tt.size() * sizeof(tt[0]));
+	memcpy(&(v_globalData[format.bnInitialState]), &(bnInitialState[0]), bnInitialState.size() * sizeof(bnInitialState[0]));
+	memcpy(&(v_globalData[format.inputArray]), &(inputArray[0]), inputArray.size() * sizeof(inputArray[0]));
 
 	/* MODEL END */
 

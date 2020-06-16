@@ -4,29 +4,103 @@ import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element, SubElement, Comment
 from xml.dom import minidom
 import csv
+import networkx
 
-def generate_gene_functions(nv_file, varf_file, tt_file, num_genes):
-  nv = np.random.randint(low=2, high=7, size=num_genes)
+class Node:
 
-  varf = np.ones((num_genes, num_genes), dtype=np.int32) * -1
-  for i, n in enumerate(nv):
-    varf[i, :n] = random.sample(range(0, num_genes), n)
+  def __init__(self, name):
+    self.name = name
 
-  tt = np.ones((num_genes, 2 ** num_genes), dtype=np.int32) * -1
-  for i, n in enumerate(nv):
-    if n == 0: continue
-    tt[i, :(2 ** n)] = np.random.randint(2, size=(2 ** n))
+  def __str__(self):
+    return self.name
+
+  def __hash__(self):
+    return self.name.__hash__()
+
+def make_dot(nv, varf, varf_offsets, dot_file):
+  graph = networkx.DiGraph()
+
+  nodes = []
+  for i in range(len(nv)):
+    node = Node(str(i))
+    nodes.append(node)
+    graph.add_node(node)
+
+  for i in range(len(nv)):
+    for v in varf[varf_offsets[i]:(varf_offsets[i] + nv[i])]:
+      graph.add_edge(nodes[i], nodes[v])
+
+  pydot_graph = networkx.drawing.nx_pydot.to_pydot(graph)
+  pydot_graph.set_strict(False)
+  pydot_graph.set_name("boolean_network")
+  pydot_graph.write(dot_file, prog='dot')
+
+def generate_gene_functions(nv_file, varf_file, tt_file, dot_file, num_genes, connectivity, input_connections):
+  assert input_connections <= num_genes
+
+  nv = np.ones(num_genes, dtype=np.int32) * connectivity
+  nv[0] = 0
+  for i in range(1, input_connections + 1):
+    nv[i] += 1
+
+  current_varf_offset = 0
+  varf_offsets = []
+  for v in nv:
+    varf_offsets.append(current_varf_offset)
+    current_varf_offset += v
+
+  current_tt_offset = 0
+  tt_offsets = []
+  for v in nv:
+    tt_offsets.append(current_tt_offset)
+    if v > 0:
+      current_tt_offset += 2 ** v
+
+  available_nodes = [ x for x in range(1, num_genes) ]
+  connection_pool = []
+  for _ in range(connectivity):
+    connection_pool += available_nodes
+
+  def take_from_pool(pool, num, exclude):
+    nodes = []
+    for _ in range(num):
+      while True:
+        idx = random.randint(0, len(pool) - 1)
+        node = pool[idx]
+        if ((not node in exclude) and (not node in nodes)) or sorted(pool) == sorted(exclude):
+          nodes.append(node)
+          pool.pop(idx)
+          break
+    return nodes
+
+  varf = np.ones(current_varf_offset, dtype=np.int32) * -1
+  for i in range(len(varf_offsets) - 1):
+    v = varf_offsets[i + 1] - varf_offsets[i]
+    if v > 0:
+      varf[varf_offsets[i]:(varf_offsets[i] + connectivity)] = take_from_pool(connection_pool, connectivity, [i])
+  varf[varf_offsets[-1]:current_varf_offset] = take_from_pool(connection_pool, connectivity, [(len(varf_offsets) - 1)])
+
+  for i in range(1, input_connections + 1):
+    if i + 1 < len(varf_offsets):
+      varf[varf_offsets[i + 1] - 1] = 0
+    else:
+      varf[current_varf_offset - 1] = 0
+
+  assert len(connection_pool) == 0
+
+  tt = np.random.randint(2, size=current_tt_offset)
 
   with open(nv_file, 'w') as f:
     f.write(' '.join([str(x) for x in nv]))
 
   with open(varf_file, 'w') as f:
-    for row in varf:
-      f.write(' '.join([str(x).rjust(2) for x in row]) + '\n')
+    f.write(' '.join([str(x) for x in varf]))
 
   with open(tt_file, 'w') as f:
-    for row in tt:
-      f.write(' '.join([str(x).rjust(2) for x in row]) + '\n')
+    f.write(' '.join([str(x) for x in tt]))
+
+  if dot_file != None:
+    make_dot(nv, varf, varf_offsets, dot_file)
 
 def generate_bn_initial_state(state_file, num_genes):
   state = np.random.randint(2, size=num_genes)
@@ -44,7 +118,6 @@ def prettify(elem):
   rough_string = ET.tostring(elem, 'utf-8')
   reparsed = minidom.parseString(rough_string)
   return reparsed.toprettyxml(indent="  ")
-
 
 def make_params_xml(xml_path, output_dir, simulation_steps, additional_params):
   xml_file = open(xml_path, 'w')

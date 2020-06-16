@@ -79,17 +79,16 @@ void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& jun
 
 	for (S32 i = 1; i < getNumGenes(); i++) {
 		const auto nv = getNv()[i];
-		CHECK(nv != -1);
+		CHECK(nv >= 0);
 
 		if (nv > 0 ) {
-			const auto varf = getVarf(i);
-			const auto tt = getTt(i);
+			const auto varf = getGeneVarf(i);
+			const auto tt = getGeneTt(i);
 
 			U32 ttEntry = 0;
 			for (U32 j = 0; j < (U32)nv; j++) {
 				const auto var_val = state.getBoolVal(varf[j]);
 				CHECK(var_val != -1);
-				CHECK(nv == getNumGenes() || varf[nv] == -1);
 				if (var_val) {
 					ttEntry |= (1 << j);
 				}
@@ -97,7 +96,6 @@ void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& jun
 
 			const auto tt_val = tt[ttEntry];
 			CHECK(tt_val != -1);
-			CHECK(nv == getNumGenes() || tt[(U64)std::pow(2, nv)] == -1);
 			newBools.push_back(tt_val);
 		} else {
 			newBools.push_back(state.getBoolVal(i));
