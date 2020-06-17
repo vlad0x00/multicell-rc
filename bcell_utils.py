@@ -36,13 +36,29 @@ def make_dot(nv, varf, varf_offsets, dot_file):
   pydot_graph.write(dot_file, prog='dot')
 
 def generate_gene_functions(nv_file, varf_file, tt_file, dot_file, num_genes, connectivity, input_connections):
-  assert input_connections <= num_genes
+  assert input_connections < num_genes
 
-  nv = np.ones(num_genes, dtype=np.int32) * connectivity
-  nv[0] = 0
-  for i in range(1, input_connections + 1):
-    nv[i] += 1
+  nv = np.zeros(num_genes, dtype=np.int32)
 
+  total_edges = num_genes * connectivity
+  edges = []
+  for _ in range(total_edges):
+    while True:
+      i, j = random.sample(range(1, num_genes), 2)
+      if not (i, j) in edges:
+        nv[j] += 1
+        edges.append((i, j))
+        break
+  for _ in range(input_connections):
+    while True:
+      j = random.randrange(1, num_genes)
+      if not (0, j) in edges:
+        nv[j] += 1
+        edges.append((0, j))
+        break
+
+  assert connectivity - 1 < sum(nv) / len(nv) < connectivity + 1
+    
   current_varf_offset = 0
   varf_offsets = []
   for v in nv:
@@ -56,37 +72,16 @@ def generate_gene_functions(nv_file, varf_file, tt_file, dot_file, num_genes, co
     if v > 0:
       current_tt_offset += 2 ** v
 
-  available_nodes = [ x for x in range(1, num_genes) ]
-  connection_pool = []
-  for _ in range(connectivity):
-    connection_pool += available_nodes
-
-  def take_from_pool(pool, num, exclude):
-    nodes = []
-    for _ in range(num):
-      while True:
-        idx = random.randint(0, len(pool) - 1)
-        node = pool[idx]
-        if ((not node in exclude) and (not node in nodes)) or sorted(pool) == sorted(exclude):
-          nodes.append(node)
-          pool.pop(idx)
-          break
-    return nodes
-
   varf = np.ones(current_varf_offset, dtype=np.int32) * -1
-  for i in range(len(varf_offsets) - 1):
-    v = varf_offsets[i + 1] - varf_offsets[i]
-    if v > 0:
-      varf[varf_offsets[i]:(varf_offsets[i] + connectivity)] = take_from_pool(connection_pool, connectivity, [i])
-  varf[varf_offsets[-1]:current_varf_offset] = take_from_pool(connection_pool, connectivity, [(len(varf_offsets) - 1)])
-
-  for i in range(1, input_connections + 1):
-    if i + 1 < len(varf_offsets):
-      varf[varf_offsets[i + 1] - 1] = 0
-    else:
-      varf[current_varf_offset - 1] = 0
-
-  assert len(connection_pool) == 0
+  for node in range(len(nv)):
+    for i in range(nv[node]):
+      idx = -1
+      for j, edge in enumerate(edges):
+        if edge[1] == node:
+          idx = j
+          break
+      varf[varf_offsets[node] + i] = edges[idx][0]
+      edges.pop(idx)
 
   tt = np.random.randint(2, size=current_tt_offset)
 
@@ -141,7 +136,7 @@ def make_params_xml(xml_path, output_dir, simulation_steps, additional_params):
   bcell_input_param = additional_params
   bcell_verbosity = 0 # [0-5]
 
-  bcell_num_threads = 6
+  bcell_num_threads = 4
   bcell_num_node_groups = 1
   bcell_num_nodes_per_group = 1
   bcell_num_sockets_per_node = 1

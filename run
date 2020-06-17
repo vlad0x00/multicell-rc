@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import argparse
 import pandas as pd
 import numpy as np
 import networkx
-from sklearn.linear_model import Lasso
+from sklearn.linear_model import Lasso, LassoCV
 from sklearn.model_selection import train_test_split
 
 import bcell_utils
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-g', '--gen-initial', action='store_true', help="Generate initial boolean network state and functions. Otherwise use existing.")
+parser.add_argument('-g', '--gen-initial', action='store_true', help="Generate initial boolean network state, functions, and input array. Otherwise use existing.")
+parser.add_argument('-d', '--make-dot', action='store_true', help="Generate a dot file of the boolean network model and every state of the simulation for visualization and debugging.")
 args = parser.parse_args()
 
 MODEL_DIR = "model/"
@@ -25,22 +27,22 @@ VARF_FILE = MODEL_DIR + "varf"
 TT_FILE = MODEL_DIR + "tt"
 BN_INITIAL_STATE_FILE = MODEL_DIR + "bn_initial_state"
 DOT_FILE = MODEL_DIR + "boolean_network.dot"
-NUM_GENES = 10
+NUM_GENES = 200
 CONNECTIVITY = 2
 INPUT_CONNECTIONS = NUM_GENES // 2
 NUM_OUTPUT_GENES = NUM_GENES
 NUM_CELLS = 1
-MAKE_DOT = True
+DELAY = 1
 
-LASSO_ALPHA = 0.05
+LASSO_ALPHA = 0.005
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Simulation parameters
-SIMULATION_STEPS = 50
+SIMULATION_STEPS = 150
 
 INPUT_ARRAY_FILE = MODEL_DIR + "input_array"
-INPUT_ARRAY_LENGTH = SIMULATION_STEPS
+INPUT_ARRAY_LENGTH = SIMULATION_STEPS + 1
 WINDOW_SIZE = 3
 
 ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + BN_INITIAL_STATE_FILE + " " + INPUT_ARRAY_FILE
@@ -48,21 +50,50 @@ ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + NV_FILE + " " 
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 
 if args.gen_initial:
-  if not MAKE_DOT:
+  print("Generating initial boolean network state, functions, and input array... ", end='', flush=True)
+  if not args.make_dot:
     if os.path.isfile(DOT_FILE):
        os.remove(DOT_FILE)
     DOT_FILE = None
   bcell_utils.generate_gene_functions(NV_FILE, VARF_FILE, TT_FILE, DOT_FILE, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS)
   bcell_utils.generate_bn_initial_state(BN_INITIAL_STATE_FILE, NUM_GENES)
   bcell_utils.generate_input_array(INPUT_ARRAY_FILE, INPUT_ARRAY_LENGTH)
+  print("Done!", flush=True)
 bcell_utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS)
 
+print("Running Biocellion... ", end='', flush=True)
 os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE)
+print("Done!", flush=True)
 
+print("Training LASSO... ", end='', flush=True)
 with open(INPUT_ARRAY_FILE) as f:
   input_array = [ int(x) for x in f.readline().split() ]
+
+states = []
+with open(BIOCELLION_OUTPUT_FILE) as f:
+  i = 0
+  s = -1
+  for line in f.readlines():
+    if "interface grid summary" in line:
+      i += 1
+
+      if "Timestep" in line:
+        s += 1
+        states.append([])
+
+      if "Gene" in line:
+        tokens = line.split()[4].split(":")
+        gene = int(tokens[0])
+        val = int(tokens[1])
+        if gene in range(NUM_GENES - 1, NUM_GENES - 1 - NUM_OUTPUT_GENES, -1):
+          states[s].append(val)
+
+states = states[WINDOW_SIZE:]
+for state in states:
+  assert len(state) == NUM_OUTPUT_GENES
+
 parity = []
-for i in range(WINDOW_SIZE, len(input_array) + 1):
+for i in range(WINDOW_SIZE, len(input_array)):
   bitsum = 0
   for bit in input_array[(i - WINDOW_SIZE):i]:
     bitsum += bit
@@ -70,31 +101,25 @@ for i in range(WINDOW_SIZE, len(input_array) + 1):
     parity.append(0)
   else:
     parity.append(1)
+assert len(input_array) == len(parity) + WINDOW_SIZE
 
-output_genes = []
-for _ in range(NUM_OUTPUT_GENES):
-  output_genes.append([])
+majority = []
+for i in range(WINDOW_SIZE, len(input_array)):
+  bitsum = 0
+  for bit in input_array[(i - WINDOW_SIZE):i]:
+    bitsum += bit
+  if bitsum > WINDOW_SIZE // 2:
+    majority.append(1)
+  else:
+    majority.append(0)
+assert len(input_array) == len(majority) + WINDOW_SIZE
 
-with open(BIOCELLION_OUTPUT_FILE) as f:
-  i = 0
-  for line in f.readlines():
-    if "summary" in line:
-      i += 1
-      if ((i + NUM_GENES - 1) / NUM_GENES < WINDOW_SIZE + 1): continue # Ignore initial state and data before full window
+x = states
+y = parity
 
-      tokens = line.split()[4].split(":")
-      gene = int(tokens[0])
-      val = int(tokens[1])
-      if gene in range(NUM_GENES - 1, NUM_GENES - 1 - NUM_OUTPUT_GENES, -1):
-        output_genes[NUM_GENES - 1 - gene].append(val)
-
-assert len(output_genes[0]) == INPUT_ARRAY_LENGTH - WINDOW_SIZE + 1
-for i in range(NUM_OUTPUT_GENES):
-  assert len(output_genes[i]) == len(output_genes[0])
-
-x = pd.DataFrame()
-for gene in range(NUM_OUTPUT_GENES):
-  x[str(gene)] = output_genes[gene]
+if DELAY > 0:
+  x = x[DELAY:]
+  y = y[:-DELAY]
 
 def make_dot():
   class Node:
@@ -117,23 +142,28 @@ def make_dot():
     pydot_graph.set_strict(False)
     pydot_graph.set_name("state" + str(index))
     pydot_graph.write(OUTPUT_DIR + "state" + str(index).zfill(3) + ".dot", prog='dot')
-if MAKE_DOT:
+if args.make_dot:
   make_dot()
+else:
+  for filename in os.listdir(OUTPUT_DIR):
+    if filename.startswith("state"):
+      os.remove(OUTPUT_DIR + filename)
 
-y = pd.DataFrame()
-y['parity'] = parity
-
-for gene in range(NUM_OUTPUT_GENES):
-  len(x[str(gene)]) == len(y['parity'])
+assert len(x) == len(y)
+for s in x:
+  assert len(s) == NUM_GENES
 
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
-lasso = Lasso(alpha=LASSO_ALPHA)
+lasso = LassoCV(max_iter=10000)
+#lasso = Lasso(alpha=LASSO_ALPHA)
 lasso.fit(x_train, y_train)
 
 train_score = lasso.score(x_train, y_train)
 test_score = lasso.score(x_test, y_test)
 coeff_used = np.sum(lasso.coef_!=0)
+
+print("Done!", flush=True)
 
 print("Training score:", train_score)
 print("Testing score:", test_score)

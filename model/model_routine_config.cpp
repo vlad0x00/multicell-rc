@@ -233,13 +233,22 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
 	Vector<string> v_modelParam = readXMLParameters();
 	S32 numGenes = std::stoi(v_modelParam[0]);
 
-	SummaryOutputInfo info;        
-	v_summaryOutputIntInfo.resize(numGenes);
+	SummaryOutputInfo info;
+	v_summaryOutputIntInfo.resize(2 + numGenes);
 	v_summaryOutputRealInfo.clear();
+
+	info.name = "Timestep";
+	info.type = SUMMARY_TYPE_SUM;
+	v_summaryOutputIntInfo[0] = info;
+
+	info.name = "Input";
+	info.type = SUMMARY_TYPE_SUM;
+	v_summaryOutputIntInfo[1] = info;
+
 	for (S32 i = 0; i < numGenes; i++) {
 		info.name = "Gene " + std::to_string(i);
 		info.type = SUMMARY_TYPE_SUM;
-		v_summaryOutputIntInfo[i] = info;
+		v_summaryOutputIntInfo[i + 2] = info;
 	}
 	
 	/* MODEL END */

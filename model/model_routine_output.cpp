@@ -40,17 +40,24 @@ void ModelRoutine::updateSummaryVar( const VIdx& vIdx, const NbrUBAgentData& nbr
 	S32 numGenes = getNumGenes();
 
 	CHECK(v_realVal.size() == 0);
-	CHECK(v_intVal.size() == (U32)numGenes);
+	CHECK(v_intVal.size() == 2 + (U32)numGenes);
 
 	const UBAgentData& ubAgentData = *(nbrUBAgentData.getConstPtr(0, 0, 0));
 
-	for (S32 i = 0; i < numGenes; i++) {
-		v_intVal[i] = 0;
-	}
-
-	for (S32 i = 0; i < numGenes; i++) {
-		for (auto agent : ubAgentData.v_spAgent) {
-			v_intVal[i] = agent.state.getBoolVal(i);
+	if (ubAgentData.v_spAgent.size() > 0) {
+		const S32 baselineStep = Info::getCurBaselineTimeStep();
+		v_intVal[0] = baselineStep;
+		v_intVal[1] = getInputArray()[baselineStep];
+		for (S32 i = 0; i < numGenes; i++) {
+			for (auto agent : ubAgentData.v_spAgent) {
+				v_intVal[i + 2] = agent.state.getBoolVal(i);
+			}
+		}
+	} else {
+		v_intVal[0] = 0;
+		v_intVal[1] = 0;
+		for (S32 i = 0; i < numGenes; i++) {
+			v_intVal[i + 2] = 0;
 		}
 	}
   
