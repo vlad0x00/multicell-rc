@@ -1,2 +1,7 @@
 *.pyc
 output
+model/nv
+model/varf
+model/tt
+model/*.o
+model/*.so

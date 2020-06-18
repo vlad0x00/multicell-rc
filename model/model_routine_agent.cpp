@@ -75,7 +75,7 @@ void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& jun
 	Vector<BOOL> newBools;
 
 	const S32 baselineStep = Info::getCurBaselineTimeStep();
-	newBools.push_back(getInputArray()[baselineStep]);
+	newBools.push_back(getInputArray()[baselineStep + 1]);
 
 	for (S32 i = 1; i < getNumGenes(); i++) {
 		const auto nv = getNv()[i];

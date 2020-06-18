@@ -97,15 +97,18 @@ def generate_gene_functions(nv_file, varf_file, tt_file, dot_file, num_genes, co
   if dot_file != None:
     make_dot(nv, varf, varf_offsets, dot_file)
 
-def generate_bn_initial_state(state_file, num_genes):
-  state = np.random.randint(2, size=num_genes)
-  with open(state_file, 'w') as f:
-    f.write(' '.join([str(x) for x in state]))
-
 def generate_input_array(array_file, array_len):
   arr = np.random.randint(2, size=array_len)
   with open(array_file, 'w') as f:
     f.write(' '.join([str(x) for x in arr]))
+
+def generate_bn_initial_state(state_file, num_genes, input_array_file):
+  with open(input_array_file, 'r') as f:
+    input_array = [ int(x) for x in f.readline().split() ]
+  state = np.random.randint(2, size=num_genes)
+  state[0] = input_array[0]
+  with open(state_file, 'w') as f:
+    f.write(' '.join([str(x) for x in state]))
 
 def prettify(elem):
   """Return a pretty-printed XML string for the Element.

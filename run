@@ -32,14 +32,12 @@ CONNECTIVITY = 2
 INPUT_CONNECTIONS = NUM_GENES // 2
 NUM_OUTPUT_GENES = NUM_GENES
 NUM_CELLS = 1
-DELAY = 1
+DELAY = 0
+SIMULATION_STEPS = 150
 
 LASSO_ALPHA = 0.005
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-# Simulation parameters
-SIMULATION_STEPS = 150
 
 INPUT_ARRAY_FILE = MODEL_DIR + "input_array"
 INPUT_ARRAY_LENGTH = SIMULATION_STEPS + 1
@@ -56,8 +54,8 @@ if args.gen_initial:
        os.remove(DOT_FILE)
     DOT_FILE = None
   bcell_utils.generate_gene_functions(NV_FILE, VARF_FILE, TT_FILE, DOT_FILE, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS)
-  bcell_utils.generate_bn_initial_state(BN_INITIAL_STATE_FILE, NUM_GENES)
   bcell_utils.generate_input_array(INPUT_ARRAY_FILE, INPUT_ARRAY_LENGTH)
+  bcell_utils.generate_bn_initial_state(BN_INITIAL_STATE_FILE, NUM_GENES, INPUT_ARRAY_FILE)
   print("Done!", flush=True)
 bcell_utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS)
 
