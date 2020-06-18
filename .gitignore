@@ -5,5 +5,6 @@ model/varf
 model/tt
 model/bn_initial_state
 model/input_array
+model/params.xml
 model/*.o
 model/*.so
