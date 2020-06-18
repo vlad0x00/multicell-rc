@@ -3,5 +3,7 @@ output
 model/nv
 model/varf
 model/tt
+model/bn_initial_state
+model/input_array
 model/*.o
 model/*.so
