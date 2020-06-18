@@ -264,6 +264,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	S32 param = 0;
 	const S32 numGenes = std::stoi(v_modelParam[param++]);
 	const S32 numCells = std::stoi(v_modelParam[param++]);
+	const S32 numCellTypes = std::stoi(v_modelParam[param++]);
   auto nvFile = std::ifstream(v_modelParam[param++]);
 	auto varfFile = std::ifstream(v_modelParam[param++]);
 	auto ttFile = std::ifstream(v_modelParam[param++]);
@@ -324,6 +325,9 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	format.numCells = size;
 	size += sizeof(numCells);
 
+	format.numCellTypes = size;
+	size += sizeof(numCellTypes);
+
 	format.nv = size;
 	size += nv.size() * sizeof(nv[0]);
 
@@ -349,6 +353,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	memcpy(&(v_globalData[0]), &format, sizeof(format));
 	memcpy(&(v_globalData[format.numGenes]), &numGenes, sizeof(numGenes));
 	memcpy(&(v_globalData[format.numCells]), &numCells, sizeof(numCells));
+	memcpy(&(v_globalData[format.numCellTypes]), &numCellTypes, sizeof(numCellTypes));
 	memcpy(&(v_globalData[format.nv]), &(nv[0]), nv.size() * sizeof(nv[0]));
 	memcpy(&(v_globalData[format.varfOffsets]), &(varfOffsets[0]), varfOffsets.size() * sizeof(varfOffsets[0]));
 	memcpy(&(v_globalData[format.ttOffsets]), &(ttOffsets[0]), ttOffsets.size() * sizeof(ttOffsets[0]));
