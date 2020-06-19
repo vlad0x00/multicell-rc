@@ -6,14 +6,22 @@ import argparse
 import pandas as pd
 import numpy as np
 import networkx
+import math
 from sklearn.linear_model import Lasso, LassoCV
 from sklearn.model_selection import train_test_split
 
 import bcell_utils
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-g', '--gen-initial', action='store_true', help="Generate initial boolean network state, functions, and input array. Otherwise use existing.")
-parser.add_argument('-d', '--make-dot', action='store_true', help="Generate a dot file of the boolean network model and every state of the simulation for visualization and debugging.")
+parser.add_argument('-n', '--nodes', type=int, default=50, help="Number of nodes in boolean network(s).")
+parser.add_argument('-c', '--cells', type=int, default=1, help="Number of cells in the simulation.")
+parser.add_argument('-d', '--degree', type=int, default=2, help="Average node in-degree of boolean network(s).")
+parser.add_argument('-i', '--input-fraction', type=float, default=0.5, help="Fraction of nodes connected to the input signal.")
+parser.add_argument('-s', '--steps', type=int, default=150, help="Number of simulation steps.")
+parser.add_argument('-t', '--time-delay', type=int, default=0, help="Step delay between a boolean network update from an input signal and output layer prediction.")
+parser.add_argument('-w', '--window-size', type=int, default=3, help="Window size of predicted functions.")
+parser.add_argument('-g', '--generate', action='store_true', help="Generate initial boolean network state, functions, and input array. Otherwise use existing.")
+parser.add_argument('-z', '--visualize', action='store_true', help="Generate a dot file of the boolean network model and every state of the simulation for visualization and debugging.")
 args = parser.parse_args()
 
 MODEL_DIR = "model/"
@@ -27,29 +35,27 @@ VARF_FILE = MODEL_DIR + "varf"
 TT_FILE = MODEL_DIR + "tt"
 BN_INITIAL_STATE_FILE = MODEL_DIR + "bn_initial_state"
 DOT_FILE = MODEL_DIR + "boolean_network.dot"
-NUM_GENES = 200
-CONNECTIVITY = 2
-INPUT_CONNECTIONS = NUM_GENES // 2
+NUM_GENES = args.nodes
+CONNECTIVITY = args.degree
+INPUT_CONNECTIONS = math.ceil(NUM_GENES * args.input_fraction)
 NUM_OUTPUT_GENES = NUM_GENES
-NUM_CELLS = 1
-DELAY = 0
-SIMULATION_STEPS = 150
-
+NUM_CELLS = args.cells
+DELAY = args.time_delay
+SIMULATION_STEPS = args.steps
+INPUT_ARRAY_FILE = MODEL_DIR + "input_array"
+INPUT_ARRAY_LENGTH = SIMULATION_STEPS + 1
+WINDOW_SIZE = args.window_size
 LASSO_ALPHA = 0.005
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-INPUT_ARRAY_FILE = MODEL_DIR + "input_array"
-INPUT_ARRAY_LENGTH = SIMULATION_STEPS + 1
-WINDOW_SIZE = 3
 
 ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + BN_INITIAL_STATE_FILE + " " + INPUT_ARRAY_FILE
 
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 
-if args.gen_initial:
+if args.generate:
   print("Generating initial boolean network state, functions, and input array... ", end='', flush=True)
-  if not args.make_dot:
+  if not args.visualize:
     if os.path.isfile(DOT_FILE):
        os.remove(DOT_FILE)
     DOT_FILE = None
@@ -101,19 +107,19 @@ for i in range(WINDOW_SIZE, len(input_array)):
     parity.append(1)
 assert len(input_array) == len(parity) + WINDOW_SIZE
 
-majority = []
+median = []
 for i in range(WINDOW_SIZE, len(input_array)):
   bitsum = 0
   for bit in input_array[(i - WINDOW_SIZE):i]:
     bitsum += bit
   if bitsum > WINDOW_SIZE // 2:
-    majority.append(1)
+    median.append(1)
   else:
-    majority.append(0)
-assert len(input_array) == len(majority) + WINDOW_SIZE
+    median.append(0)
+assert len(input_array) == len(median) + WINDOW_SIZE
 
 x = states
-y = parity
+y = median
 
 if DELAY > 0:
   x = x[DELAY:]
@@ -140,7 +146,7 @@ def make_dot():
     pydot_graph.set_strict(False)
     pydot_graph.set_name("state" + str(index))
     pydot_graph.write(OUTPUT_DIR + "state" + str(index).zfill(3) + ".dot", prog='dot')
-if args.make_dot:
+if args.visualize:
   make_dot()
 else:
   for filename in os.listdir(OUTPUT_DIR):
