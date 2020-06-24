@@ -13,14 +13,15 @@ from sklearn.model_selection import train_test_split
 import bcell_utils
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-n', '--nodes', type=int, default=50, help="Number of nodes in boolean network(s).")
+parser.add_argument('-g', '--genes', type=int, default=50, help="Number of genes per cell.")
 parser.add_argument('-c', '--cells', type=int, default=1, help="Number of cells in the simulation.")
-parser.add_argument('-d', '--degree', type=int, default=2, help="Average node in-degree of boolean network(s).")
+parser.add_argument('-t', '--cell-types', type=int, default=1, help="Number of cell types in the simulation.")
+parser.add_argument('-d', '--degree', type=int, default=2, help="Average node in-degree of gene network(s).")
 parser.add_argument('-i', '--input-fraction', type=float, default=0.5, help="Fraction of nodes connected to the input signal.")
 parser.add_argument('-s', '--steps', type=int, default=150, help="Number of simulation steps.")
-parser.add_argument('-t', '--time-delay', type=int, default=0, help="Step delay between a boolean network update from an input signal and output layer prediction.")
+parser.add_argument('-m', '--memory', type=int, default=0, help="Step delay between an input signal and output layer prediction.")
 parser.add_argument('-w', '--window-size', type=int, default=3, help="Window size of predicted functions.")
-parser.add_argument('-g', '--generate', action='store_true', help="Generate initial boolean network state, functions, and input array. Otherwise use existing.")
+parser.add_argument('-r', '--randomize', action='store_true', help="Generate random initial boolean network states, functions, and input signal. Otherwise use existing.")
 parser.add_argument('-z', '--visualize', action='store_true', help="Generate a dot file of the boolean network model and every state of the simulation for visualization and debugging.")
 args = parser.parse_args()
 
@@ -33,23 +34,24 @@ PARAMS_FILE = MODEL_DIR + "params.xml"
 NV_FILE = MODEL_DIR + "nv"
 VARF_FILE = MODEL_DIR + "varf"
 TT_FILE = MODEL_DIR + "tt"
-BN_INITIAL_STATE_FILE = MODEL_DIR + "bn_initial_state"
-DOT_FILE = MODEL_DIR + "boolean_network.dot"
-NUM_GENES = args.nodes
+GENE_INITIAL_STATES_FILE = MODEL_DIR + "gene_initial_states"
+DOT_FILE = MODEL_DIR + "gene_networks.dot"
+NUM_GENES = args.genes
+NUM_CELLS = args.cells
+NUM_CELL_TYPES = args.cell_types
 CONNECTIVITY = args.degree
 INPUT_CONNECTIONS = math.ceil(NUM_GENES * args.input_fraction)
 NUM_OUTPUT_GENES = NUM_GENES
-NUM_CELLS = args.cells
-DELAY = args.time_delay
 SIMULATION_STEPS = args.steps
+DELAY = args.memory
+WINDOW_SIZE = args.window_size
 INPUT_ARRAY_FILE = MODEL_DIR + "input_array"
 INPUT_ARRAY_LENGTH = SIMULATION_STEPS + 1
-WINDOW_SIZE = args.window_size
 LASSO_ALPHA = 0.005
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + BN_INITIAL_STATE_FILE + " " + INPUT_ARRAY_FILE
+ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_ARRAY_FILE
 
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 
@@ -61,7 +63,7 @@ if args.generate:
     DOT_FILE = None
   bcell_utils.generate_gene_functions(NV_FILE, VARF_FILE, TT_FILE, DOT_FILE, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS)
   bcell_utils.generate_input_array(INPUT_ARRAY_FILE, INPUT_ARRAY_LENGTH)
-  bcell_utils.generate_bn_initial_state(BN_INITIAL_STATE_FILE, NUM_GENES, INPUT_ARRAY_FILE)
+  bcell_utils.generate_bn_initial_state(GENE_INITIAL_STATES_FILE, NUM_GENES, INPUT_ARRAY_FILE)
   print("Done!", flush=True)
 bcell_utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS)
 

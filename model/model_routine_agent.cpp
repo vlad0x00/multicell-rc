@@ -29,29 +29,35 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 		VReal vOffset;  // Poisition offset is the vector distance from the center of the unit box.
 		SpAgentState state;
 
-		/* The cell is placed in the middle of the simulation domain */
-		vIdx[0] = regionSize[0]/2 - 1;
-		vIdx[1] = regionSize[1]/2 - 1;
-		vIdx[2] = regionSize[2]/2 - 1;
+		S32 numCells = getNumCells();
+		S32 numCellTypes = getNumCellTypes();
+		for (S32 i = 0; i < numCells; i++) {
+			S32 cellType = i % numCellTypes;
 
-		vOffset[0] = 0.5 * IF_GRID_SPACING; // Upper corner the unit box, so the cell is placed "truly" in the middle
-		vOffset[1] = 0.5 * IF_GRID_SPACING;
-		vOffset[2] = 0.5 * IF_GRID_SPACING;
+			vIdx[0] = regionSize[0] * Util::getModelRand(MODEL_RNG_UNIFORM);
+			vIdx[1] = regionSize[1] * Util::getModelRand(MODEL_RNG_UNIFORM);
+			vIdx[2] = regionSize[2] * Util::getModelRand(MODEL_RNG_UNIFORM);
 
-		/* Initialize state */
-		state.setType(0);                                                     
-		state.setRadius(CELL_RADIUS);
+			vOffset[0] = IF_GRID_SPACING * Util::getModelRand(MODEL_RNG_UNIFORM);
+			vOffset[1] = IF_GRID_SPACING * Util::getModelRand(MODEL_RNG_UNIFORM);
+			vOffset[2] = IF_GRID_SPACING * Util::getModelRand(MODEL_RNG_UNIFORM);
 
-		auto bnInitialState = getBnInitialState();
-		for (S32 i = 0; i < getNumGenes(); i++) {
-			state.setBoolVal(i, bnInitialState[i]);
+			/* Initialize state */
+			state.setType(cellType);
+			state.setRadius(CELL_RADIUS);
+
+			auto bnInitialState = getBnInitialState();
+			for (S32 i = 0; i < getNumGenes(); i++) {
+				state.setBoolVal(i, bnInitialState[i]);
+			}
+
+			/* Initialize return vectors {v_spAgentState, v_spAgentVIdx, v_spAgentOffset} by using .push_back() */
+			CHECK(ifGridHabitableBoxData.get(vIdx) == true);
+			v_spAgentVIdx.push_back(vIdx);
+			v_spAgentOffset.push_back(vOffset);
+			v_spAgentState.push_back(state);
+
 		}
-
-		/* Initialize return vectors {v_spAgentState, v_spAgentVIdx, v_spAgentOffset} by using .push_back() */
-		CHECK(ifGridHabitableBoxData.get(vIdx) == true);
-		v_spAgentVIdx.push_back(vIdx);
-		v_spAgentOffset.push_back(vOffset);
-		v_spAgentState.push_back(state);
 	}
 
 	/* MODEL END */

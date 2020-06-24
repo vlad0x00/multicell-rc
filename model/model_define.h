@@ -40,6 +40,7 @@ const S32 NUM_STATE_AND_GRID_TIME_STEPS_PER_BASELINE = 1;
 typedef struct {
   S64 numGenes;
   S64 numCells;
+  S64 numCellTypes;
   S64 nv;
 	S64 varfOffsets;
 	S64 ttOffsets;
@@ -65,6 +66,12 @@ static inline S32 getNumCells() {
 	const auto& g = Info::getGlobalDataRef();
 	const auto f = getGlobalDataFormat();	
 	return *((S32*)(&(g[f.numCells])));
+}
+
+static inline S32 getNumCellTypes() {
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();
+	return *((S32*)(&(g[f.numCellTypes])));
 }
 
 static inline S32* getNv() {
