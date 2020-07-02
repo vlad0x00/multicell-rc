@@ -46,8 +46,8 @@ typedef struct {
 	S64 ttOffsets;
   S64 varf;
   S64 tt;
-  S64 bnInitialState;
-  S64 inputArray;
+  S64 geneInitialStates;
+  S64 inputSignal;
 } GlobalDataFormat;
 
 static inline GlobalDataFormat getGlobalDataFormat() {
@@ -74,34 +74,34 @@ static inline S32 getNumCellTypes() {
 	return *((S32*)(&(g[f.numCellTypes])));
 }
 
-static inline S32* getNv() {
+static inline S32* getNv(S32 cellType) {
 	const auto& g = Info::getGlobalDataRef();
 	const auto f = getGlobalDataFormat();	
-	return (S32*)(&(g[f.nv]));
+	return (S32*)(&(g[f.nv + cellType * getNumGenes()]));
 }
 
-static inline S32* getGeneVarf(S32 gene) {
+static inline S32* getVarf(S32 cellType, S32 gene) {
 	const auto& g = Info::getGlobalDataRef();
 	const auto f = getGlobalDataFormat();
-	return (S32*)(&(g[f.varf])) + ((S32*)(&(g[f.varfOffsets])))[gene];
+	return (S32*)(&(g[f.varf])) + ((S32*)(&(g[f.varfOffsets])))[cellType * getNumGenes() + gene];
 }
 
-static inline S32* getGeneTt(S32 gene) {
+static inline S32* getTt(S32 cellType, S32 gene) {
 	const auto& g = Info::getGlobalDataRef();
 	const auto f = getGlobalDataFormat();	
-	return (S32*)(&(g[f.tt])) + ((S32*)(&(g[f.ttOffsets])))[gene];
+	return (S32*)(&(g[f.tt])) + ((S32*)(&(g[f.ttOffsets])))[cellType * getNumGenes() + gene];
 }
 
-static inline S32* getBnInitialState() {
+static inline S32* getGeneInitialStates(S32 cellType) {
 	const auto& g = Info::getGlobalDataRef();
 	const auto f = getGlobalDataFormat();	
-	return (S32*)(&(g[f.bnInitialState]));
+	return (S32*)(&(g[f.geneInitialStates + cellType * getNumGenes()]));
 }
 
-static inline S32* getInputArray() {
+static inline S32* getInputSignal() {
 	const auto& g = Info::getGlobalDataRef();
 	const auto f = getGlobalDataFormat();	
-	return (S32*)(&(g[f.inputArray]));
+	return (S32*)(&(g[f.inputSignal]));
 }
 
 /* MODEL END */

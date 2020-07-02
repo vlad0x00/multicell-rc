@@ -37,30 +37,36 @@ void ModelRoutine::updateSpAgentOutput( const VIdx& vIdx, const SpAgent& spAgent
 void ModelRoutine::updateSummaryVar( const VIdx& vIdx, const NbrUBAgentData& nbrUBAgentData, const NbrUBEnv& nbrUBEnv, Vector<REAL>& v_realVal/* [elemIdx] */, Vector<S32>& v_intVal/* [elemIdx] */ ) {
 	/* MODEL START */
 
-	S32 numGenes = getNumGenes();
+	auto numGenes = getNumGenes();
+	auto numCells = getNumCells();
 
 	CHECK(v_realVal.size() == 0);
-	CHECK(v_intVal.size() == 2 + (U32)numGenes);
+	CHECK(v_intVal.size() == 2 + (U32)(numCells * numGenes));
 
 	const UBAgentData& ubAgentData = *(nbrUBAgentData.getConstPtr(0, 0, 0));
 
-	if (ubAgentData.v_spAgent.size() > 0) {
-		const S32 baselineStep = Info::getCurBaselineTimeStep();
-		v_intVal[0] = baselineStep;
-		v_intVal[1] = getInputArray()[baselineStep];
-		for (S32 i = 0; i < numGenes; i++) {
-			for (auto agent : ubAgentData.v_spAgent) {
-				v_intVal[i + 2] = agent.state.getBoolVal(i);
-			}
-		}
-	} else {
-		v_intVal[0] = 0;
-		v_intVal[1] = 0;
-		for (S32 i = 0; i < numGenes; i++) {
-			v_intVal[i + 2] = 0;
+	v_intVal[0] = 0;
+	v_intVal[1] = 0;
+	for (S32 cell = 0; cell < numCells; cell++) {
+		for (S32 gene = 0; gene < numGenes; gene++) {
+			v_intVal[2 + cell * numGenes + gene] = 0;
 		}
 	}
-  
+
+	for (auto& agent : ubAgentData.v_spAgent) {
+		auto cellNum = agent.state.getModelInt(0);
+
+		if (cellNum == 0) {
+			const S32 baselineStep = Info::getCurBaselineTimeStep();
+			v_intVal[0] = baselineStep;
+			v_intVal[1] = getInputSignal()[baselineStep];
+		}
+
+		for (S32 gene = 0; gene < numGenes; gene++) {
+			v_intVal[2 + cellNum * numGenes + gene] = agent.state.getBoolVal(gene);
+		}
+	}
+
 	/* MODEL END */
 
 	return;

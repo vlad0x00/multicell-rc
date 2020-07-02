@@ -3,8 +3,8 @@ output
 model/nv
 model/varf
 model/tt
-model/bn_initial_state
-model/input_array
+model/gene_initial_states
+model/input_signal
 model/params.xml
 model/*.o
 model/*.so

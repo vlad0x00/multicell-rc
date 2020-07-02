@@ -38,18 +38,19 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 			vIdx[1] = regionSize[1] * Util::getModelRand(MODEL_RNG_UNIFORM);
 			vIdx[2] = regionSize[2] * Util::getModelRand(MODEL_RNG_UNIFORM);
 
-			vOffset[0] = IF_GRID_SPACING * Util::getModelRand(MODEL_RNG_UNIFORM);
-			vOffset[1] = IF_GRID_SPACING * Util::getModelRand(MODEL_RNG_UNIFORM);
-			vOffset[2] = IF_GRID_SPACING * Util::getModelRand(MODEL_RNG_UNIFORM);
+			vOffset[0] = IF_GRID_SPACING * (Util::getModelRand(MODEL_RNG_UNIFORM) - 0.5);
+			vOffset[1] = IF_GRID_SPACING * (Util::getModelRand(MODEL_RNG_UNIFORM) - 0.5);
+			vOffset[2] = IF_GRID_SPACING * (Util::getModelRand(MODEL_RNG_UNIFORM) - 0.5);
 
 			/* Initialize state */
 			state.setType(cellType);
 			state.setRadius(CELL_RADIUS);
 
-			auto bnInitialState = getBnInitialState();
+			auto geneInitialStates = getGeneInitialStates(cellType);
 			for (S32 i = 0; i < getNumGenes(); i++) {
-				state.setBoolVal(i, bnInitialState[i]);
+				state.setBoolVal(i, geneInitialStates[i]);
 			}
+			state.setModelInt(0, i);
 
 			/* Initialize return vectors {v_spAgentState, v_spAgentVIdx, v_spAgentOffset} by using .push_back() */
 			CHECK(ifGridHabitableBoxData.get(vIdx) == true);
@@ -81,15 +82,16 @@ void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& jun
 	Vector<BOOL> newBools;
 
 	const S32 baselineStep = Info::getCurBaselineTimeStep();
-	newBools.push_back(getInputArray()[baselineStep + 1]);
+	newBools.push_back(getInputSignal()[baselineStep + 1]);
 
-	for (S32 i = 1; i < getNumGenes(); i++) {
-		const auto nv = getNv()[i];
+	auto cellType = state.getType();
+	for (S32 gene = 1; gene < getNumGenes(); gene++) {
+		const auto nv = getNv(cellType)[gene];
 		CHECK(nv >= 0);
 
 		if (nv > 0 ) {
-			const auto varf = getGeneVarf(i);
-			const auto tt = getGeneTt(i);
+			const auto varf = getVarf(cellType, gene);
+			const auto tt = getTt(cellType, gene);
 
 			U32 ttEntry = 0;
 			for (U32 j = 0; j < (U32)nv; j++) {
@@ -104,8 +106,8 @@ void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& jun
 			CHECK(tt_val != -1);
 			newBools.push_back(tt_val);
 		} else {
-			newBools.push_back(state.getBoolVal(i));
-		}		
+			newBools.push_back(state.getBoolVal(gene));
+		}
 	}
 
 	state.setBoolValArray(newBools);

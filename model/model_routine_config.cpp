@@ -123,18 +123,22 @@ void ModelRoutine::updateSpAgentInfo( Vector<SpAgentInfo>& v_spAgentInfo ) {/* s
 
 	auto params = readXMLParameters();
 
+	S32 numCellTypes = std::stoi(params[2]);
+
 	/* Provide information about the discrete agent types in the user model */
 	SpAgentInfo info;
 
-	info.dMax = IF_GRID_SPACING;
-	info.numBoolVars = std::stoi(params[0]);
-	info.numStateModelReals = 0;
-	info.numStateModelInts = 0;
-	info.v_mechIntrctModelRealInfo.clear();
-	info.v_mechIntrctModelIntInfo.clear();
-	info.v_odeNetInfo.clear();
+	for (S32 cellType = 0; cellType < numCellTypes; cellType++) {
+		info.dMax = IF_GRID_SPACING;
+		info.numBoolVars = std::stoi(params[0]);
+		info.numStateModelReals = 0;
+		info.numStateModelInts = 1;
+		info.v_mechIntrctModelRealInfo.clear();
+		info.v_mechIntrctModelIntInfo.clear();
+		info.v_odeNetInfo.clear();
 
-	v_spAgentInfo.push_back(info);
+		v_spAgentInfo.push_back(info);
+	}
 
 	/* MODEL END */
 
@@ -231,10 +235,11 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
 		{SUMMARY_TYPE_SUM, SUMMARY_TYPE_AVG, SUMMARY_TYPE_MIN, SUMMARY_TYPE_MAX} */      
 
 	Vector<string> v_modelParam = readXMLParameters();
-	S32 numGenes = std::stoi(v_modelParam[0]);
+	auto numGenes = std::stoi(v_modelParam[0]);
+	auto numCells = std::stoi(v_modelParam[1]);
 
 	SummaryOutputInfo info;
-	v_summaryOutputIntInfo.resize(2 + numGenes);
+	v_summaryOutputIntInfo.resize(2 + numCells * numGenes);
 	v_summaryOutputRealInfo.clear();
 
 	info.name = "Timestep";
@@ -245,10 +250,12 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
 	info.type = SUMMARY_TYPE_SUM;
 	v_summaryOutputIntInfo[1] = info;
 
-	for (S32 i = 0; i < numGenes; i++) {
-		info.name = "Gene " + std::to_string(i);
-		info.type = SUMMARY_TYPE_SUM;
-		v_summaryOutputIntInfo[i + 2] = info;
+	for (S32 cell = 0; cell < numCells; cell++) {
+		for (S32 gene = 0; gene < numGenes; gene++) {
+			info.name = "Cell " + std::to_string(cell) + ", Gene " + std::to_string(gene);
+			info.type = SUMMARY_TYPE_SUM;
+			v_summaryOutputIntInfo[2 + cell * numGenes + gene] = info;
+		}
 	}
 	
 	/* MODEL END */
@@ -268,16 +275,16 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   auto nvFile = std::ifstream(v_modelParam[param++]);
 	auto varfFile = std::ifstream(v_modelParam[param++]);
 	auto ttFile = std::ifstream(v_modelParam[param++]);
-	auto bnInitialStateFile = std::ifstream(v_modelParam[param++]);
-	auto inputArrayFile = std::ifstream(v_modelParam[param++]);
+	auto geneInitialStatesFile = std::ifstream(v_modelParam[param++]);
+	auto inputSignalFile = std::ifstream(v_modelParam[param++]);
 
 	Vector<S32> nv;
 	Vector<S32> varfOffsets;
 	Vector<S32> ttOffsets;
 	Vector<S32> varf;
 	Vector<S32> tt;
-	Vector<S32> bnInitialState;
-	Vector<S32> inputArray;
+	Vector<S32> geneInitialStates;
+	Vector<S32> inputSignal;
 
 	S32 i;
 	std::string line;
@@ -308,12 +315,12 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 		tt.push_back(i);
 	}
 
-	while (bnInitialStateFile >> i) {
-		bnInitialState.push_back(i);
+	while (geneInitialStatesFile >> i) {
+		geneInitialStates.push_back(i);
 	}
 
-	while (inputArrayFile >> i) {
-		inputArray.push_back(i);
+	while (inputSignalFile >> i) {
+		inputSignal.push_back(i);
 	}
 
 	GlobalDataFormat format;
@@ -343,11 +350,11 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	format.tt = size;
 	size += tt.size() * sizeof(tt[0]);
 
-	format.bnInitialState = size;
-	size += bnInitialState.size() * sizeof(bnInitialState[0]);
+	format.geneInitialStates = size;
+	size += geneInitialStates.size() * sizeof(geneInitialStates[0]);
 
-	format.inputArray = size;
-	size += inputArray.size() * sizeof(inputArray[0]);
+	format.inputSignal = size;
+	size += inputSignal.size() * sizeof(inputSignal[0]);
 
 	v_globalData.resize(size);
 	memcpy(&(v_globalData[0]), &format, sizeof(format));
@@ -359,8 +366,8 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	memcpy(&(v_globalData[format.ttOffsets]), &(ttOffsets[0]), ttOffsets.size() * sizeof(ttOffsets[0]));
 	memcpy(&(v_globalData[format.varf]), &(varf[0]), varf.size() * sizeof(varf[0]));
 	memcpy(&(v_globalData[format.tt]), &(tt[0]), tt.size() * sizeof(tt[0]));
-	memcpy(&(v_globalData[format.bnInitialState]), &(bnInitialState[0]), bnInitialState.size() * sizeof(bnInitialState[0]));
-	memcpy(&(v_globalData[format.inputArray]), &(inputArray[0]), inputArray.size() * sizeof(inputArray[0]));
+	memcpy(&(v_globalData[format.geneInitialStates]), &(geneInitialStates[0]), geneInitialStates.size() * sizeof(geneInitialStates[0]));
+	memcpy(&(v_globalData[format.inputSignal]), &(inputSignal[0]), inputSignal.size() * sizeof(inputSignal[0]));
 
 	/* MODEL END */
 

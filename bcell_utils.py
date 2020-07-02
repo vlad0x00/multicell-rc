@@ -1,10 +1,15 @@
+import os
 import numpy as np
 import random
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element, SubElement, Comment
 from xml.dom import minidom
 import csv
-import networkx
+import networkx as nx
+from sklearn.linear_model import Lasso, LassoCV
+from sklearn.model_selection import train_test_split
+import pandas as pd
+import numpy as np
 
 class Node:
 
@@ -17,98 +22,210 @@ class Node:
   def __hash__(self):
     return self.name.__hash__()
 
-def make_dot(nv, varf, varf_offsets, dot_file):
-  graph = networkx.DiGraph()
+def make_network_dot(varf, dot_file):
+  graph = nx.DiGraph()
 
-  nodes = []
-  for i in range(len(nv)):
-    node = Node(str(i))
-    nodes.append(node)
-    graph.add_node(node)
+  for cell_type, variable_matrix in enumerate(varf):
+    for gene, _ in enumerate(variable_matrix):
+      node = Node(str(cell_type) + "_" + str(gene))
+      graph.add_node(node)
 
-  for i in range(len(nv)):
-    for v in varf[varf_offsets[i]:(varf_offsets[i] + nv[i])]:
-      graph.add_edge(nodes[i], nodes[v])
+  for cell_type, variable_matrix in enumerate(varf):
+    for gene, variables in enumerate(variable_matrix):
+      node = Node(str(cell_type) + "_" + str(gene))
+      for v in variables:
+        var_node = Node(str(cell_type) + "_" + str(v))
+        graph.add_edge(node, var_node)
 
-  pydot_graph = networkx.drawing.nx_pydot.to_pydot(graph)
+  pydot_graph = nx.drawing.nx_pydot.to_pydot(graph)
   pydot_graph.set_strict(False)
-  pydot_graph.set_name("boolean_network")
+  pydot_graph.set_name("gene_networks")
   pydot_graph.write(dot_file, prog='dot')
 
-def generate_gene_functions(nv_file, varf_file, tt_file, dot_file, num_genes, connectivity, input_connections):
+def generate_gene_functions(num_cell_types, num_genes, connectivity, input_connections, nv_file, varf_file, tt_file, dot_file):
   assert input_connections < num_genes
 
-  nv = np.zeros(num_genes, dtype=np.int32)
+  nv = []
+  varf = []
+  tt = []
 
-  total_edges = num_genes * connectivity
-  edges = []
-  for _ in range(total_edges):
-    while True:
-      i, j = random.sample(range(1, num_genes), 2)
-      if not (i, j) in edges:
-        nv[j] += 1
-        edges.append((i, j))
-        break
-  for _ in range(input_connections):
-    while True:
-      j = random.randrange(1, num_genes)
-      if not (0, j) in edges:
-        nv[j] += 1
-        edges.append((0, j))
-        break
+  for _ in range(num_cell_types):
+    nv.append(np.zeros(num_genes, dtype=np.int32))
 
-  assert connectivity - 1 < sum(nv) / len(nv) < connectivity + 1
-    
-  current_varf_offset = 0
-  varf_offsets = []
-  for v in nv:
-    varf_offsets.append(current_varf_offset)
-    current_varf_offset += v
-
-  current_tt_offset = 0
-  tt_offsets = []
-  for v in nv:
-    tt_offsets.append(current_tt_offset)
-    if v > 0:
-      current_tt_offset += 2 ** v
-
-  varf = np.ones(current_varf_offset, dtype=np.int32) * -1
-  for node in range(len(nv)):
-    for i in range(nv[node]):
-      idx = -1
-      for j, edge in enumerate(edges):
-        if edge[1] == node:
-          idx = j
+    total_edges = (num_genes - 1) * connectivity # -1 cause of input signal gene 0
+    edges = []
+    for _ in range(total_edges):
+      while True:
+        i, j = random.sample(range(1, num_genes), 2)
+        if not (i, j) in edges:
+          nv[-1][j] += 1
+          edges.append((i, j))
           break
-      varf[varf_offsets[node] + i] = edges[idx][0]
-      edges.pop(idx)
+    for _ in range(input_connections):
+      while True:
+        j = random.randrange(1, num_genes)
+        if not (0, j) in edges:
+          nv[-1][j] += 1
+          edges.append((0, j))
+          break
 
-  tt = np.random.randint(2, size=current_tt_offset)
+    assert connectivity - 1 < sum(nv[-1]) / len(nv[-1]) < connectivity + 1
+
+    varf.append([])
+    for gene, n in enumerate(nv[-1]):
+      varf[-1].append([])
+      for _ in range(n):
+        idx = -1
+        for i, edge in enumerate(edges):
+          if edge[1] == gene:
+            varf[-1][-1].append(edge[0])
+            idx = i
+            break
+        edges.pop(idx)
+
+    tt.append([])
+    for gene, n in enumerate(nv[-1]):
+      if n > 0:
+        tt[-1].append(np.random.randint(2, size=(2 ** n)))
+      else:
+        tt[-1].append([])
 
   with open(nv_file, 'w') as f:
-    f.write(' '.join([str(x) for x in nv]))
+    for cell_type_nv in nv:
+      f.write(' '.join([str(x) for x in cell_type_nv]))
+      f.write('\n')
 
   with open(varf_file, 'w') as f:
-    f.write(' '.join([str(x) for x in varf]))
+    for cell_type_varf in varf:
+      for gene_varf in cell_type_varf:
+        f.write(' '.join([str(x) for x in gene_varf]))
+        f.write('\n')
 
   with open(tt_file, 'w') as f:
-    f.write(' '.join([str(x) for x in tt]))
+    for cell_type_tt in tt:
+      for gene_tt in cell_type_tt:
+        f.write(' '.join([str(x) for x in gene_tt]))
+        f.write('\n')
 
   if dot_file != None:
-    make_dot(nv, varf, varf_offsets, dot_file)
+    make_network_dot(varf, dot_file)
 
-def generate_input_array(array_file, array_len):
-  arr = np.random.randint(2, size=array_len)
-  with open(array_file, 'w') as f:
+def generate_input_signal(signal_len, signal_file):
+  arr = np.random.randint(2, size=signal_len)
+  with open(signal_file, 'w') as f:
     f.write(' '.join([str(x) for x in arr]))
 
-def generate_bn_initial_state(state_file, num_genes, input_array_file):
-  with open(input_array_file, 'r') as f:
-    input_array = [ int(x) for x in f.readline().split() ]
-  state = np.random.randint(2, size=num_genes)
-  state[0] = input_array[0]
+def generate_gene_initial_states(num_cell_types, num_genes, input_signal_file, state_file):
+  with open(input_signal_file, 'r') as f:
+    input_signal = [ int(x) for x in f.readline().split() ]
   with open(state_file, 'w') as f:
-    f.write(' '.join([str(x) for x in state]))
+    for _ in range(num_cell_types):
+      state = np.random.randint(2, size=num_genes)
+      state[0] = input_signal[0]
+      f.write(' '.join([str(x) for x in state]))
+      f.write('\n')
+
+def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_output_genes, num_cells, window_size, delay, visualize):
+  with open(input_signal_file) as f:
+    input_signal = [ int(x) for x in f.readline().split() ]
+
+  states = []
+  with open(biocellion_output_file) as f:
+    i = 0
+    s = -1
+    for line in f.readlines():
+      if "interface grid summary" in line:
+        i += 1
+
+        if "Timestep" in line:
+          s += 1
+          states.append([])
+
+        if "Gene" in line:
+          tokens = line.split()[6].split(":")
+          gene = int(tokens[0])
+          val = int(tokens[1])
+          if gene in range(num_genes - 1, num_genes - 1 - num_output_genes, -1):
+            states[s].append(val)
+
+  states = states[window_size:]
+  for state in states:
+    assert len(state) == num_cells * num_output_genes
+
+  def make_simulation_dots(states, output_dir):
+    class Node:
+
+      def __init__(self, name):
+        self.name = name
+
+      def __str__(self):
+        return self.name
+
+      def __hash__(self):
+        return self.name.__hash__()
+
+    for idx, state in enumerate(states):
+      graph = nx.DiGraph()
+      for i, bit in enumerate(state):
+        graph.add_node(Node(str(i)), label=bit)
+
+      pydot_graph = nx.drawing.nx_pydot.to_pydot(graph)
+      pydot_graph.set_strict(False)
+      pydot_graph.set_name("state" + str(idx))
+      pydot_graph.write(output_dir + "state" + str(index).zfill(3) + ".dot", prog='dot')
+  if visualize:
+    make_simulation_dots(states, output_dir)
+  else:
+    for filename in os.listdir(output_dir):
+      if filename.startswith("state"):
+        os.remove(output_dir + filename)
+
+  parity = []
+  for i in range(window_size, len(input_signal)):
+    bitsum = 0
+    for bit in input_signal[(i - window_size):i]:
+      bitsum += bit
+    if bitsum % 2 == 0: 
+      parity.append(0)
+    else:
+      parity.append(1)
+  assert len(input_signal) == len(parity) + window_size
+
+  median = []
+  for i in range(window_size, len(input_signal)):
+    bitsum = 0
+    for bit in input_signal[(i - window_size):i]:
+      bitsum += bit
+    if bitsum > window_size // 2:
+      median.append(1)
+    else:
+      median.append(0)
+  assert len(input_signal) == len(median) + window_size
+
+  x = states
+  y = median
+
+  if delay > 0:
+    x = x[delay:]
+    y = y[:-delay]
+
+  assert len(x) == len(y)
+  for s in x:
+    assert len(s) == num_cells * num_genes
+
+  x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
+
+  lasso = LassoCV(max_iter=10000)
+  #lasso = Lasso(alpha=LASSO_ALPHA)
+  lasso.fit(x_train, y_train)
+
+  train_score = lasso.score(x_train, y_train)
+  test_score = lasso.score(x_test, y_test)
+  coeff_used = np.sum(lasso.coef_!=0)
+
+  print("Training score:", train_score)
+  print("Testing score:", test_score)
+  print("Number of features used:", coeff_used)
 
 def prettify(elem):
   """Return a pretty-printed XML string for the Element.
