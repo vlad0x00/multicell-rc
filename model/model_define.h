@@ -76,8 +76,8 @@ static inline S32 getNumCellTypes() {
 
 static inline S32* getNv(S32 cellType) {
 	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();	
-	return (S32*)(&(g[f.nv + cellType * getNumGenes()]));
+	const auto f = getGlobalDataFormat();
+	return (S32*)(&(g[f.nv])) + cellType * getNumGenes();
 }
 
 static inline S32* getVarf(S32 cellType, S32 gene) {
