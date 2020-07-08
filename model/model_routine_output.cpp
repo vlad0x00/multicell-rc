@@ -24,9 +24,21 @@ using namespace std;
 void ModelRoutine::updateSpAgentOutput( const VIdx& vIdx, const SpAgent& spAgent, REAL& color, Vector<REAL>& v_extraScalar, Vector<VReal>& v_extraVector ) {
 	/* MODEL START */
 
+	const auto numGenes = getNumGenes();
+
 	color = spAgent.state.getType();
-	CHECK(v_extraScalar.size() == 0);
+	CHECK(v_extraScalar.size() == size_t(2 + numGenes));
 	CHECK(v_extraVector.size() == 0);
+
+	const auto cellNum = spAgent.state.getModelInt(0);
+	const auto baselineStep = Info::getCurBaselineTimeStep();
+
+	v_extraScalar[0] = cellNum;
+	v_extraScalar[1] = baselineStep;
+
+	for (S32 gene = 0; gene < numGenes; gene++) {
+		v_extraScalar[2 + gene] = spAgent.state.getBoolVal(gene);
+	}
 
 	/* MODEL END */
 

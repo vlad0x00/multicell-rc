@@ -211,9 +211,17 @@ void ModelRoutine::updateRNGInfo( Vector<RNGInfo>& v_rngInfo ) {
 void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
 	/* MODEL START */
 
+	Vector<string> v_modelParam = readXMLParameters();
+	auto numGenes = std::stoi(v_modelParam[0]);
+
 	/* FileOutputInfo class holds the information related to file output of simulation results. */
 	fileOutputInfo.particleOutput = true;                          
 	fileOutputInfo.v_particleExtraOutputScalarVarName.clear();
+	fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("Timestep");
+	fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("Input");
+	for (S32 gene = 0; gene < numGenes; gene++) {
+		fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("Gene " + std::to_string(gene));
+	}
 	fileOutputInfo.v_particleExtraOutputVectorVarName.clear();
 	fileOutputInfo.v_gridPhiOutput.clear();
 	fileOutputInfo.v_gridPhiOutputDivideByKappa.clear();
@@ -257,7 +265,7 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
 			v_summaryOutputIntInfo[2 + cell * numGenes + gene] = info;
 		}
 	}
-	
+
 	/* MODEL END */
 
 	return;
