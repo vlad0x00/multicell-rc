@@ -160,8 +160,62 @@ void ModelRoutine::updateJunctionEndInfo( Vector<JunctionEndInfo>& v_junctionEnd
 void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
 	/* MODEL START */
 
-	/* No PDE's in this model */
-	v_phiPDEInfo.clear();
+	auto params = readXMLParameters();
+
+	S32 numCytokines = std::stoi(params[10]);
+
+	PDEInfo pdeInfo;
+	GridPhiInfo gridPhiInfo;
+
+	for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {  
+		std::string name = std::to_string(cytokine);
+
+		pdeInfo.pdeIdx = cytokine;
+		pdeInfo.pdeType = PDE_TYPE_REACTION_DIFFUSION_STEADY_STATE_LINEAR;
+		pdeInfo.numLevels = NUM_AMR_LEVELS;
+		pdeInfo.numTimeSteps = NUM_PDE_TIME_STEPS_PER_STATE_AND_GRID_TIME_STEP;
+		pdeInfo.v_tagExpansionSize.assign(NUM_AMR_LEVELS, 0);/* v_tagExpansionSize[0] should be always 0 */
+		pdeInfo.ifLevel = NUM_AMR_LEVELS - 1;
+		pdeInfo.mgSolveInfo.numPre = 3;/*multigrid parameters */
+		pdeInfo.mgSolveInfo.numPost = 3;/*multigrid parameters */
+		pdeInfo.mgSolveInfo.numBottom = 3;/*multigrid parameters */
+		pdeInfo.mgSolveInfo.vCycle = true;/*multigrid parameters */
+		pdeInfo.mgSolveInfo.maxIters = 30;/*multigrid parameters */
+		pdeInfo.mgSolveInfo.epsilon = 1e-8;/*multigrid parameters */
+		pdeInfo.mgSolveInfo.hang = 1e-6;/*multigrid parameters */
+		pdeInfo.mgSolveInfo.normThreshold = 1e-10;/* multigrid parameters */
+
+		pdeInfo.advectionInfo.courantNumber = 0.5;/* dummy */
+
+		pdeInfo.splittingInfo.v_diffusionTimeSteps.assign( 1, 1 );/* dummy */
+		pdeInfo.splittingInfo.odeStiff = ODE_STIFF_NORMAL;/* dummy */
+		pdeInfo.splittingInfo.odeH = 0.5;/* dummy */
+		pdeInfo.splittingInfo.odeHm = 0.1;/* dummy */
+		pdeInfo.splittingInfo.odeEpsilon = 1e-6;/* dummy */
+		pdeInfo.splittingInfo.odeThreshold = 1e-19;/* dummy */
+
+		pdeInfo.callAdjustRHSTimeDependentLinear = false;
+		gridPhiInfo.elemIdx = cytokine;
+		gridPhiInfo.name = "cytokine" + std::to_string(cytokine);
+		gridPhiInfo.syncMethod = VAR_SYNC_METHOD_DELTA;/* updateIfGridVar */
+		gridPhiInfo.aa_bcType[0][0] = BC_TYPE_NEUMANN_CONST;/* dummy */
+		gridPhiInfo.aa_bcVal[0][0] = 0.0;/* dummy */
+		gridPhiInfo.aa_bcType[0][1] = BC_TYPE_NEUMANN_CONST;/* dummy */
+		gridPhiInfo.aa_bcVal[0][1] = 0.0;/* dummy */
+		gridPhiInfo.aa_bcType[1][0] = BC_TYPE_NEUMANN_CONST;/* dummy */
+		gridPhiInfo.aa_bcVal[1][0] = 0.0;/* dummy */
+		gridPhiInfo.aa_bcType[1][1] = BC_TYPE_NEUMANN_CONST;/* dummy */
+		gridPhiInfo.aa_bcVal[1][1] = 0.0;/* dummy */
+		gridPhiInfo.aa_bcType[2][0] = BC_TYPE_NEUMANN_CONST;
+		gridPhiInfo.aa_bcVal[2][0] = 0.0;
+		gridPhiInfo.aa_bcType[2][1] = BC_TYPE_NEUMANN_CONST;
+		gridPhiInfo.aa_bcVal[2][1] = 0.0;
+		gridPhiInfo.errorThresholdVal = GRID_PHI_NORM_THRESHOLD * -1.0;
+		gridPhiInfo.warningThresholdVal = GRID_PHI_NORM_THRESHOLD * -1.0;
+		gridPhiInfo.setNegToZero = true;
+		pdeInfo.v_gridPhiInfo.push_back(gridPhiInfo);
+		v_phiPDEInfo.push_back(pdeInfo);
+	}
 
 	/* MODEL END */
 

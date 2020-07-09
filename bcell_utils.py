@@ -52,7 +52,7 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
   for _ in range(num_cell_types):
     nv.append(np.zeros(num_genes, dtype=np.int32))
 
-    total_edges = (num_genes - 1) * connectivity
+    total_edges = (num_genes - 1 - num_cytokines) * connectivity
     edges = []
     for _ in range(total_edges):
       while True:
@@ -65,7 +65,7 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
           break
     for _ in range(input_connections):
       while True:
-        j = random.randrange(1, num_genes)
+        j = random.randrange(1 + num_cytokines, num_genes)
         if not (0, j) in edges:
           nv[-1][j] += 1
           edges.append((0, j))
