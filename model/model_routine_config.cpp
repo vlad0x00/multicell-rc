@@ -285,6 +285,12 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	auto ttFile = std::ifstream(v_modelParam[param++]);
 	auto geneInitialStatesFile = std::ifstream(v_modelParam[param++]);
 	auto inputSignalFile = std::ifstream(v_modelParam[param++]);
+	const REAL alpha = std::stod(v_modelParam[param++]);
+	const REAL beta = std::stod(v_modelParam[param++]);
+	const S32 numCytokines = std::stoi(v_modelParam[param++]);
+	const REAL secretionLow = std::stod(v_modelParam[param++]);
+	const REAL secretionHigh = std::stod(v_modelParam[param++]);
+	const REAL cytokineThreshold = std::stod(v_modelParam[param++]);
 
 	Vector<S32> nv;
 	Vector<S32> varfOffsets;
@@ -364,6 +370,27 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	format.inputSignal = size;
 	size += inputSignal.size() * sizeof(inputSignal[0]);
 
+	format.alpha = size;
+	size += sizeof(alpha);
+
+	format.beta = size;
+	size += sizeof(beta);
+
+	format.numCytokines = size;
+	size += sizeof(numCytokines);
+
+	format.numCytokines = size;
+	size += sizeof(numCytokines);
+
+	format.secretionLow = size;
+	size += sizeof(secretionLow);
+
+	format.secretionHigh = size;
+	size += sizeof(secretionHigh);
+
+	format.cytokineThreshold = size;
+	size += sizeof(cytokineThreshold);
+
 	v_globalData.resize(size);
 	memcpy(&(v_globalData[0]), &format, sizeof(format));
 	memcpy(&(v_globalData[format.numGenes]), &numGenes, sizeof(numGenes));
@@ -376,6 +403,12 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	memcpy(&(v_globalData[format.tt]), &(tt[0]), tt.size() * sizeof(tt[0]));
 	memcpy(&(v_globalData[format.geneInitialStates]), &(geneInitialStates[0]), geneInitialStates.size() * sizeof(geneInitialStates[0]));
 	memcpy(&(v_globalData[format.inputSignal]), &(inputSignal[0]), inputSignal.size() * sizeof(inputSignal[0]));
+	memcpy(&(v_globalData[format.alpha]), &alpha, sizeof(alpha));
+	memcpy(&(v_globalData[format.beta]), &beta, sizeof(beta));
+	memcpy(&(v_globalData[format.numCytokines]), &numCytokines, sizeof(numCytokines));
+	memcpy(&(v_globalData[format.secretionLow]), &secretionLow, sizeof(secretionLow));
+	memcpy(&(v_globalData[format.secretionHigh]), &secretionHigh, sizeof(secretionHigh));
+	memcpy(&(v_globalData[format.cytokineThreshold]), &cytokineThreshold, sizeof(cytokineThreshold));
 
 	/* MODEL END */
 

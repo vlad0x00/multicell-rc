@@ -37,6 +37,8 @@ const REAL IF_GRID_SPACING = 10.0; // Micrometers
 const REAL BASELINE_TIME_STEP_DURATION = 1.0;
 const S32 NUM_STATE_AND_GRID_TIME_STEPS_PER_BASELINE = 1;
 
+const S32 SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL = 2;
+
 typedef struct {
   S64 numGenes;
   S64 numCells;
@@ -48,6 +50,12 @@ typedef struct {
   S64 tt;
   S64 geneInitialStates;
   S64 inputSignal;
+	S64 alpha;
+	S64 beta;
+	S64 numCytokines;
+	S64 secretionLow;
+	S64 secretionHigh;
+	S64 cytokineThreshold;
 } GlobalDataFormat;
 
 static inline GlobalDataFormat getGlobalDataFormat() {
@@ -102,6 +110,42 @@ static inline S32* getInputSignal() {
 	const auto& g = Info::getGlobalDataRef();
 	const auto f = getGlobalDataFormat();	
 	return (S32*)(&(g[f.inputSignal]));
+}
+
+static inline REAL getAlpha() {
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();
+	return *((REAL*)(&(g[f.alpha])));
+}
+
+static inline REAL getBeta() {
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();
+	return *((REAL*)(&(g[f.beta])));
+}
+
+static inline S32 getNumCytokines() {
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();
+	return *((S32*)(&(g[f.numCytokines])));
+}
+
+static inline REAL getSecretionLow() {
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();
+	return *((REAL*)(&(g[f.secretionLow])));
+}
+
+static inline REAL getSecretionHigh() {
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();
+	return *((REAL*)(&(g[f.secretionHigh])));
+}
+
+static inline REAL getCytokineThreshold() {
+	const auto& g = Info::getGlobalDataRef();
+	const auto f = getGlobalDataFormat();
+	return *((REAL*)(&(g[f.cytokineThreshold])));
 }
 
 /* MODEL END */

@@ -9,25 +9,41 @@ import bcell_utils
 
 def zeroplus_int(s):
   i = int(s)
-  if i < 0: raise argparse.ArgumentTypeError(s + " is invalid, please input a number >=0.")
+  if i < 0: raise argparse.ArgumentTypeError(s + " is invalid, please input an integer >=0.")
   return i
 
 def abovezero_int(s):
   i = int(s)
-  if i <= 0: raise argparse.ArgumentTypeError(s + " is invalid, please input a number >0.")
+  if i <= 0: raise argparse.ArgumentTypeError(s + " is invalid, please input an integer >0.")
   return i
+
+def zeroplus_float(s):
+  f = float(s)
+  if f < 0: raise argparse.ArgumentTypeError(s + " is invalid, please input a float >=0.")
+  return f
+
+def abovezero_float(s):
+  f = float(s)
+  if f <= 0: raise argparse.ArgumentTypeError(s + " is invalid, please input a float >0.")
+  return f
 
 def fraction_type(s):
   f = float(s)
   if f < 0 or f > 1: raise argparse.ArgumentTypeError(s + " is invalid, please input a number >=0 and <=1.")
   return f
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-g', '--genes', type=abovezero_int, default=50, help="Number of genes per cell.")
 parser.add_argument('-c', '--cells', type=abovezero_int, default=1, help="Number of cells in the simulation.")
 parser.add_argument('-t', '--cell-types', type=abovezero_int, default=1, help="Number of cell types in the simulation.")
 parser.add_argument('-d', '--degree', type=abovezero_int, default=2, help="Average node in-degree of gene network(s).")
 parser.add_argument('-i', '--input-fraction', type=fraction_type, default=0.5, help="Fraction of nodes connected to the input signal.")
+parser.add_argument('-a', '--alpha', type=zeroplus_float, default=0.005, help="Molecular decay rate.")
+parser.add_argument('-b', '--beta', type=zeroplus_float, default=2.0, help="Grid diffusion coefficient.")
+parser.add_argument('-k', '--cytokines', type=zeroplus_int, default=3, help="Number of cytokines in the simulation.")
+parser.add_argument('-l', '--secretion-low', type=zeroplus_float, default=0.1, help="Cytokine secretion when the gene is off.")
+parser.add_argument('-h', '--secretion-high', type=zeroplus_float, default=1.0, help="Cytokine secretion when the gene is on.")
+parser.add_argument('-y', '--cytokine-threshold', type=zeroplus_float, default=5.0, help="Cytokine threshold to turn a gene on.")
 parser.add_argument('-s', '--steps', type=abovezero_int, default=150, help="Number of simulation steps.")
 parser.add_argument('-m', '--memory', type=zeroplus_int, default=0, help="Step delay between input signal and output layer prediction.")
 parser.add_argument('-w', '--window-size', type=abovezero_int, default=3, help="Window size of predicted functions.")
@@ -51,6 +67,12 @@ NUM_CELLS = args.cells
 NUM_CELL_TYPES = args.cell_types
 CONNECTIVITY = args.degree
 INPUT_CONNECTIONS = math.ceil(NUM_GENES * args.input_fraction)
+ALPHA = args.alpha
+BETA = args.beta
+NUM_CYTOKINES = args.cytokines
+SECRETION_LOW = args.secretion_low
+SECRETION_HIGH = args.secretion_high
+CYTOKINE_THRESHOLD = args.cytokine_threshold
 NUM_OUTPUT_GENES = NUM_GENES
 SIMULATION_STEPS = args.steps
 DELAY = args.memory
@@ -61,7 +83,7 @@ LASSO_ALPHA = 0.005
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE
+ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + ALPHA + " " + BETA + " " + NUM_CYTOKINES + " " + SECRETION_LOW + " " + SECRETION_HIGH + " " + CYTOKINE_THRESHOLD
 
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 
@@ -72,7 +94,7 @@ if not args.visualize:
 
 if args.randomize:
   print("Generating initial gene network(s) state(s), functions, and input signal... ", end='', flush=True)
-  bcell_utils.generate_gene_functions(NUM_CELL_TYPES, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
+  bcell_utils.generate_gene_functions(NUM_CELL_TYPES, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
   bcell_utils.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
   bcell_utils.generate_gene_initial_states(NUM_CELL_TYPES, NUM_GENES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
   print("Done!", flush=True)

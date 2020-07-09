@@ -79,6 +79,24 @@ void ModelRoutine::spAgentCRNODERHS( const S32 odeNetIdx, const VIdx& vIdx, cons
 void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& junctionData, const VReal& vOffset, const NbrUBEnv& nbrUBEnv, SpAgentState& state/* INOUT */ ) {
 	/* MODEL START */
 
+	const auto numCytokines = getNumCytokines();
+
+	REAL aaaRatio[3][3][3];
+	REAL avgPhi[numCytokines];
+	for (S32 cytokine = 0; cytokine < NUM_CYTOKINES; cytokine++) {
+	  avgPhi[cytokine] = 0.0;
+	}
+	Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, vOffset, state.getRadius(), aaa_ratio);
+	for(S32 i = -1 ; i <= 1; i++) {
+		for(S32 j = -1 ; j <= 1; j++) {
+			for(S32 k = -1 ; k <= 1; k++) {
+				for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
+					avgPhi[cytokine] += nbrUBEnv.getPhi(i, j, k, cytokine) * aaa_ratio[i + 1][j + 1][k + 1];
+				}
+			}
+		}
+	}
+
 	Vector<BOOL> newBools;
 
 	const S32 baselineStep = Info::getCurBaselineTimeStep();

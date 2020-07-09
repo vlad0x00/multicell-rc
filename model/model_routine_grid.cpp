@@ -19,7 +19,9 @@ using namespace std;
 void ModelRoutine::initIfGridVar( const VIdx& vIdx, const UBAgentData& ubAgentData, UBEnv& ubEnv ) {
 	/* MODEL START */
 
-	ERROR( "unimplemented." );
+	for (S32 cytokine = 0; cytokine < getNumCytokines(); cytokine++) {
+		ubEnv.setPhi(cytokine, 0.0);
+	}
 
 	/* MODEL END */
 
@@ -29,7 +31,7 @@ void ModelRoutine::initIfGridVar( const VIdx& vIdx, const UBAgentData& ubAgentDa
 void ModelRoutine::initIfSubgridKappa( const S32 pdeIdx, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridKappa ) {/* relevant only if v_gridPhiOutputDivideByKappa[pdeIdx] is set to true in updateFileOutputInfo() */
 	/* MODEL START */
 
-	ERROR( "unimplemented." );
+	gridKappa = 1.0;
 
 	/* MODEL END */
 
@@ -49,7 +51,7 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
 void ModelRoutine::updateIfSubgridKappa( const S32 pdeIdx, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridKappa ) {
 	/* MODEL START */
 
-	ERROR( "unimplemented." );
+	gridKappa = 1.0;
 
 	/* MODEL END */
 
@@ -59,7 +61,7 @@ void ModelRoutine::updateIfSubgridKappa( const S32 pdeIdx, const VIdx& vIdx, con
 void ModelRoutine::updateIfSubgridAlpha( const S32 elemIdx, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridAlpha/* decay (-) */ ) {
 	/* MODEL START */
 
-	ERROR( "unimplemented." );
+	gridAlpha = -getAlpha();
 
 	/* MODEL END */
 
@@ -69,7 +71,7 @@ void ModelRoutine::updateIfSubgridAlpha( const S32 elemIdx, const VIdx& vIdx, co
 void ModelRoutine::updateIfSubgridBetaInIfRegion( const S32 elemIdx, const S32 dim, const VIdx& vIdx0, const VIdx& subgridVOffset0, const UBAgentData& ubAgentData0, const UBEnv& ubEnv0, const VIdx& vIdx1, const VIdx& subgridVOffset1, const UBAgentData& ubAgentData1, const UBEnv& ubEnv1, REAL& gridBeta ) {
 	/* MODEL START */
 
-	ERROR( "unimplemented." );
+	gridBeta = getBeta();
 
 	/* MODEL END */
 
@@ -79,7 +81,7 @@ void ModelRoutine::updateIfSubgridBetaInIfRegion( const S32 elemIdx, const S32 d
 void ModelRoutine::updateIfSubgridBetaPDEBufferBdry( const S32 elemIdx, const S32 dim, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridBeta ) {
 	/* MODEL START */
 
-	ERROR( "unimplemented." );
+	gridBeta = getBeta();
 
 	/* MODEL END */
 
@@ -89,7 +91,7 @@ void ModelRoutine::updateIfSubgridBetaPDEBufferBdry( const S32 elemIdx, const S3
 void ModelRoutine::updateIfSubgridBetaDomainBdry( const S32 elemIdx, const S32 dim, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridBeta ) {
 	/* MODEL START */
 
-	ERROR( "unimplemented." );
+	gridBeta = getBeta();
 
 	/* MODEL END */
 
@@ -99,7 +101,7 @@ void ModelRoutine::updateIfSubgridBetaDomainBdry( const S32 elemIdx, const S32 d
 void ModelRoutine::updateIfSubgridRHSLinear( const S32 elemIdx, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridRHS/* uptake(-) and secretion (+) */ ) {
 	/* MODEL START */
 
-	ERROR( "unimplemented." );
+	// Empty
 
 	/* MODEL END */
 

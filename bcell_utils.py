@@ -42,7 +42,7 @@ def make_network_dot(varf, dot_file):
   pydot_graph.set_name("gene_networks")
   pydot_graph.write(dot_file, prog='dot')
 
-def generate_gene_functions(num_cell_types, num_genes, connectivity, input_connections, nv_file, varf_file, tt_file, dot_file):
+def generate_gene_functions(num_cell_types, num_genes, connectivity, input_connections, num_cytokines, nv_file, varf_file, tt_file, dot_file):
   assert input_connections < num_genes
 
   nv = []
@@ -52,11 +52,13 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
   for _ in range(num_cell_types):
     nv.append(np.zeros(num_genes, dtype=np.int32))
 
-    total_edges = (num_genes - 1) * connectivity # -1 cause of input signal gene 0
+    total_edges = (num_genes - 1) * connectivity
     edges = []
     for _ in range(total_edges):
       while True:
         i, j = random.sample(range(1, num_genes), 2)
+        if 1 + num_cytokines <= i < 1 + 2 * num_cytokines: continue
+        if j < 1 + num_cytokines: continue
         if not (i, j) in edges:
           nv[-1][j] += 1
           edges.append((i, j))
