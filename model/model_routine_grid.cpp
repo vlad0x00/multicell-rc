@@ -41,7 +41,51 @@ void ModelRoutine::initIfSubgridKappa( const S32 pdeIdx, const VIdx& vIdx, const
 void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& vIdx, const NbrUBAgentData& nbrUBAgentData, NbrUBEnv& nbrUBEnv/* [INOUT] */ ) {
 	/* MODEL START */
 
-	ERROR( "unimplemented." );
+	CHECK(pre == true);
+	CHECK(iter == 0);
+
+	static const REAL dt = BASELINE_TIME_STEP_DURATION / NUM_STATE_AND_GRID_TIME_STEPS_PER_BASELINE;
+
+	const auto numCytokines = getNumCytokines();
+	const auto secretionLow = getSecretionLow();
+	const auto secretionHigh = getSecretionHigh();
+
+	REAL rhs[numCytokines];
+	for(S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
+		rhs[cytokine] = 0.0;
+	}
+
+	/* iterate over 3 * 3 * 3 boxes */
+	for(S32 i = -1; i <= 1; i++) {
+		for(S32 j = -1; j <= 1; j++) {
+			for(S32 k = -1; k <= 1; k++) {
+				const UBAgentData& ubAgentData = *(nbrUBAgentData.getConstPtr(i, j, k));         
+				VIdx ubVIdxOffset;
+				ubVIdxOffset[0] = i* -1;
+				ubVIdxOffset[1] = j* -1;
+				ubVIdxOffset[2] = k* -1;
+
+				for (const auto& agent: ubAgentData.v_spAgent) {
+					const REAL ratio = Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, agent.vOffset, agent.state.getRadius(), ubVIdxOffset);
+
+					if( ratio > 0.0 ) {
+						// Don't really need those
+						//REAL radius = agent.state.getRadius();
+						//REAL vol = (4.0 * MY_PI / 3.0) * radius * radius * radius;
+						
+						for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
+							rhs[cytokine] += ratio * dt * (agent.state.getBoolVal(1 + numCytokines + cytokine) ? secretionHigh : secretionLow);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for(S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
+		rhs[cytokine] /= (IF_GRID_SPACING * IF_GRID_SPACING * IF_GRID_SPACING);
+		nbrUBEnv.setModelReal(0, 0, 0, cytokine, rhs[cytokine]);
+	}
 
 	/* MODEL END */
 
@@ -101,7 +145,7 @@ void ModelRoutine::updateIfSubgridBetaDomainBdry( const S32 elemIdx, const S32 d
 void ModelRoutine::updateIfSubgridRHSLinear( const S32 elemIdx, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridRHS/* uptake(-) and secretion (+) */ ) {
 	/* MODEL START */
 
-	// Empty
+	gridRHS = ubEnv.getModelReal(elemIdx);
 
 	/* MODEL END */
 
@@ -131,7 +175,9 @@ void ModelRoutine::updateIfSubgridRHSTimeDependentSplitting( const S32 pdeIdx, c
 void ModelRoutine::updateIfGridAMRTags( const VIdx& vIdx, const NbrUBAgentData& nbrUBAgentData, const NbrUBEnv& nbrUBEnv, Vector<S32>& v_finestLevel/* [pdeIdx] */ ) {
 	/* MODEL START */
 
-	ERROR( "unimplemented." );
+  for(S32 pdeIdx = 0; pdeIdx < getNumCytokines(); pdeIdx++) {
+    v_finestLevel[pdeIdx] = NUM_AMR_LEVELS - 1;
+  }
 
 	/* MODEL END */
 

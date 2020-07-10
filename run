@@ -101,9 +101,9 @@ if args.randomize:
 bcell_utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS)
 
 print("Running Biocellion... ", end='', flush=True)
-#os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE)
+os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE)
 print("Done!", flush=True)
 
 print("Training LASSO... ", end='', flush=True)
-#bcell_utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_OUTPUT_GENES, NUM_CELLS, WINDOW_SIZE, DELAY, args.visualize)
+bcell_utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_OUTPUT_GENES, NUM_CELLS, WINDOW_SIZE, DELAY, args.visualize)
 print("Done!", flush=True)
