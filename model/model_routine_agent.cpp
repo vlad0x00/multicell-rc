@@ -34,9 +34,9 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 		for (S32 i = 0; i < numCells; i++) {
 			S32 cellType = i % numCellTypes;
 
-			vIdx[0] = regionSize[0] * Util::getModelRand(MODEL_RNG_UNIFORM);
-			vIdx[1] = regionSize[1] * Util::getModelRand(MODEL_RNG_UNIFORM);
-			vIdx[2] = regionSize[2] * Util::getModelRand(MODEL_RNG_UNIFORM);
+			vIdx[0] = regionSize[0] * (0.75 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.125);
+			vIdx[1] = regionSize[1] * (0.75 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.125);
+			vIdx[2] = regionSize[2] * (0.75 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.125);
 
 			vOffset[0] = IF_GRID_SPACING * (Util::getModelRand(MODEL_RNG_UNIFORM) - 0.5);
 			vOffset[1] = IF_GRID_SPACING * (Util::getModelRand(MODEL_RNG_UNIFORM) - 0.5);
@@ -106,8 +106,8 @@ void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& jun
 	const S32 baselineStep = Info::getCurBaselineTimeStep();
 	newBools.push_back(getInputSignal()[baselineStep + 1]);
 
-	for (S32 gene = 1; gene < numCytokines; gene++) {
-		if (avgPhi[gene - 1] > cytokineThreshold) {
+	for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
+		if (avgPhi[cytokine] > cytokineThreshold) {
 			newBools.push_back(1);	
 		} else {
 			newBools.push_back(0);

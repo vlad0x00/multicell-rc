@@ -264,9 +264,9 @@ def make_params_xml(xml_path, output_dir, simulation_steps, additional_params):
   bcell_num_sockets_per_node = 1
   bcell_max_load_imbalance = 1.2
 
-  bcell_super_x = 64
-  bcell_super_y = 64
-  bcell_super_z = 64
+  bcell_super_x = bcell_size_x
+  bcell_super_y = bcell_size_y
+  bcell_super_z = bcell_size_z
 
   bcell_summary = 1
   bcell_load_balance = 0

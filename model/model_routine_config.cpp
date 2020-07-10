@@ -173,7 +173,7 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
 		pdeInfo.pdeIdx = cytokine;
 		pdeInfo.pdeType = PDE_TYPE_REACTION_DIFFUSION_STEADY_STATE_LINEAR;
 		pdeInfo.numLevels = NUM_AMR_LEVELS;
-		pdeInfo.numTimeSteps = NUM_PDE_TIME_STEPS_PER_STATE_AND_GRID_TIME_STEP;
+		pdeInfo.numTimeSteps = 0;
 		pdeInfo.v_tagExpansionSize.assign(NUM_AMR_LEVELS, 0); /* v_tagExpansionSize[0] should be always 0 */
 		pdeInfo.ifLevel = NUM_AMR_LEVELS - 1;
 		pdeInfo.mgSolveInfo.numPre = 3;
@@ -195,6 +195,7 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
 		pdeInfo.splittingInfo.odeThreshold = 1e-19;              /* dummy */
 
 		pdeInfo.callAdjustRHSTimeDependentLinear = false;
+
 		gridPhiInfo.elemIdx = cytokine;
 		gridPhiInfo.name = "cytokine" + std::to_string(cytokine);
 		gridPhiInfo.syncMethod = VAR_SYNC_METHOD_DELTA;
@@ -213,7 +214,7 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
 		gridPhiInfo.errorThresholdVal = GRID_PHI_NORM_THRESHOLD * -1.0;
 		gridPhiInfo.warningThresholdVal = GRID_PHI_NORM_THRESHOLD * -1.0;
 		gridPhiInfo.setNegToZero = true;
-		pdeInfo.v_gridPhiInfo.assign(1, gridPhiInfo);
+		pdeInfo.v_gridPhiInfo.push_back(gridPhiInfo);
 		v_phiPDEInfo.push_back(pdeInfo);
 	}
 
@@ -276,8 +277,9 @@ void ModelRoutine::updateRNGInfo( Vector<RNGInfo>& v_rngInfo ) {
 void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
 	/* MODEL START */
 
-	Vector<string> v_modelParam = readXMLParameters();
-	auto numGenes = std::stoi(v_modelParam[0]);
+	Vector<string> params = readXMLParameters();
+	const auto numGenes = std::stoi(params[0]);
+	const S32 numCytokines = std::stoi(params[10]);
 
 	/* FileOutputInfo class holds the information related to file output of simulation results. */
 	fileOutputInfo.particleOutput = true;                          
@@ -288,8 +290,8 @@ void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
 		fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("Gene " + std::to_string(gene));
 	}
 	fileOutputInfo.v_particleExtraOutputVectorVarName.clear();
-	fileOutputInfo.v_gridPhiOutput.clear();
-	fileOutputInfo.v_gridPhiOutputDivideByKappa.clear();
+	fileOutputInfo.v_gridPhiOutput.assign(numCytokines, false);
+	fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(numCytokines, false);
 
 	/* MODEL END */
 
