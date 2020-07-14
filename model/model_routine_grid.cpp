@@ -19,7 +19,7 @@ using namespace std;
 void ModelRoutine::initIfGridVar( const VIdx& vIdx, const UBAgentData& ubAgentData, UBEnv& ubEnv ) {
 	/* MODEL START */
 
-	for (S32 cytokine = 0; cytokine < getNumCytokines(); cytokine++) {
+	for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
 		ubEnv.setPhi(cytokine, 0.0);
 	}
 
@@ -46,19 +46,23 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
 
 	static const REAL dt = BASELINE_TIME_STEP_DURATION / NUM_STATE_AND_GRID_TIME_STEPS_PER_BASELINE;
 
-	const auto numCytokines = getNumCytokines();
-	const auto secretionLow = getSecretionLow();
-	const auto secretionHigh = getSecretionHigh();
-
-	REAL rhs[numCytokines];
-	for(S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
+	REAL rhs[gNumCytokines];
+	for(S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
 		rhs[cytokine] = 0.0;
 	}
 
 	/* iterate over 3 * 3 * 3 boxes */
 	for(S32 i = -1; i <= 1; i++) {
+		const auto x = i + vIdx[0];
 		for(S32 j = -1; j <= 1; j++) {
+			const auto y = j + vIdx[1];
 			for(S32 k = -1; k <= 1; k++) {
+				const auto z = k + vIdx[2];
+
+				if (x < 0 || x >= Info::getDomainSize(0)) { continue; }
+				if (y < 0 || y >= Info::getDomainSize(1)) { continue; }
+				if (z < 0 || z >= Info::getDomainSize(2)) { continue; }
+
 				const UBAgentData& ubAgentData = *(nbrUBAgentData.getConstPtr(i, j, k));         
 				VIdx ubVIdxOffset;
 				ubVIdxOffset[0] = i* -1;
@@ -68,13 +72,13 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
 				for (const auto& agent: ubAgentData.v_spAgent) {
 					const REAL ratio = Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, agent.vOffset, agent.state.getRadius(), ubVIdxOffset);
 
-					if( ratio > 0.0 ) {
+					if(ratio > 0.0) {
 						// Don't really need those
 						//REAL radius = agent.state.getRadius();
 						//REAL vol = (4.0 * MY_PI / 3.0) * radius * radius * radius;
 						
-						for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
-							rhs[cytokine] += ratio * dt * (agent.state.getBoolVal(1 + numCytokines + cytokine) ? secretionHigh : secretionLow);
+						for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+							rhs[cytokine] += ratio * dt * (agent.state.getBoolVal(1 + gNumCytokines + cytokine) ? gSecretionHigh : gSecretionLow);
 						}
 					}
 				}
@@ -82,7 +86,7 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
 		}
 	}
 
-	for(S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
+	for(S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
 		rhs[cytokine] /= (IF_GRID_SPACING * IF_GRID_SPACING * IF_GRID_SPACING);
 		nbrUBEnv.setModelReal(0, 0, 0, cytokine, rhs[cytokine]);
 	}
@@ -105,7 +109,7 @@ void ModelRoutine::updateIfSubgridKappa( const S32 pdeIdx, const VIdx& vIdx, con
 void ModelRoutine::updateIfSubgridAlpha( const S32 elemIdx, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridAlpha/* decay (-) */ ) {
 	/* MODEL START */
 
-	gridAlpha = -getAlpha();
+	gridAlpha = -gAlpha;
 
 	/* MODEL END */
 
@@ -115,7 +119,7 @@ void ModelRoutine::updateIfSubgridAlpha( const S32 elemIdx, const VIdx& vIdx, co
 void ModelRoutine::updateIfSubgridBetaInIfRegion( const S32 elemIdx, const S32 dim, const VIdx& vIdx0, const VIdx& subgridVOffset0, const UBAgentData& ubAgentData0, const UBEnv& ubEnv0, const VIdx& vIdx1, const VIdx& subgridVOffset1, const UBAgentData& ubAgentData1, const UBEnv& ubEnv1, REAL& gridBeta ) {
 	/* MODEL START */
 
-	gridBeta = getBeta();
+	gridBeta = gBeta;
 
 	/* MODEL END */
 
@@ -125,7 +129,7 @@ void ModelRoutine::updateIfSubgridBetaInIfRegion( const S32 elemIdx, const S32 d
 void ModelRoutine::updateIfSubgridBetaPDEBufferBdry( const S32 elemIdx, const S32 dim, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridBeta ) {
 	/* MODEL START */
 
-	gridBeta = getBeta();
+	gridBeta = gBeta;
 
 	/* MODEL END */
 
@@ -135,7 +139,7 @@ void ModelRoutine::updateIfSubgridBetaPDEBufferBdry( const S32 elemIdx, const S3
 void ModelRoutine::updateIfSubgridBetaDomainBdry( const S32 elemIdx, const S32 dim, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridBeta ) {
 	/* MODEL START */
 
-	gridBeta = getBeta();
+	gridBeta = gBeta;
 
 	/* MODEL END */
 
@@ -175,7 +179,7 @@ void ModelRoutine::updateIfSubgridRHSTimeDependentSplitting( const S32 pdeIdx, c
 void ModelRoutine::updateIfGridAMRTags( const VIdx& vIdx, const NbrUBAgentData& nbrUBAgentData, const NbrUBEnv& nbrUBEnv, Vector<S32>& v_finestLevel/* [pdeIdx] */ ) {
 	/* MODEL START */
 
-  for(S32 pdeIdx = 0; pdeIdx < getNumCytokines(); pdeIdx++) {
+  for(S32 pdeIdx = 0; pdeIdx < gNumCytokines; pdeIdx++) {
     v_finestLevel[pdeIdx] = NUM_AMR_LEVELS - 1;
   }
 

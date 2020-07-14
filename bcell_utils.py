@@ -241,24 +241,24 @@ def make_params_xml(xml_path, output_dir, simulation_steps, additional_params):
 
   # Biocellion required parameters
   bcell_num_baseline = simulation_steps
-  bcell_nx = '16'
-  bcell_ny = '16'
-  bcell_nz = '16'
-  bcell_partition_size = 16
+  bcell_nx = '8'
+  bcell_ny = '8'
+  bcell_nz = '8'
+  bcell_partition_size = 8
   bcell_path = output_dir
   bcell_interval = 1
   bcell_start_x = 0
   bcell_start_y = 0
   bcell_start_z = 0
-  bcell_size_x = 16
-  bcell_size_y = 16
-  bcell_size_z = 16
+  bcell_size_x = 8
+  bcell_size_y = 8
+  bcell_size_z = 8
 
   # Biocellion optional parameteres
   bcell_input_param = additional_params
   bcell_verbosity = 0 # [0-5]
 
-  bcell_num_threads = 4
+  bcell_num_threads = 1
   bcell_num_node_groups = 1
   bcell_num_nodes_per_group = 1
   bcell_num_sockets_per_node = 1

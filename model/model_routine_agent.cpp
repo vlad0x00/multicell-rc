@@ -29,10 +29,8 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 		VReal vOffset;  // Poisition offset is the vector distance from the center of the unit box.
 		SpAgentState state;
 
-		S32 numCells = getNumCells();
-		S32 numCellTypes = getNumCellTypes();
-		for (S32 i = 0; i < numCells; i++) {
-			S32 cellType = i % numCellTypes;
+		for (S32 cell = 0; cell < gNumCells; cell++) {
+			S32 cellType = cell % gNumCellTypes;
 
 			vIdx[0] = regionSize[0] * (0.75 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.125);
 			vIdx[1] = regionSize[1] * (0.75 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.125);
@@ -46,11 +44,10 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 			state.setType(cellType);
 			state.setRadius(CELL_RADIUS);
 
-			auto geneInitialStates = getGeneInitialStates(cellType);
-			for (S32 i = 0; i < getNumGenes(); i++) {
-				state.setBoolVal(i, geneInitialStates[i]);
+			for (S32 gene = 0; gene < gNumGenes; gene++) {
+				state.setBoolVal(gene, getGeneInitialStates(cellType)[gene]);
 			}
-			state.setModelInt(0, i);
+			state.setModelInt(0, cell);
 
 			/* Initialize return vectors {v_spAgentState, v_spAgentVIdx, v_spAgentOffset} by using .push_back() */
 			CHECK(ifGridHabitableBoxData.get(vIdx) == true);
@@ -79,22 +76,18 @@ void ModelRoutine::spAgentCRNODERHS( const S32 odeNetIdx, const VIdx& vIdx, cons
 void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& junctionData, const VReal& vOffset, const NbrUBEnv& nbrUBEnv, SpAgentState& state/* INOUT */ ) {
 	/* MODEL START */
 
-  const auto numGenes = getNumGenes();
-	const auto numCytokines = getNumCytokines();
-	const auto cytokineThreshold = getCytokineThreshold();
-
 	const auto cellType = state.getType();
 
 	REAL aaaRatio[3][3][3];
-	REAL avgPhi[numCytokines];
-	for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
+	REAL avgPhi[gNumCytokines];
+	for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
 	  avgPhi[cytokine] = 0.0;
 	}
 	Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, vOffset, state.getRadius(), aaaRatio);
 	for(S32 i = -1 ; i <= 1; i++) {
 		for(S32 j = -1 ; j <= 1; j++) {
 			for(S32 k = -1 ; k <= 1; k++) {
-				for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
+				for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
 					avgPhi[cytokine] += nbrUBEnv.getPhi(i, j, k, cytokine) * aaaRatio[i + 1][j + 1][k + 1];
 				}
 			}
@@ -104,17 +97,17 @@ void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& jun
 	Vector<BOOL> newBools;
 
 	const S32 baselineStep = Info::getCurBaselineTimeStep();
-	newBools.push_back(getInputSignal()[baselineStep + 1]);
+	newBools.push_back(gInputSignal[baselineStep + 1]);
 
-	for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
-		if (avgPhi[cytokine] > cytokineThreshold) {
+	for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+		if (avgPhi[cytokine] > gCytokineThreshold) {
 			newBools.push_back(1);	
 		} else {
 			newBools.push_back(0);
 		}
 	}
 
-	for (S32 gene = 1 + numCytokines; gene < numGenes; gene++) {
+	for (S32 gene = 1 + gNumCytokines; gene < gNumGenes; gene++) {
 		const auto nv = getNv(cellType)[gene];
 		CHECK(nv >= 0);
 
@@ -124,6 +117,7 @@ void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& jun
 
 			U32 ttEntry = 0;
 			for (U32 j = 0; j < (U32)nv; j++) {
+				CHECK(varf[j] >= 0 && varf[j] < gNumGenes);
 				const auto var_val = state.getBoolVal(varf[j]);
 				CHECK(var_val != -1);
 				if (var_val) {

@@ -41,6 +41,23 @@ const S32 SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL = 2;
 const S32 NUM_AMR_LEVELS = 1;
 const REAL GRID_PHI_NORM_THRESHOLD = 1e-10;
 
+extern S32 gNumGenes;
+extern S32 gNumCells;
+extern S32 gNumCellTypes;
+extern S32* gNv;
+extern S32* gVarfOffsets;
+extern S32* gTtOffsets;
+extern S32* gVarf;
+extern S32* gTt;
+extern S32* gGeneInitialStates;
+extern S32* gInputSignal;
+extern REAL gAlpha;
+extern REAL gBeta;
+extern S32 gNumCytokines;
+extern REAL gSecretionLow;
+extern REAL gSecretionHigh;
+extern REAL gCytokineThreshold;
+
 typedef struct {
   S64 numGenes;
   S64 numCells;
@@ -60,94 +77,20 @@ typedef struct {
 	S64 cytokineThreshold;
 } GlobalDataFormat;
 
-static inline GlobalDataFormat getGlobalDataFormat() {
-	const auto& g = Info::getGlobalDataRef();
-	GlobalDataFormat format = *((GlobalDataFormat*)(&(g[0])));
-	return format;
-}
-
-static inline S32 getNumGenes() {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();
-	return *((S32*)(&(g[f.numGenes])));
-}
-
-static inline S32 getNumCells() { 
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();	
-	return *((S32*)(&(g[f.numCells])));
-}
-
-static inline S32 getNumCellTypes() {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();
-	return *((S32*)(&(g[f.numCellTypes])));
-}
-
 static inline S32* getNv(S32 cellType) {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();
-	return (S32*)(&(g[f.nv])) + cellType * getNumGenes();
+	return gNv + cellType * gNumGenes;
 }
 
 static inline S32* getVarf(S32 cellType, S32 gene) {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();
-	return (S32*)(&(g[f.varf])) + ((S32*)(&(g[f.varfOffsets])))[cellType * getNumGenes() + gene];
+	return gVarf + gVarfOffsets[cellType * gNumGenes + gene];
 }
 
 static inline S32* getTt(S32 cellType, S32 gene) {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();	
-	return (S32*)(&(g[f.tt])) + ((S32*)(&(g[f.ttOffsets])))[cellType * getNumGenes() + gene];
+	return gTt + gTtOffsets[cellType * gNumGenes + gene];
 }
 
 static inline S32* getGeneInitialStates(S32 cellType) {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();	
-	return (S32*)(&(g[f.geneInitialStates + cellType * getNumGenes()]));
-}
-
-static inline S32* getInputSignal() {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();	
-	return (S32*)(&(g[f.inputSignal]));
-}
-
-static inline REAL getAlpha() {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();
-	return *((REAL*)(&(g[f.alpha])));
-}
-
-static inline REAL getBeta() {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();
-	return *((REAL*)(&(g[f.beta])));
-}
-
-static inline S32 getNumCytokines() {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();
-	return *((S32*)(&(g[f.numCytokines])));
-}
-
-static inline REAL getSecretionLow() {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();
-	return *((REAL*)(&(g[f.secretionLow])));
-}
-
-static inline REAL getSecretionHigh() {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();
-	return *((REAL*)(&(g[f.secretionHigh])));
-}
-
-static inline REAL getCytokineThreshold() {
-	const auto& g = Info::getGlobalDataRef();
-	const auto f = getGlobalDataFormat();
-	return *((REAL*)(&(g[f.cytokineThreshold])));
+	return gGeneInitialStates + cellType * gNumGenes;
 }
 
 /* MODEL END */

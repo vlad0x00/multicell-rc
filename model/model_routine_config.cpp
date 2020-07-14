@@ -23,6 +23,23 @@ using namespace std;
 #include <fstream>
 #include <sstream>
 
+S32 gNumGenes;
+S32 gNumCells;
+S32 gNumCellTypes;
+S32* gNv;
+S32* gVarfOffsets;
+S32* gTtOffsets;
+S32* gVarf;
+S32* gTt;
+S32* gGeneInitialStates;
+S32* gInputSignal;
+REAL gAlpha;
+REAL gBeta;
+S32 gNumCytokines;
+REAL gSecretionLow;
+REAL gSecretionHigh;
+REAL gCytokineThreshold;
+
 static Vector<string> readXMLParameters() {
 	Vector<string> v_modelParam; // This will be returned
 
@@ -58,7 +75,9 @@ void ModelRoutine::updateIfGridSpacing( REAL& ifGridSpacing ) {
 void ModelRoutine::updateOptModelRoutineCallInfo( OptModelRoutineCallInfo& callInfo ) {
 	/* MODEL START */
 
-	// Empty
+  callInfo.numComputeMechIntrctIters = 0;
+  callInfo.numUpdateIfGridVarPreStateAndGridStepIters = 1;
+  callInfo.numUpdateIfGridVarPostStateAndGridStepIters = 0;
 
 	/* MODEL END */
 
@@ -185,14 +204,14 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
 		pdeInfo.mgSolveInfo.hang = 1e-6;
 		pdeInfo.mgSolveInfo.normThreshold = 1e-10;
 
-		pdeInfo.advectionInfo.courantNumber = 0.5;/* dummy */
+		pdeInfo.advectionInfo.courantNumber = 0.5; /* dummy */
 
 		pdeInfo.splittingInfo.v_diffusionTimeSteps.assign(1, 1); /* dummy */
-		pdeInfo.splittingInfo.odeStiff = ODE_STIFF_NORMAL;       /* dummy */
-		pdeInfo.splittingInfo.odeH = 0.5;                        /* dummy */
-		pdeInfo.splittingInfo.odeHm = 0.1;                       /* dummy */
-		pdeInfo.splittingInfo.odeEpsilon = 1e-6;                 /* dummy */
-		pdeInfo.splittingInfo.odeThreshold = 1e-19;              /* dummy */
+		pdeInfo.splittingInfo.odeStiff = ODE_STIFF_NORMAL; /* dummy */
+		pdeInfo.splittingInfo.odeH = 0.5; /* dummy */
+		pdeInfo.splittingInfo.odeHm = 0.1; /* dummy */
+		pdeInfo.splittingInfo.odeEpsilon = 1e-6; /* dummy */
+		pdeInfo.splittingInfo.odeThreshold = 1e-19; /* dummy */
 
 		pdeInfo.callAdjustRHSTimeDependentLinear = false;
 
@@ -214,6 +233,7 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
 		gridPhiInfo.errorThresholdVal = GRID_PHI_NORM_THRESHOLD * -1.0;
 		gridPhiInfo.warningThresholdVal = GRID_PHI_NORM_THRESHOLD * -1.0;
 		gridPhiInfo.setNegToZero = true;
+		pdeInfo.v_gridPhiInfo.clear();
 		pdeInfo.v_gridPhiInfo.push_back(gridPhiInfo);
 		v_phiPDEInfo.push_back(pdeInfo);
 	}
@@ -279,7 +299,7 @@ void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
 
 	Vector<string> params = readXMLParameters();
 	const auto numGenes = std::stoi(params[0]);
-	const S32 numCytokines = std::stoi(params[10]);
+	const auto numCytokines = std::stoi(params[10]);
 
 	/* FileOutputInfo class holds the information related to file output of simulation results. */
 	fileOutputInfo.particleOutput = true;                          
@@ -290,8 +310,8 @@ void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
 		fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("Gene " + std::to_string(gene));
 	}
 	fileOutputInfo.v_particleExtraOutputVectorVarName.clear();
-	fileOutputInfo.v_gridPhiOutput.assign(numCytokines, false);
-	fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(numCytokines, false);
+	fileOutputInfo.v_gridPhiOutput.assign(numCytokines, true);
+	fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(numCytokines, true);
 
 	/* MODEL END */
 
@@ -309,27 +329,40 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
 		value. summary type e is used to set the reduction method. Choose one of these summary types:
 		{SUMMARY_TYPE_SUM, SUMMARY_TYPE_AVG, SUMMARY_TYPE_MIN, SUMMARY_TYPE_MAX} */      
 
-	Vector<string> v_modelParam = readXMLParameters();
-	auto numGenes = std::stoi(v_modelParam[0]);
-	auto numCells = std::stoi(v_modelParam[1]);
+	Vector<string> params = readXMLParameters();
+	const auto numGenes = std::stoi(params[0]);
+	const auto numCells = std::stoi(params[1]);
+	const auto numCytokines = std::stoi(params[10]);
 
 	SummaryOutputInfo info;
-	v_summaryOutputIntInfo.resize(2 + numCells * numGenes);
+	v_summaryOutputIntInfo.clear();
 	v_summaryOutputRealInfo.clear();
+
+	for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
+		info.name = "cytokine" + std::to_string(cytokine) + "_min";
+		info.type = SUMMARY_TYPE_MIN;
+		v_summaryOutputRealInfo.push_back(info);
+		info.name = "cytokine" + std::to_string(cytokine) + "_max";
+		info.type = SUMMARY_TYPE_MAX;
+		v_summaryOutputRealInfo.push_back(info);
+		info.name = "cytokine" + std::to_string(cytokine) + "_avg";
+		info.type = SUMMARY_TYPE_AVG;
+		v_summaryOutputRealInfo.push_back(info);
+	}
 
 	info.name = "Timestep";
 	info.type = SUMMARY_TYPE_SUM;
-	v_summaryOutputIntInfo[0] = info;
+	v_summaryOutputIntInfo.push_back(info);
 
 	info.name = "Input";
 	info.type = SUMMARY_TYPE_SUM;
-	v_summaryOutputIntInfo[1] = info;
+	v_summaryOutputIntInfo.push_back(info);
 
 	for (S32 cell = 0; cell < numCells; cell++) {
 		for (S32 gene = 0; gene < numGenes; gene++) {
 			info.name = "Cell " + std::to_string(cell) + ", Gene " + std::to_string(gene);
 			info.type = SUMMARY_TYPE_SUM;
-			v_summaryOutputIntInfo[2 + cell * numGenes + gene] = info;
+			v_summaryOutputIntInfo.push_back(info);
 		}
 	}
 
@@ -344,20 +377,20 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	Vector<string> v_modelParam = readXMLParameters();
 
 	S32 param = 0;
-	const S32 numGenes = std::stoi(v_modelParam[param++]);
-	const S32 numCells = std::stoi(v_modelParam[param++]);
-	const S32 numCellTypes = std::stoi(v_modelParam[param++]);
+	S32 numGenes = std::stoi(v_modelParam[param++]);
+	S32 numCells = std::stoi(v_modelParam[param++]);
+	S32 numCellTypes = std::stoi(v_modelParam[param++]);
   auto nvFile = std::ifstream(v_modelParam[param++]);
 	auto varfFile = std::ifstream(v_modelParam[param++]);
 	auto ttFile = std::ifstream(v_modelParam[param++]);
 	auto geneInitialStatesFile = std::ifstream(v_modelParam[param++]);
 	auto inputSignalFile = std::ifstream(v_modelParam[param++]);
-	const REAL alpha = std::stod(v_modelParam[param++]);
-	const REAL beta = std::stod(v_modelParam[param++]);
-	const S32 numCytokines = std::stoi(v_modelParam[param++]);
-	const REAL secretionLow = std::stod(v_modelParam[param++]);
-	const REAL secretionHigh = std::stod(v_modelParam[param++]);
-	const REAL cytokineThreshold = std::stod(v_modelParam[param++]);
+	REAL alpha = std::stod(v_modelParam[param++]);
+  REAL beta = std::stod(v_modelParam[param++]);
+	S32 numCytokines = std::stoi(v_modelParam[param++]);
+	REAL secretionLow = std::stod(v_modelParam[param++]);
+	REAL secretionHigh = std::stod(v_modelParam[param++]);
+	REAL cytokineThreshold = std::stod(v_modelParam[param++]);
 
 	Vector<S32> nv;
 	Vector<S32> varfOffsets;
@@ -485,7 +518,25 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 void ModelRoutine::init( void ) {
 	/* MODEL START */
 
-	// Empty
+	const auto& g = Info::getGlobalDataRef();
+	GlobalDataFormat f = *((GlobalDataFormat*)(&(g[0])));
+
+  gNumGenes = *((S32*)(&(g[f.numGenes])));
+	gNumCells = *((S32*)(&(g[f.numCells])));
+  gNumCellTypes = *((S32*)(&(g[f.numCellTypes])));
+  gNv = (S32*)(&(g[f.nv]));
+	gVarfOffsets = (S32*)(&(g[f.varfOffsets]));
+	gTtOffsets = (S32*)(&(g[f.ttOffsets]));
+	gVarf = (S32*)(&(g[f.varf]));
+  gTt = (S32*)(&(g[f.tt]));
+  gGeneInitialStates = (S32*)(&(g[f.geneInitialStates]));
+  gInputSignal = (S32*)(&(g[f.inputSignal]));
+	gAlpha = *((REAL*)(&(g[f.alpha])));
+	gBeta = *((REAL*)(&(g[f.beta])));
+	gNumCytokines = *((S32*)(&(g[f.numCytokines])));
+	gSecretionLow = *((REAL*)(&(g[f.secretionLow])));
+  gSecretionHigh = *((REAL*)(&(g[f.secretionHigh])));
+  gCytokineThreshold = *((REAL*)(&(g[f.cytokineThreshold])));
 
 	/* MODEL END */
 
