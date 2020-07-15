@@ -250,13 +250,12 @@ void ModelRoutine::updateIfGridModelVarInfo( Vector<IfGridModelVarInfo>& v_ifGri
 
 	S32 numCytokines = std::stoi(params[10]);
 
+	v_ifGridModelRealInfo.clear();
 	IfGridModelVarInfo info;
-	v_ifGridModelRealInfo.resize(numCytokines);
-
 	for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
 		info.name = std::to_string(cytokine) + "_rhs" ;
 		info.syncMethod = VAR_SYNC_METHOD_DELTA;
-		v_ifGridModelRealInfo[cytokine] = info;
+		v_ifGridModelRealInfo.push_back(info);
 	}
 
 	v_ifGridModelIntInfo.clear();
@@ -308,8 +307,14 @@ void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
 		fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("genebits_" + std::to_string(i));
 	}
 	fileOutputInfo.v_particleExtraOutputVectorVarName.clear();
-	fileOutputInfo.v_gridPhiOutput.assign(numCytokines, true);
-	fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(numCytokines, true);
+	if (numCytokines > 0) {
+		fileOutputInfo.v_gridPhiOutput.assign(numCytokines, true);
+		fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(numCytokines, true);
+	} else {
+		fileOutputInfo.v_gridPhiOutput.clear();
+		fileOutputInfo.v_gridPhiOutputDivideByKappa.clear();
+	}
+
 
 	/* MODEL END */
 

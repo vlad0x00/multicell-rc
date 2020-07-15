@@ -79,16 +79,19 @@ void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& jun
 	const auto cellType = state.getType();
 
 	REAL aaaRatio[3][3][3];
-	REAL avgPhi[gNumCytokines];
-	for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-	  avgPhi[cytokine] = 0.0;
-	}
-	Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, vOffset, state.getRadius(), aaaRatio);
-	for(S32 i = -1 ; i <= 1; i++) {
-		for(S32 j = -1 ; j <= 1; j++) {
-			for(S32 k = -1 ; k <= 1; k++) {
-				for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-					avgPhi[cytokine] += nbrUBEnv.getPhi(i, j, k, cytokine) * aaaRatio[i + 1][j + 1][k + 1];
+	REAL* avgPhi = nullptr;
+	if (gNumCytokines > 0) {
+		avgPhi = new REAL[gNumCytokines];
+		for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+			avgPhi[cytokine] = 0.0;
+		}
+		Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, vOffset, state.getRadius(), aaaRatio);
+		for(S32 i = -1 ; i <= 1; i++) {
+			for(S32 j = -1 ; j <= 1; j++) {
+				for(S32 k = -1 ; k <= 1; k++) {
+					for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+						avgPhi[cytokine] += nbrUBEnv.getPhi(i, j, k, cytokine) * aaaRatio[i + 1][j + 1][k + 1];
+					}
 				}
 			}
 		}
@@ -134,6 +137,10 @@ void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& jun
 	}
 
 	state.setBoolValArray(newBools);
+
+	if (gNumCytokines > 0) {
+		delete[] avgPhi;
+	}
 
 	/* MODEL END */
 
