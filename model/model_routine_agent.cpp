@@ -32,9 +32,9 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 		for (S32 cell = 0; cell < gNumCells; cell++) {
 			S32 cellType = cell % gNumCellTypes;
 
-			vIdx[0] = regionSize[0] * (0.75 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.125);
-			vIdx[1] = regionSize[1] * (0.75 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.125);
-			vIdx[2] = regionSize[2] * (0.75 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.125);
+			vIdx[0] = regionSize[0] * (0.5 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.250);
+			vIdx[1] = regionSize[1] * (0.5 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.250);
+			vIdx[2] = regionSize[2] * (0.5 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.250);
 
 			vOffset[0] = IF_GRID_SPACING * (Util::getModelRand(MODEL_RNG_UNIFORM) - 0.5);
 			vOffset[1] = IF_GRID_SPACING * (Util::getModelRand(MODEL_RNG_UNIFORM) - 0.5);
@@ -45,7 +45,7 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 			state.setRadius(CELL_RADIUS);
 
 			for (S32 gene = 0; gene < gNumGenes; gene++) {
-				state.setBoolVal(gene, getGeneInitialStates(cellType)[gene]);
+				state.setBoolVal(gene, getGeneInitialStates(cell)[gene]);
 			}
 			state.setModelInt(0, cell);
 

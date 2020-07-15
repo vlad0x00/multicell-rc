@@ -89,8 +89,8 @@ static inline S32* getTt(S32 cellType, S32 gene) {
 	return gTt + gTtOffsets[cellType * gNumGenes + gene];
 }
 
-static inline S32* getGeneInitialStates(S32 cellType) {
-	return gGeneInitialStates + cellType * gNumGenes;
+static inline S32* getGeneInitialStates(S32 cell) {
+	return gGeneInitialStates + cell * gNumGenes;
 }
 
 /* MODEL END */

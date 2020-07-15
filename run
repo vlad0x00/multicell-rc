@@ -96,7 +96,7 @@ if args.randomize:
   print("Generating initial gene network(s) state(s), functions, and input signal... ", end='', flush=True)
   bcell_utils.generate_gene_functions(NUM_CELL_TYPES, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
   bcell_utils.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
-  bcell_utils.generate_gene_initial_states(NUM_CELL_TYPES, NUM_GENES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
+  bcell_utils.generate_gene_initial_states(NUM_GENES, NUM_CELLS, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
   print("Done!", flush=True)
 bcell_utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS)
 
@@ -105,5 +105,5 @@ os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_
 print("Done!", flush=True)
 
 print("Training LASSO... ", end='', flush=True)
-bcell_utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_OUTPUT_GENES, NUM_CELLS, WINDOW_SIZE, DELAY, args.visualize)
+bcell_utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_OUTPUT_GENES, NUM_CELLS, WINDOW_SIZE, DELAY, SIMULATION_STEPS, args.visualize)
 print("Done!", flush=True)

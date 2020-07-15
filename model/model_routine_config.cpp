@@ -302,12 +302,10 @@ void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
 	const auto numCytokines = std::stoi(params[10]);
 
 	/* FileOutputInfo class holds the information related to file output of simulation results. */
-	fileOutputInfo.particleOutput = true;                          
+	fileOutputInfo.particleOutput = true;
 	fileOutputInfo.v_particleExtraOutputScalarVarName.clear();
-	fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("Timestep");
-	fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("Input");
-	for (S32 gene = 0; gene < numGenes; gene++) {
-		fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("Gene " + std::to_string(gene));
+	for (S32 i = 0; i < std::ceil(double(numGenes) / (sizeof(REAL) * 8)); i++) {
+		fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("genebits_" + std::to_string(i));
 	}
 	fileOutputInfo.v_particleExtraOutputVectorVarName.clear();
 	fileOutputInfo.v_gridPhiOutput.assign(numCytokines, true);
@@ -330,8 +328,6 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
 		{SUMMARY_TYPE_SUM, SUMMARY_TYPE_AVG, SUMMARY_TYPE_MIN, SUMMARY_TYPE_MAX} */      
 
 	Vector<string> params = readXMLParameters();
-	const auto numGenes = std::stoi(params[0]);
-	const auto numCells = std::stoi(params[1]);
 	const auto numCytokines = std::stoi(params[10]);
 
 	SummaryOutputInfo info;
@@ -348,22 +344,6 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
 		info.name = "cytokine" + std::to_string(cytokine) + "_avg";
 		info.type = SUMMARY_TYPE_AVG;
 		v_summaryOutputRealInfo.push_back(info);
-	}
-
-	info.name = "Timestep";
-	info.type = SUMMARY_TYPE_SUM;
-	v_summaryOutputIntInfo.push_back(info);
-
-	info.name = "Input";
-	info.type = SUMMARY_TYPE_SUM;
-	v_summaryOutputIntInfo.push_back(info);
-
-	for (S32 cell = 0; cell < numCells; cell++) {
-		for (S32 gene = 0; gene < numGenes; gene++) {
-			info.name = "Cell " + std::to_string(cell) + ", Gene " + std::to_string(gene);
-			info.type = SUMMARY_TYPE_SUM;
-			v_summaryOutputIntInfo.push_back(info);
-		}
 	}
 
 	/* MODEL END */

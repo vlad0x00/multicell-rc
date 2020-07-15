@@ -24,18 +24,23 @@ using namespace std;
 void ModelRoutine::updateSpAgentOutput( const VIdx& vIdx, const SpAgent& spAgent, REAL& color, Vector<REAL>& v_extraScalar, Vector<VReal>& v_extraVector ) {
 	/* MODEL START */
 
+	const auto numGenebits = std::ceil(double(gNumGenes) / (sizeof(REAL) * 8));
+
 	color = spAgent.state.getType();
-	CHECK(v_extraScalar.size() == size_t(2 + gNumGenes));
+	CHECK(v_extraScalar.size() == size_t(numGenebits));
 	CHECK(v_extraVector.size() == 0);
 
-	const auto cellNum = spAgent.state.getModelInt(0);
-	const auto baselineStep = Info::getCurBaselineTimeStep();
-
-	v_extraScalar[0] = cellNum;
-	v_extraScalar[1] = baselineStep;
+	CHECK(sizeof(REAL) == sizeof(U64));
+	for (S32 genebits = 0; genebits < numGenebits; genebits++) {
+		*((U64*)(&(v_extraScalar[genebits]))) = 0;
+	}
 
 	for (S32 gene = 0; gene < gNumGenes; gene++) {
-		v_extraScalar[2 + gene] = spAgent.state.getBoolVal(gene);
+		const S32 genebits = gene / (sizeof(REAL) * 8);
+		const S32 genebitPos = gene % (sizeof(REAL) * 8);
+		if (spAgent.state.getBoolVal(gene)) {
+			*((U64*)(&(v_extraScalar[genebits]))) |= (1 << genebitPos);
+		}
 	}
 
 	/* MODEL END */
@@ -48,35 +53,11 @@ void ModelRoutine::updateSummaryVar( const VIdx& vIdx, const NbrUBAgentData& nbr
 	/* MODEL START */
 
 	CHECK(v_realVal.size() == (U32)(gNumCytokines * 3));
-	CHECK(v_intVal.size() == 2 + (U32)(gNumCells * gNumGenes));
+	CHECK(v_intVal.size() == 0);
 
 	for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
 		for (S32 i = 0; i < 3; i++) {
 			v_realVal[cytokine * 3 + i] = nbrUBEnv.getPhi(0, 0, 0, cytokine);
-		}
-	}
-
-	const UBAgentData& ubAgentData = *(nbrUBAgentData.getConstPtr(0, 0, 0));
-
-	v_intVal[0] = 0;
-	v_intVal[1] = 0;
-	for (S32 cell = 0; cell < gNumCells; cell++) {
-		for (S32 gene = 0; gene < gNumGenes; gene++) {
-			v_intVal[2 + cell * gNumGenes + gene] = 0;
-		}
-	}
-
-	for (auto& agent : ubAgentData.v_spAgent) {
-		auto cellNum = agent.state.getModelInt(0);
-
-		if (cellNum == 0) {
-			const S32 baselineStep = Info::getCurBaselineTimeStep();
-			v_intVal[0] = baselineStep;
-			v_intVal[1] = gInputSignal[baselineStep];
-		}
-
-		for (S32 gene = 0; gene < gNumGenes; gene++) {
-			v_intVal[2 + cellNum * gNumGenes + gene] = agent.state.getBoolVal(gene);
 		}
 	}
 

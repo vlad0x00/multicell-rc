@@ -117,38 +117,84 @@ def generate_input_signal(signal_len, signal_file):
   with open(signal_file, 'w') as f:
     f.write(' '.join([str(x) for x in arr]))
 
-def generate_gene_initial_states(num_cell_types, num_genes, input_signal_file, state_file):
+def generate_gene_initial_states(num_genes, num_cells, input_signal_file, state_file):
   with open(input_signal_file, 'r') as f:
     input_signal = [ int(x) for x in f.readline().split() ]
   with open(state_file, 'w') as f:
-    for _ in range(num_cell_types):
+    for _ in range(num_cells):
       state = np.random.randint(2, size=num_genes)
       state[0] = input_signal[0]
       f.write(' '.join([str(x) for x in state]))
       f.write('\n')
 
-def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_output_genes, num_cells, window_size, delay, visualize):
+def get_gene_values(output_file, num_genes, num_cells):
+  with open(output_file, "rb") as f:
+    lines = f.readlines()
+
+  raw_start = 0
+  raw_end = 0
+  genebits_offsets = []
+  genebits_updated = False
+  for i, line in enumerate(lines):
+    if b'<AppendedData encoding=\"raw\">' in line: raw_start = i + 1
+    if b'</AppendedData>' in line: raw_end = i
+    if b'offset' in line:
+      tmp = line.decode('utf-8').split()
+      for token in tmp:
+        if 'offset' in token:
+          tmp = token.split('=')
+      assert tmp[0] == 'offset'
+      tmp = tmp[1][1:]
+      for i in range(len(tmp)):
+        if not tmp[i].isdigit():
+          offset = int(tmp[:i])
+          break
+      if b'Name="genebits_' in line:
+        genebits_offsets.append(offset)
+        genebits_updated = True
+      elif genebits_updated:
+        genebits_offsets.append(offset)
+        genebits_updated = False
+
+  raw_data = b''
+  for line in lines[raw_start:raw_end]:
+    raw_data += line
+  raw_data = raw_data[1:] # Remove the underscore
+
+  if genebits_updated:
+    genebits_offsets.append(len(raw_data))
+    genebits_updated = False
+
+  gene_values = []
+  for _ in range(num_cells):
+    gene_values.append([])
+
+  gene_num = 0
+  for i in range(1, len(genebits_offsets)):
+    data_end = genebits_offsets[i]
+    data_start = data_end - num_cells * 8
+
+    genebits = raw_data[data_start:data_end]
+    for cell in range(num_cells):
+      for bitPos in range(64):
+        if gene_num + bitPos >= num_genes: break
+        gene_values[cell].append((genebits[(cell * 8):((cell + 1) * 8)][bitPos // 8] & (1 << (bitPos % 8))) >> (bitPos % 8))
+    if gene_num + bitPos >= num_genes: break
+    gene_num += 64
+  gene_values.reverse()
+
+  return gene_values
+
+def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_output_genes, num_cells, window_size, delay, timesteps, visualize):
   with open(input_signal_file) as f:
     input_signal = [ int(x) for x in f.readline().split() ]
 
   states = []
-  with open(biocellion_output_file) as f:
-    i = 0
-    s = -1
-    for line in f.readlines():
-      if "interface grid summary" in line:
-        i += 1
-
-        if "Timestep" in line:
-          s += 1
-          states.append([])
-
-        if "Gene" in line:
-          tokens = line.split()[6].split(":")
-          gene = int(tokens[0])
-          val = int(tokens[1])
-          if gene in range(num_genes - 1, num_genes - 1 - num_output_genes, -1):
-            states[s].append(val)
+  for step in range(timesteps + 1):
+    states.append([])
+    gene_values = get_gene_values(os.path.join(output_dir, 'agent_0_0_0_' + str(step) + '.vtp'), num_genes, num_cells)
+    for values in gene_values:
+      states[-1] += values
 
   states = states[window_size:]
   for state in states:
@@ -241,24 +287,24 @@ def make_params_xml(xml_path, output_dir, simulation_steps, additional_params):
 
   # Biocellion required parameters
   bcell_num_baseline = simulation_steps
-  bcell_nx = '8'
-  bcell_ny = '8'
-  bcell_nz = '8'
-  bcell_partition_size = 8
+  bcell_nx = '5'
+  bcell_ny = '5'
+  bcell_nz = '5'
+  bcell_partition_size = 5
   bcell_path = output_dir
   bcell_interval = 1
   bcell_start_x = 0
   bcell_start_y = 0
   bcell_start_z = 0
-  bcell_size_x = 8
-  bcell_size_y = 8
-  bcell_size_z = 8
+  bcell_size_x = 5
+  bcell_size_y = 5
+  bcell_size_z = 5
 
   # Biocellion optional parameteres
   bcell_input_param = additional_params
   bcell_verbosity = 0 # [0-5]
 
-  bcell_num_threads = 1
+  bcell_num_threads = 4
   bcell_num_node_groups = 1
   bcell_num_nodes_per_group = 1
   bcell_num_sockets_per_node = 1
