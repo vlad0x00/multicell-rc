@@ -1,17 +1,17 @@
 #!/bin/bash
 
 G=( 10 20 30 40 50 60 70 80 90 100 )
-K=( 0 1 2 3 )
+Y=( 0 1 2 3 )
 
 ITERATIONS=30
 
 cd "$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd ..
-for k in ${K[@]}; do
+for y in ${Y[@]}; do
   for g in ${G[@]}; do
     for i in $(seq $ITERATIONS); do
-      echo "G = $g, Iteration = $i"
-      ./run -g $g -k $k -r
+      echo "G = $g, Iteration = $i, Y = $y"
+      ./run -g $g -y $k -n
       sleep $(bc <<< "scale=1; $g / 50.")
     done
   done

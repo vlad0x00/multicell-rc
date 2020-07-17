@@ -11,6 +11,8 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
 
+STATES_FILE = 'states'
+
 class Node:
 
   def __init__(self, name):
@@ -185,16 +187,29 @@ def get_gene_values(output_file, num_genes, num_cells):
 
   return gene_values
 
-def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_output_genes, num_cells, window_size, delay, timesteps, visualize):
-  with open(input_signal_file) as f:
-    input_signal = [ int(x) for x in f.readline().split() ]
-
+def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir):
   states = []
   for step in range(timesteps + 1):
     states.append([])
     gene_values = get_gene_values(os.path.join(output_dir, 'agent_0_0_0_' + str(step) + '.vtp'), num_genes, num_cells)
     for values in gene_values:
       states[-1] += values
+
+  with open(STATES_FILE, 'w') as f:
+    for state in states:
+      for i, bit in enumerate(state):
+        if i > 0:
+          f.write(' ')
+        f.write(str(bit))
+      f.write('\n')
+
+  return states
+
+def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_output_genes, num_cells, window_size, delay, timesteps, function, visualize):
+  with open(input_signal_file) as f:
+    input_signal = [ int(x) for x in f.readline().split() ]
+
+  states = get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir)
 
   states = states[window_size:]
   for state in states:
@@ -250,8 +265,10 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
       median.append(0)
   assert len(input_signal) == len(median) + window_size
 
+  functions = { 'parity' : parity, 'median' : median }
+
   x = states
-  y = median
+  y = functions[function]
 
   if delay > 0:
     x = x[delay:]
@@ -277,9 +294,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   train_accuracy = sum([ 1 if a == b else 0 for a, b in zip(train_predicted, y_train) ]) / len(train_predicted)
   test_accuracy = sum([ 1 if a == b else 0 for a, b in zip(test_predicted, y_test) ]) / len(test_predicted)
 
-  print("Training accuracy:", train_accuracy)
-  print("Testing accuracy:", test_accuracy)
-  print("Number of features used:", coeff_used)
+  return train_accuracy, test_accuracy, coeff_used
 
 def prettify(elem):
   """Return a pretty-printed XML string for the Element.

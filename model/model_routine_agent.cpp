@@ -29,16 +29,25 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 		VReal vOffset;  // Poisition offset is the vector distance from the center of the unit box.
 		SpAgentState state;
 
+		S32 pos[3];
+		pos[0] = regionSize[0] * IF_GRID_SPACING / 2;
+		pos[1] = regionSize[1] * IF_GRID_SPACING / 2;
+		pos[2] = regionSize[2] * IF_GRID_SPACING / 2;
+		S32 sign = 1;
+
 		for (S32 cell = 0; cell < gNumCells; cell++) {
 			S32 cellType = cell % gNumCellTypes;
 
-			vIdx[0] = regionSize[0] * (0.5 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.250);
-			vIdx[1] = regionSize[1] * (0.5 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.250);
-			vIdx[2] = regionSize[2] * (0.5 * Util::getModelRand(MODEL_RNG_UNIFORM) + 0.250);
+			pos[cell % 2] += (1 + cell / 2) * sign;
+			if (cell % 2 == 1) { sign *= -1; }
 
-			vOffset[0] = IF_GRID_SPACING * (Util::getModelRand(MODEL_RNG_UNIFORM) - 0.5);
-			vOffset[1] = IF_GRID_SPACING * (Util::getModelRand(MODEL_RNG_UNIFORM) - 0.5);
-			vOffset[2] = IF_GRID_SPACING * (Util::getModelRand(MODEL_RNG_UNIFORM) - 0.5);
+			vIdx[0] = std::floor(pos[0] / IF_GRID_SPACING);
+			vIdx[1] = std::floor(pos[1] / IF_GRID_SPACING);
+			vIdx[2] = std::floor(pos[2] / IF_GRID_SPACING);
+
+			vOffset[0] = (pos[0] - vIdx[0] * IF_GRID_SPACING) / IF_GRID_SPACING;
+			vOffset[1] = (pos[1] - vIdx[1] * IF_GRID_SPACING) / IF_GRID_SPACING;
+			vOffset[2] = (pos[2] - vIdx[2] * IF_GRID_SPACING) / IF_GRID_SPACING;
 
 			/* Initialize state */
 			state.setType(cellType);
