@@ -5,29 +5,29 @@ import matplotlib.pyplot as plt
 import sys
 import numpy as np
 
-data = { 'n' : [], 'k' : [], 'score': [], 'test' : [] }
+data = { 'g' : [], 'k' : [], 'accuracy': [], 'test' : [] }
 with open(sys.argv[1], 'r') as f:
   
   for line in f:
 
-    if line.startswith('N ='):
-      n = int(line.split()[2].split(',')[0])
-      k = int(line.split()[5].split(',')[0])
+    if line.startswith('G ='):
+      g = int(line.split()[2].split(',')[0])
+      k = int(line.split()[8].split(',')[0])
 
-    if line.startswith('Training score:'):
-      data['n'].append(n)
+    if line.startswith('Training accuracy:'):
+      data['g'].append(g)
       data['k'].append('K = ' + str(k))
-      data['score'].append(float(line.split()[2]))
+      data['accuracy'].append(float(line.split()[2]))
       data['test'].append('Training')
 
-    if line.startswith('Testing score:'):
-      data['n'].append(n)
+    if line.startswith('Testing accuracy:'):
+      data['g'].append(g)
       data['k'].append('K = ' + str(k))
-      data['score'].append(float(line.split()[2]))
+      data['accuracy'].append(float(line.split()[2]))
       data['test'].append('Test')
 
-ax = sns.lineplot(x='n', y='score', hue='k', style='test', data=data)
-plt.xlabel('N', fontsize=14)
-plt.ylabel('R2', rotation=0, fontsize=14)
+ax = sns.lineplot(x='g', y='accuracy', hue='k', style='test', data=data)
+plt.xlabel('G', fontsize=14)
+plt.ylabel('Accuracy', rotation=0, fontsize=14, textcoords=(10, 10))
 plt.xticks([ 10, 50, 100, 200, 300, 400, 500 ])
 plt.savefig('fig.png')
