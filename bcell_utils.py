@@ -267,12 +267,18 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   #lasso = Lasso(alpha=LASSO_ALPHA)
   lasso.fit(x_train, y_train)
 
+  train_predicted = [ 1 if x > 0.5 else 0 for x in lasso.predict(x_train) ]
+  test_predicted = [ 1 if x > 0.5 else 0 for x in lasso.predict(x_test) ]
+
   train_score = lasso.score(x_train, y_train)
   test_score = lasso.score(x_test, y_test)
   coeff_used = np.sum(lasso.coef_!=0)
 
-  print("Training score:", train_score)
-  print("Testing score:", test_score)
+  train_accuracy = sum([ 1 if a == b else 0 for a, b in zip(train_predicted, y_train) ]) / len(train_predicted)
+  test_accuracy = sum([ 1 if a == b else 0 for a, b in zip(test_predicted, y_test) ]) / len(test_predicted)
+
+  print("Training accuracy:", train_accuracy)
+  print("Testing accuracy:", test_accuracy)
   print("Number of features used:", coeff_used)
 
 def prettify(elem):

@@ -4,6 +4,7 @@ import os
 import sys
 import argparse
 import math
+import shutil
 
 import bcell_utils
 
@@ -81,7 +82,8 @@ INPUT_SIGNAL_FILE = MODEL_DIR + "input_signal"
 INPUT_SIGNAL_LENGTH = SIMULATION_STEPS + 1
 LASSO_ALPHA = 0.005
 
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+shutil.rmtree(OUTPUT_DIR)
+os.makedirs(OUTPUT_DIR)
 
 ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA) + " " + str(BETA) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD)
 
