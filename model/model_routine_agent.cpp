@@ -26,28 +26,43 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 
 	if (init == true) {
 		VIdx vIdx;      // The location of each cell defined by the unit box index, and position offset.
-		VReal vOffset;  // Poisition offset is the vector distance from the center of the unit box.
+		VReal vOffset;  // Position offset is the vector distance from the center of the unit box.
 		SpAgentState state;
 
-		S32 pos[3];
-		pos[0] = regionSize[0] * IF_GRID_SPACING / 2;
-		pos[1] = regionSize[1] * IF_GRID_SPACING / 2;
-		pos[2] = regionSize[2] * IF_GRID_SPACING / 2;
-		S32 sign = 1;
+		S32 zLayers = std::cbrt(gNumCells);
+		S32 yLayers = std::sqrt(gNumCells / zLayers);
+		S32 xLayers = gNumCells / zLayers / yLayers;
+		zLayers = std::ceil(std::cbrt(gNumCells));
+
+		Vector<VIdx> coordsVIdx;
+		Vector<VReal> coordsOffset;
+
+		for (S32 z = -zLayers / 2; z < (zLayers - zLayers / 2); z++) {
+			for (S32 y = -yLayers / 2; y < (yLayers - yLayers / 2); y++) {
+				for (S32 x = -xLayers / 2; x < (xLayers - xLayers / 2); x++) {
+					vIdx[0] = x / IF_GRID_SPACING + regionSize[0] / 2;
+					vIdx[1] = y / IF_GRID_SPACING + regionSize[1] / 2;
+					vIdx[2] = z / IF_GRID_SPACING + regionSize[2] / 2;
+					vOffset[0] = x - std::floor(x / IF_GRID_SPACING) * IF_GRID_SPACING;
+					vOffset[1] = y - std::floor(y / IF_GRID_SPACING) * IF_GRID_SPACING;
+					vOffset[2] = z - std::floor(z / IF_GRID_SPACING) * IF_GRID_SPACING;
+					for (S32 dim = 0; dim < 3; dim++) {
+						while (vOffset[dim] < -IF_GRID_SPACING / 2.0)               { vIdx[dim] -= 1; vOffset[dim] += IF_GRID_SPACING; }
+						while (vOffset[dim] > IF_GRID_SPACING / 2.0) { vIdx[dim] += 1; vOffset[dim] -= IF_GRID_SPACING; }
+					}
+					coordsVIdx.push_back(vIdx);
+					coordsOffset.push_back(vOffset);
+				}
+			}
+		}
 
 		for (S32 cell = 0; cell < gNumCells; cell++) {
 			S32 cellType = cell % gNumCellTypes;
 
-			pos[cell % 2] += (1 + cell / 2) * sign;
-			if (cell % 2 == 1) { sign *= -1; }
+			vIdx = coordsVIdx[cell];
+			vOffset = coordsOffset[cell];
 
-			vIdx[0] = std::floor(pos[0] / IF_GRID_SPACING);
-			vIdx[1] = std::floor(pos[1] / IF_GRID_SPACING);
-			vIdx[2] = std::floor(pos[2] / IF_GRID_SPACING);
-
-			vOffset[0] = (pos[0] - vIdx[0] * IF_GRID_SPACING) / IF_GRID_SPACING;
-			vOffset[1] = (pos[1] - vIdx[1] * IF_GRID_SPACING) / IF_GRID_SPACING;
-			vOffset[2] = (pos[2] - vIdx[2] * IF_GRID_SPACING) / IF_GRID_SPACING;
+			std::cerr << vIdx[0] << "," << vIdx[1] << "," << vIdx[2] << " | " << vOffset[0] << "," << vOffset[1] << "," << vOffset[2] << std::endl;
 
 			/* Initialize state */
 			state.setType(cellType);
@@ -83,6 +98,37 @@ void ModelRoutine::spAgentCRNODERHS( const S32 odeNetIdx, const VIdx& vIdx, cons
 }
 
 void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& junctionData, const VReal& vOffset, const NbrUBEnv& nbrUBEnv, SpAgentState& state/* INOUT */ ) {
+	/* MODEL START */
+
+	// Empty
+
+	/* MODEL END */
+
+	return;
+}
+
+void ModelRoutine::spAgentSecretionBySpAgent( const VIdx& vIdx, const JunctionData& junctionData, const VReal& vOffset, const MechIntrctData& mechIntrctData, const NbrUBEnv& nbrUBEnv, SpAgentState& state/* INOUT */, Vector<SpAgentState>& v_spAgentState, Vector<VReal>& v_spAgentDisp ) {
+	/* MODEL START */
+
+	// Empty
+
+	/* MODEL END */
+
+	return;
+}
+
+void ModelRoutine::updateSpAgentBirthDeath( const VIdx& vIdx, const SpAgent& spAgent, const MechIntrctData& mechIntrctData, const NbrUBEnv& nbrUBEnv, BOOL& divide, BOOL& disappear ) {
+	/* MODEL START */
+
+ 	divide = false;
+  disappear = false;
+
+	/* MODEL END */
+
+	return;
+}
+
+void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junctionData, const VReal& vOffset, const MechIntrctData& mechIntrctData, const NbrUBEnv& nbrUBEnv, SpAgentState& state/* INOUT */, VReal& disp ) {/* if not dividing or disappearing */
 	/* MODEL START */
 
 	const auto cellType = state.getType();
@@ -150,37 +196,6 @@ void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& jun
 	if (gNumCytokines > 0) {
 		delete[] avgPhi;
 	}
-
-	/* MODEL END */
-
-	return;
-}
-
-void ModelRoutine::spAgentSecretionBySpAgent( const VIdx& vIdx, const JunctionData& junctionData, const VReal& vOffset, const MechIntrctData& mechIntrctData, const NbrUBEnv& nbrUBEnv, SpAgentState& state/* INOUT */, Vector<SpAgentState>& v_spAgentState, Vector<VReal>& v_spAgentDisp ) {
-	/* MODEL START */
-
-	// Empty
-
-	/* MODEL END */
-
-	return;
-}
-
-void ModelRoutine::updateSpAgentBirthDeath( const VIdx& vIdx, const SpAgent& spAgent, const MechIntrctData& mechIntrctData, const NbrUBEnv& nbrUBEnv, BOOL& divide, BOOL& disappear ) {
-	/* MODEL START */
-
- 	divide = false;
-  disappear = false;
-
-	/* MODEL END */
-
-	return;
-}
-
-void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junctionData, const VReal& vOffset, const MechIntrctData& mechIntrctData, const NbrUBEnv& nbrUBEnv, SpAgentState& state/* INOUT */, VReal& disp ) {/* if not dividing or disappearing */
-	/* MODEL START */
-
-	// Empty
 
 	/* MODEL END */
 

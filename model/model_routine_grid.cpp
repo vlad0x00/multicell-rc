@@ -73,6 +73,8 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
 					ubVIdxOffset[2] = k* -1;
 
 					for (const auto& agent: ubAgentData.v_spAgent) {
+						if (agent.state.getModelInt(0) == 0) { continue; }
+						//if (agent.state.getModelInt(0) == 1) { continue; }
 						const REAL ratio = Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, agent.vOffset, agent.state.getRadius(), ubVIdxOffset);
 
 						if(ratio > 0.0) {
