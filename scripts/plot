@@ -12,11 +12,11 @@ with open(sys.argv[1], 'r') as f:
 
     if line.startswith('PARAMS:'):
       y = int(line.split()[3].split(',')[0])
-      t = int(line.split()[6].split(',')[0])
+      t = float(line.split()[6].split(',')[0])
 
     if line.startswith('Testing accuracy:'):
       data['y'].append('Y = ' + str(y))
-      data['t'].append('T = ' + str(t))
+      data['t'].append(t)
       data['accuracy'].append(float(line.split()[2]))
 
 ax = sns.lineplot(x='t', y='accuracy', hue='y', data=data)
