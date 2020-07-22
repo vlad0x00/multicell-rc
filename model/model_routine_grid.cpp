@@ -19,8 +19,11 @@ using namespace std;
 void ModelRoutine::initIfGridVar( const VIdx& vIdx, const UBAgentData& ubAgentData, UBEnv& ubEnv ) {
 	/* MODEL START */
 
+  ubEnv.setPhi(0, 0.0);
+	ubEnv.setModelReal(0, 0.0);
 	for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-		ubEnv.setPhi(cytokine, 0.0);
+		ubEnv.setPhi(1 + cytokine, 0.0);
+		ubEnv.setModelReal(1 + cytokine, 0.0);
 	}
 
 	/* MODEL END */
@@ -73,8 +76,6 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
 					ubVIdxOffset[2] = k* -1;
 
 					for (const auto& agent: ubAgentData.v_spAgent) {
-						if (agent.state.getModelInt(0) == 0) { continue; }
-						//if (agent.state.getModelInt(0) == 1) { continue; }
 						const REAL ratio = Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, agent.vOffset, agent.state.getRadius(), ubVIdxOffset);
 
 						if(ratio > 0.0) {
@@ -93,7 +94,7 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
 
 		for(S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
 			rhs[cytokine] /= (IF_GRID_SPACING * IF_GRID_SPACING * IF_GRID_SPACING);
-			nbrUBEnv.setModelReal(0, 0, 0, cytokine, rhs[cytokine]);
+			nbrUBEnv.setModelReal(0, 0, 0, 1 + cytokine, rhs[cytokine]);
 		}
 
 		delete[] rhs;
@@ -199,7 +200,8 @@ void ModelRoutine::updateIfGridAMRTags( const VIdx& vIdx, const NbrUBAgentData& 
 void ModelRoutine::updateIfGridDirichletBCVal( const S32 elemIdx, const VReal& pos, const S32 dim, const BOOL lowSide, const UBEnvModelVar a_ubEnvModelVar[3], const Vector<REAL> av_gridPhi[3]/* av_gridPhi[].size() == ratio * raito * ratio (ratio = Info::envAuxDataInfo.v_phiRatioFromIfGridToIfSubgrid[elemIdx]), use VIdx::getIdx3DTo1D() to index */, REAL& bcVal ) {
 	/* MODEL START */
 
-	ERROR( "unimplemented." );
+  CHECK(elemIdx == 0);
+	bcVal = gInputSignal[Info::getCurBaselineTimeStep() + 1] * INPUT_SIGNAL_DIRICHLET_VAL;
 
 	/* MODEL END */
 

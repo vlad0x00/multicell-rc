@@ -116,6 +116,7 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
 
 def generate_input_signal(signal_len, signal_file):
   arr = np.random.randint(2, size=signal_len)
+  arr[0] = 0
   with open(signal_file, 'w') as f:
     f.write(' '.join([str(x) for x in arr]))
 
@@ -180,7 +181,8 @@ def get_gene_values(output_file, num_genes, num_cells):
     for cell in range(num_cells):
       for bitPos in range(64):
         if gene_num + bitPos >= num_genes: break
-        gene_values[cell].append((genebits[(cell * 8):((cell + 1) * 8)][bitPos // 8] & (1 << (bitPos % 8))) >> (bitPos % 8))
+        val = (genebits[(cell * 8):((cell + 1) * 8)][bitPos // 8] & (1 << (bitPos % 8))) >> (bitPos % 8)
+        gene_values[cell].append(val)
     if gene_num + bitPos >= num_genes: break
     gene_num += 64
   gene_values.reverse()
@@ -210,6 +212,19 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
     input_signal = [ int(x) for x in f.readline().split() ]
 
   states = get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir)
+
+  matches = []
+  for _ in range(num_cells):
+    matches.append([])
+  for signal, genes in zip(input_signal, states):
+    for cell in range(num_cells):
+      matches[cell].append(signal == genes[cell * num_genes])
+  found = False
+  for cell_matches in matches:
+    if all(cell_matches):
+      found = True
+      break
+  assert found
 
   states = states[window_size:]
   for state in states:

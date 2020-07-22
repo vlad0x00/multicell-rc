@@ -26,6 +26,9 @@ typedef enum _model_rng_type_e {
 } model_rng_type_e;
 
 const REAL CELL_RADIUS = 1.0;
+const REAL CELL_GRID_SPACING = 3.0;
+
+const REAL INPUT_SIGNAL_DIRICHLET_VAL = 100;
 
 /* IF_GRID_SPACING is the unit length of each voxel in the Simulation Domain
  The Simulation Domain size is set in the model XML file

@@ -142,6 +142,7 @@ void ModelRoutine::updateSpAgentInfo( Vector<SpAgentInfo>& v_spAgentInfo ) {/* s
 
 	auto params = readXMLParameters();
 
+	S32 numGenes = std::stoi(params[0]);
 	S32 numCellTypes = std::stoi(params[2]);
 
 	/* Provide information about the discrete agent types in the user model */
@@ -149,7 +150,7 @@ void ModelRoutine::updateSpAgentInfo( Vector<SpAgentInfo>& v_spAgentInfo ) {/* s
 
 	for (S32 cellType = 0; cellType < numCellTypes; cellType++) {
 		info.dMax = IF_GRID_SPACING;
-		info.numBoolVars = std::stoi(params[0]);
+		info.numBoolVars = numGenes;
 		info.numStateModelReals = 0;
 		info.numStateModelInts = 1;
 		info.v_mechIntrctModelRealInfo.clear();
@@ -186,10 +187,56 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
 	PDEInfo pdeInfo;
 	GridPhiInfo gridPhiInfo;
 
-	for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {  
-		std::string name = std::to_string(cytokine);
+	pdeInfo.pdeIdx = 0;
+	pdeInfo.pdeType = PDE_TYPE_REACTION_DIFFUSION_STEADY_STATE_LINEAR;
+	pdeInfo.numLevels = NUM_AMR_LEVELS;
+	pdeInfo.numTimeSteps = 0;
+	pdeInfo.v_tagExpansionSize.assign(NUM_AMR_LEVELS, 0); /* v_tagExpansionSize[0] should be always 0 */
+	pdeInfo.ifLevel = NUM_AMR_LEVELS - 1;
+	pdeInfo.mgSolveInfo.numPre = 3;
+	pdeInfo.mgSolveInfo.numPost = 3;
+	pdeInfo.mgSolveInfo.numBottom = 3;
+	pdeInfo.mgSolveInfo.vCycle = true;
+	pdeInfo.mgSolveInfo.maxIters = 30;
+	pdeInfo.mgSolveInfo.epsilon = 1e-8;
+	pdeInfo.mgSolveInfo.hang = 1e-6;
+	pdeInfo.mgSolveInfo.normThreshold = 1e-10;
 
-		pdeInfo.pdeIdx = cytokine;
+	pdeInfo.advectionInfo.courantNumber = 0.5; /* dummy */
+
+	pdeInfo.splittingInfo.v_diffusionTimeSteps.assign(1, 1); /* dummy */
+	pdeInfo.splittingInfo.odeStiff = ODE_STIFF_NORMAL; /* dummy */
+	pdeInfo.splittingInfo.odeH = 0.5; /* dummy */
+	pdeInfo.splittingInfo.odeHm = 0.1; /* dummy */
+	pdeInfo.splittingInfo.odeEpsilon = 1e-6; /* dummy */
+	pdeInfo.splittingInfo.odeThreshold = 1e-19; /* dummy */
+
+	pdeInfo.callAdjustRHSTimeDependentLinear = false;
+
+	gridPhiInfo.elemIdx = 0;
+	gridPhiInfo.name = "input_substance";
+	gridPhiInfo.syncMethod = VAR_SYNC_METHOD_DELTA;
+	gridPhiInfo.aa_bcType[0][0] = BC_TYPE_DIRICHLET_MODEL;
+	gridPhiInfo.aa_bcVal[0][0] = 0.0;
+	gridPhiInfo.aa_bcType[0][1] = BC_TYPE_DIRICHLET_MODEL;
+	gridPhiInfo.aa_bcVal[0][1] = 0.0;
+	gridPhiInfo.aa_bcType[1][0] = BC_TYPE_DIRICHLET_MODEL;
+	gridPhiInfo.aa_bcVal[1][0] = 0.0;
+	gridPhiInfo.aa_bcType[1][1] = BC_TYPE_DIRICHLET_MODEL;
+	gridPhiInfo.aa_bcVal[1][1] = 0.0;
+	gridPhiInfo.aa_bcType[2][0] = BC_TYPE_DIRICHLET_MODEL;
+	gridPhiInfo.aa_bcVal[2][0] = 0.0;
+	gridPhiInfo.aa_bcType[2][1] = BC_TYPE_DIRICHLET_MODEL;
+	gridPhiInfo.aa_bcVal[2][1] = 0.0;
+	gridPhiInfo.errorThresholdVal = GRID_PHI_NORM_THRESHOLD * -1.0;
+	gridPhiInfo.warningThresholdVal = GRID_PHI_NORM_THRESHOLD * -1.0;
+	gridPhiInfo.setNegToZero = true;
+	pdeInfo.v_gridPhiInfo.clear();
+	pdeInfo.v_gridPhiInfo.push_back(gridPhiInfo);
+	v_phiPDEInfo.push_back(pdeInfo);
+
+	for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {  
+		pdeInfo.pdeIdx = 1 + cytokine;
 		pdeInfo.pdeType = PDE_TYPE_REACTION_DIFFUSION_STEADY_STATE_LINEAR;
 		pdeInfo.numLevels = NUM_AMR_LEVELS;
 		pdeInfo.numTimeSteps = 0;
@@ -215,7 +262,7 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
 
 		pdeInfo.callAdjustRHSTimeDependentLinear = false;
 
-		gridPhiInfo.elemIdx = cytokine;
+		gridPhiInfo.elemIdx = 1 + cytokine;
 		gridPhiInfo.name = "cytokine" + std::to_string(cytokine);
 		gridPhiInfo.syncMethod = VAR_SYNC_METHOD_DELTA;
 		gridPhiInfo.aa_bcType[0][0] = BC_TYPE_NEUMANN_CONST; /* dummy */
@@ -252,6 +299,11 @@ void ModelRoutine::updateIfGridModelVarInfo( Vector<IfGridModelVarInfo>& v_ifGri
 
 	v_ifGridModelRealInfo.clear();
 	IfGridModelVarInfo info;
+
+	info.name = "input_substance_rhs" ;
+	info.syncMethod = VAR_SYNC_METHOD_DELTA;
+	v_ifGridModelRealInfo.push_back(info);
+
 	for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
 		info.name = std::to_string(cytokine) + "_rhs" ;
 		info.syncMethod = VAR_SYNC_METHOD_DELTA;
@@ -307,13 +359,8 @@ void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
 		fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("genebits_" + std::to_string(i));
 	}
 	fileOutputInfo.v_particleExtraOutputVectorVarName.clear();
-	if (numCytokines > 0) {
-		fileOutputInfo.v_gridPhiOutput.assign(numCytokines, true);
-		fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(numCytokines, true);
-	} else {
-		fileOutputInfo.v_gridPhiOutput.clear();
-		fileOutputInfo.v_gridPhiOutputDivideByKappa.clear();
-	}
+	fileOutputInfo.v_gridPhiOutput.assign(1 + numCytokines, true);
+	fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(1 + numCytokines, true);
 
 
 	/* MODEL END */
@@ -338,6 +385,16 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
 	SummaryOutputInfo info;
 	v_summaryOutputIntInfo.clear();
 	v_summaryOutputRealInfo.clear();
+
+	info.name = "input_signal_min";
+	info.type = SUMMARY_TYPE_MIN;
+	v_summaryOutputRealInfo.push_back(info);
+	info.name = "input_signal_max";
+	info.type = SUMMARY_TYPE_MAX;
+	v_summaryOutputRealInfo.push_back(info);
+	info.name = "input_signal_avg";
+	info.type = SUMMARY_TYPE_AVG;
+	v_summaryOutputRealInfo.push_back(info);
 
 	for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
 		info.name = "cytokine" + std::to_string(cytokine) + "_min";

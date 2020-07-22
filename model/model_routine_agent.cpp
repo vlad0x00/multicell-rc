@@ -37,9 +37,9 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 		Vector<VIdx> coordsVIdx;
 		Vector<VReal> coordsOffset;
 
-		for (S32 z = -zLayers / 2; z < (zLayers - zLayers / 2); z++) {
-			for (S32 y = -yLayers / 2; y < (yLayers - yLayers / 2); y++) {
-				for (S32 x = -xLayers / 2; x < (xLayers - xLayers / 2); x++) {
+		for (S32 z = (CELL_GRID_SPACING * -zLayers / 2); z < (CELL_GRID_SPACING * (zLayers - zLayers / 2)); z += CELL_GRID_SPACING) {
+			for (S32 y = (CELL_GRID_SPACING * -yLayers / 2); y < (CELL_GRID_SPACING * (yLayers - yLayers / 2)); y += CELL_GRID_SPACING) {
+				for (S32 x = (CELL_GRID_SPACING * -xLayers / 2); x < (CELL_GRID_SPACING * (xLayers - xLayers / 2)); x += CELL_GRID_SPACING) {
 					vIdx[0] = x / IF_GRID_SPACING + regionSize[0] / 2;
 					vIdx[1] = y / IF_GRID_SPACING + regionSize[1] / 2;
 					vIdx[2] = z / IF_GRID_SPACING + regionSize[2] / 2;
@@ -61,8 +61,6 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 
 			vIdx = coordsVIdx[cell];
 			vOffset = coordsOffset[cell];
-
-			std::cerr << vIdx[0] << "," << vIdx[1] << "," << vIdx[2] << " | " << vOffset[0] << "," << vOffset[1] << "," << vOffset[2] << std::endl;
 
 			/* Initialize state */
 			state.setType(cellType);
@@ -135,18 +133,18 @@ void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junction
 
 	REAL aaaRatio[3][3][3];
 	REAL* avgPhi = nullptr;
-	if (gNumCytokines > 0) {
-		avgPhi = new REAL[gNumCytokines];
-		for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-			avgPhi[cytokine] = 0.0;
-		}
-		Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, vOffset, state.getRadius(), aaaRatio);
-		for(S32 i = -1 ; i <= 1; i++) {
-			for(S32 j = -1 ; j <= 1; j++) {
-				for(S32 k = -1 ; k <= 1; k++) {
-					for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-						avgPhi[cytokine] += nbrUBEnv.getPhi(i, j, k, cytokine) * aaaRatio[i + 1][j + 1][k + 1];
-					}
+	avgPhi = new REAL[1 + gNumCytokines];
+	avgPhi[0] = 0.0;
+	for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+		avgPhi[1 + cytokine] = 0.0;
+	}
+	Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, vOffset, state.getRadius(), aaaRatio);
+	for(S32 i = -1 ; i <= 1; i++) {
+		for(S32 j = -1 ; j <= 1; j++) {
+			for(S32 k = -1 ; k <= 1; k++) {
+				avgPhi[0] += nbrUBEnv.getPhi(i, j, k, 0) * aaaRatio[i + 1][j + 1][k + 1];
+				for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+					avgPhi[1 + cytokine] += nbrUBEnv.getPhi(i, j, k, 1 + cytokine) * aaaRatio[i + 1][j + 1][k + 1];
 				}
 			}
 		}
@@ -154,8 +152,7 @@ void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junction
 
 	Vector<BOOL> newBools;
 
-	const S32 baselineStep = Info::getCurBaselineTimeStep();
-	newBools.push_back(gInputSignal[baselineStep + 1]);
+	newBools.push_back((avgPhi[0] > gCytokineThreshold) ? 1 : 0);
 
 	for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
 		if (avgPhi[cytokine] > gCytokineThreshold) {
@@ -193,9 +190,7 @@ void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junction
 
 	state.setBoolValArray(newBools);
 
-	if (gNumCytokines > 0) {
-		delete[] avgPhi;
-	}
+	delete[] avgPhi;
 
 	/* MODEL END */
 
