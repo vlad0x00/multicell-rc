@@ -1,6 +1,6 @@
 #!/bin/bash
 
-G=( 10 20 30 40 50 60 70 80 90 100 )
+T=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)
 Y=( 0 1 2 3 )
 
 ITERATIONS=30
@@ -8,11 +8,11 @@ ITERATIONS=30
 cd "$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd ..
 for y in ${Y[@]}; do
-  for g in ${G[@]}; do
+  for t in ${T[@]}; do
     for i in $(seq $ITERATIONS); do
-      echo "G = $g, Iteration = $i, Y = $y"
-      ./run -g $g -y $k -n
-      sleep $(bc <<< "scale=1; $g / 50.")
+      echo "PARAMS: Y = $y, T = $t, Iteration = $i"
+      ./run -y $y -t $t -n
+      sleep 2
     done
   done
 done
