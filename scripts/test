@@ -1,17 +1,17 @@
 #!/bin/bash
 
-T=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)
-Y=( 0 1 2 3 )
-
+ALPHAS=()
+CYTOKINES=( 0 1 2 3 )
+THRESHOLDS=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)
 ITERATIONS=30
 
 cd "$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd ..
-for y in ${Y[@]}; do
-  for t in ${T[@]}; do
-    for i in $(seq $ITERATIONS); do
-      echo "PARAMS: Y = $y, T = $t, Iteration = $i"
-      ./run -y $y -t $t -n
+for cytokines in ${CYTOKINES[@]}; do
+  for threshold in ${THRESHOLDS[@]}; do
+    for iteration in $(seq $ITERATIONS); do
+      echo "PARAMS: Cytokines = $cytokines, Threshold = $threshold, Iteration = $iteration"
+      ./run -y $cytokines -t $threshold -n
       sleep 2
     done
   done

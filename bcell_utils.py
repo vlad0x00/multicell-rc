@@ -340,7 +340,7 @@ def make_params_xml(xml_path, output_dir, simulation_steps, additional_params):
   bcell_input_param = additional_params
   bcell_verbosity = 0 # [0-5]
 
-  bcell_num_threads = 4
+  bcell_num_threads = 2
   bcell_num_node_groups = 1
   bcell_num_nodes_per_group = 1
   bcell_num_sockets_per_node = 1

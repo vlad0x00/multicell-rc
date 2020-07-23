@@ -5,22 +5,23 @@ import matplotlib.pyplot as plt
 import sys
 import numpy as np
 
-data = { 'y' : [], 't' : [], 'accuracy': [] }
+data = { 'cytokines' : [], 'threshold' : [], 'accuracy': [] }
 with open(sys.argv[1], 'r') as f:
   
   for line in f:
 
     if line.startswith('PARAMS:'):
-      y = int(line.split()[3].split(',')[0])
-      t = float(line.split()[6].split(',')[0])
+      cytokines = int(line.split()[3].split(',')[0])
+      threshold = float(line.split()[6].split(',')[0])
 
     if line.startswith('Testing accuracy:'):
-      data['y'].append('Y = ' + str(y))
-      data['t'].append(t)
+      data['cytokines'].append(str(cytokines) + " cytokines")
+      data['threshold'].append(threshold)
       data['accuracy'].append(float(line.split()[2]))
 
-ax = sns.lineplot(x='t', y='accuracy', hue='y', data=data)
-plt.xlabel('T', fontsize=14)
+ax = sns.lineplot(x='threshold', y='accuracy', hue='cytokines', data=data)
+plt.title("Cells = 27, Cell types = 9, Genes = 5, In Degree = 2,\nFunction = parity, Window = 3, Alpha = 0.1, Beta = 5.0\nSimulation steps = 100")
+plt.xlabel('Threshold', fontsize=14)
 plt.ylabel('Accuracy', rotation=0, fontsize=14, labelpad=37)
 plt.tight_layout()
 plt.savefig('fig.png')
