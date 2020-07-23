@@ -1,18 +1,28 @@
 #!/bin/bash
 
-ALPHAS=()
+# Lambda = sqrt(Beta / Alpha)
+# Beta = 5
+# Alpha = Beta / (Lambda ^ 2)
+# We vary lambda between 3 and 9 (step = 1), so the alpha values are...
+
+ALPHAS=( 0.56 0.31 0.2 0.14 0.1 0.08 0.06 )
 CYTOKINES=( 0 1 2 3 )
 THRESHOLDS=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)
-ITERATIONS=30
+WINDOWS=( 3 5 )
+ITERATIONS=50
 
 cd "$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd ..
-for cytokines in ${CYTOKINES[@]}; do
-  for threshold in ${THRESHOLDS[@]}; do
-    for iteration in $(seq $ITERATIONS); do
-      echo "PARAMS: Cytokines = $cytokines, Threshold = $threshold, Iteration = $iteration"
-      ./run -y $cytokines -t $threshold -n
-      sleep 2
+for window in ${WINDOWS[@]}; do
+  for alpha in ${ALPHAS[@]}; do
+    for cytokines in ${CYTOKINES[@]}; do
+      for threshold in ${THRESHOLDS[@]}; do
+        for iteration in $(seq $ITERATIONS); do
+          echo "PARAMS: w = $window, a = $alpha, y = $cytokines, t = $threshold, # = $iteration"
+          ./run -n -w $window -a $alpha -y $cytokines -t $threshold
+          sleep 2
+        done
+      done
     done
   done
 done

@@ -116,17 +116,19 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
 
 def generate_input_signal(signal_len, signal_file):
   arr = np.random.randint(2, size=signal_len)
-  arr[0] = 0
+  arr[0] = 0 # Initial substance level is 0, otherwise grid phi initialization is non-trivial
   with open(signal_file, 'w') as f:
     f.write(' '.join([str(x) for x in arr]))
 
-def generate_gene_initial_states(num_genes, num_cells, input_signal_file, state_file):
+def generate_gene_initial_states(num_genes, num_cells, num_cytokines, input_signal_file, state_file):
   with open(input_signal_file, 'r') as f:
     input_signal = [ int(x) for x in f.readline().split() ]
   with open(state_file, 'w') as f:
     for _ in range(num_cells):
       state = np.random.randint(2, size=num_genes)
-      state[0] = input_signal[0]
+      state[0] = input_signal[0] # 0
+      for i in range(num_cytokines):
+        state[i + 1] = 0 # Initial substance levels are 0, otherwise grid phi initialization is non-trivial
       f.write(' '.join([str(x) for x in state]))
       f.write('\n')
 

@@ -102,7 +102,7 @@ if NEW:
   print("Generating initial gene network(s) state(s), functions, and input signal... ", end='', flush=True)
   bcell_utils.generate_gene_functions(NUM_CELL_TYPES, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
   bcell_utils.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
-  bcell_utils.generate_gene_initial_states(NUM_GENES, NUM_CELLS, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
+  bcell_utils.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_CYTOKINES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
   print("Done!", flush=True)
 bcell_utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS)
 

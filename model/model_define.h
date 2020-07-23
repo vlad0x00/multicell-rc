@@ -28,7 +28,7 @@ typedef enum _model_rng_type_e {
 const REAL CELL_RADIUS = 1.0;
 const REAL CELL_GRID_SPACING = 3.0;
 
-const REAL INPUT_SIGNAL_DIRICHLET_VAL = 200;
+const REAL INPUT_SIGNAL_DIRICHLET_VAL = 500;
 const REAL INPUT_SIGNAL_THRESHOLD = 0.2;
 
 /* IF_GRID_SPACING is the unit length of each voxel in the Simulation Domain
