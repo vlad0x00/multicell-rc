@@ -215,18 +215,17 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   states = get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir)
 
-  matches = []
+  cell_input_matches = []
   for _ in range(num_cells):
-    matches.append([])
+    cell_input_matches.append([])
   for signal, genes in zip(input_signal, states):
     for cell in range(num_cells):
-      matches[cell].append(signal == genes[cell * num_genes])
-  found = False
-  for cell_matches in matches:
+      cell_input_matches[cell].append(signal == genes[cell * num_genes])
+  cells_correct_input = 0
+  for cell_matches in cell_input_matches:
     if all(cell_matches):
-      found = True
-      break
-  assert found
+      cells_correct_input += 1
+  assert cells_correct_input > 0
 
   states = states[window_size:]
   for state in states:
@@ -311,7 +310,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   train_accuracy = sum([ 1 if a == b else 0 for a, b in zip(train_predicted, y_train) ]) / len(train_predicted)
   test_accuracy = sum([ 1 if a == b else 0 for a, b in zip(test_predicted, y_test) ]) / len(test_predicted)
 
-  return train_accuracy, test_accuracy, coeff_used
+  return train_accuracy, test_accuracy, coeff_used, cells_correct_input
 
 def prettify(elem):
   """Return a pretty-printed XML string for the Element.
@@ -325,24 +324,24 @@ def make_params_xml(xml_path, output_dir, simulation_steps, additional_params):
 
   # Biocellion required parameters
   bcell_num_baseline = simulation_steps
-  bcell_nx = '8'
-  bcell_ny = '8'
-  bcell_nz = '8'
-  bcell_partition_size = 8
+  bcell_nx = '6'
+  bcell_ny = '6'
+  bcell_nz = '6'
+  bcell_partition_size = 6
   bcell_path = output_dir
   bcell_interval = 1
   bcell_start_x = 0
   bcell_start_y = 0
   bcell_start_z = 0
-  bcell_size_x = 8
-  bcell_size_y = 8
-  bcell_size_z = 8
+  bcell_size_x = 6
+  bcell_size_y = 6
+  bcell_size_z = 6
 
   # Biocellion optional parameteres
   bcell_input_param = additional_params
   bcell_verbosity = 0 # [0-5]
 
-  bcell_num_threads = 2
+  bcell_num_threads = 1
   bcell_num_node_groups = 1
   bcell_num_nodes_per_group = 1
   bcell_num_sockets_per_node = 1

@@ -111,8 +111,9 @@ os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_
 print("Done!", flush=True)
 
 print("Training LASSO... ", end='', flush=True)
-train_accuracy, test_accuracy, coeff_used = bcell_utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_OUTPUT_GENES, NUM_CELLS, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, VISUALIZE)
+train_accuracy, test_accuracy, coeff_used, cells_correct_input = bcell_utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_OUTPUT_GENES, NUM_CELLS, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, VISUALIZE)
 print("Done!", flush=True)
 print("Training accuracy:", train_accuracy)
 print("Testing accuracy:", test_accuracy)
 print("Number of features used:", coeff_used)
+print("Cells with correct input signal: {} / {}".format(cells_correct_input, NUM_CELLS))
