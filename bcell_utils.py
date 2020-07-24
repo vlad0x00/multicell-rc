@@ -10,6 +10,8 @@ from sklearn.linear_model import Lasso, LassoCV
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
+import shutil
+import subprocess
 
 STATES_FILE = 'states'
 
@@ -24,7 +26,7 @@ class Node:
   def __hash__(self):
     return self.name.__hash__()
 
-def make_network_dot(varf, dot_file):
+def make_network_dot(num_genes, varf, dot_file):
   graph = nx.DiGraph()
 
   for cell_type, variable_matrix in enumerate(varf):
@@ -44,6 +46,14 @@ def make_network_dot(varf, dot_file):
   pydot_graph.set_name("gene_networks")
   pydot_graph.write(dot_file, prog='dot')
 
+  if shutil.which('dot') is not None:
+    filename, file_extension = os.path.splitext(dot_file)
+    with open(filename + ".png", 'w') as f:
+      if num_genes > 100:
+        subprocess.run([ 'sfdp', '-x', '-Goverlap=scale', '-T', 'png', dot_file ], stdout=f)
+      else:
+        subprocess.run([ 'dot', '-T', 'png', dot_file ], stdout=f)
+
 def generate_gene_functions(num_cell_types, num_genes, connectivity, input_connections, num_cytokines, nv_file, varf_file, tt_file, dot_file):
   assert input_connections < num_genes
 
@@ -54,7 +64,7 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
   for _ in range(num_cell_types):
     nv.append(np.zeros(num_genes, dtype=np.int32))
 
-    total_edges = (num_genes - 1 - num_cytokines) * connectivity
+    total_edges = num_genes * connectivity - input_connections
     edges = []
     for _ in range(total_edges):
       while True:
@@ -73,7 +83,7 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
           edges.append((0, j))
           break
 
-    assert connectivity - 1 < sum(nv[-1]) / len(nv[-1]) < connectivity + 1
+    assert connectivity - 0.05 < sum(nv[-1]) / len(nv[-1]) < connectivity + 0.05
 
     varf.append([])
     for gene, n in enumerate(nv[-1]):
@@ -112,7 +122,7 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
         f.write('\n')
 
   if dot_file != None:
-    make_network_dot(varf, dot_file)
+    make_network_dot(num_genes, varf, dot_file)
 
 def generate_input_signal(signal_len, signal_file):
   arr = np.random.randint(2, size=signal_len)
@@ -243,15 +253,27 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
       def __hash__(self):
         return self.name.__hash__()
 
+    num_genes = len(states[0])
+    dot_available = shutil.which('dot') is not None
     for idx, state in enumerate(states):
       graph = nx.DiGraph()
       for i, bit in enumerate(state):
         graph.add_node(Node(str(i)), label=bit)
 
+      filename = output_dir + "state" + str(idx).zfill(len(str(abs(timesteps))))
+
       pydot_graph = nx.drawing.nx_pydot.to_pydot(graph)
       pydot_graph.set_strict(False)
       pydot_graph.set_name("state" + str(idx))
-      pydot_graph.write(output_dir + "state" + str(index).zfill(3) + ".dot", prog='dot')
+      pydot_graph.write(filename + ".dot", prog='dot')
+
+      if dot_available:
+        with open(filename + ".png", 'w') as f:
+          if num_genes > 100:
+            subprocess.run([ 'sfdp', '-x', '-Goverlap=scale', '-T', 'png', filename + ".dot" ], stdout=f)
+          else:
+            subprocess.run([ 'dot', '-T', 'png', filename + ".dot" ], stdout=f)
+
   if visualize:
     make_simulation_dots(states, output_dir)
   else:

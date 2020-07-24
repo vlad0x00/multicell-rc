@@ -46,7 +46,7 @@ parser.add_argument('-y', '--cytokines', type=zeroplus_int, default=3, help="Num
 parser.add_argument('-o', '--secretion-low', type=zeroplus_float, default=0, help="Cytokine secretion when the gene is off.")
 parser.add_argument('-i', '--secretion-high', type=zeroplus_float, default=200.0, help="Cytokine secretion when the gene is on.")
 parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=0.65, help="Cytokine threshold to turn a gene on.")
-parser.add_argument('-s', '--steps', type=abovezero_int, default=100, help="Number of simulation steps.")
+parser.add_argument('-s', '--steps', type=abovezero_int, default=200, help="Number of simulation steps.")
 parser.add_argument('-m', '--memory', type=zeroplus_int, default=0, help="Step delay between input signal and output layer prediction.")
 parser.add_argument('-w', '--window-size', type=abovezero_int, default=3, help="Window size of predicted functions.")
 parser.add_argument('-n', '--new', action='store_true', help="Generate random new initial gene network states, functions, and input signal. Otherwise use existing.")
@@ -68,10 +68,10 @@ NUM_GENES = 1 + args.cytokines * 2 + args.genes
 NUM_CELLS = args.cells
 NUM_CELL_TYPES = args.cell_types
 CONNECTIVITY = args.degree
-INPUT_CONNECTIONS = math.ceil(NUM_GENES * args.input_fraction)
 ALPHA = args.alpha
 BETA = args.beta
 NUM_CYTOKINES = args.cytokines
+INPUT_CONNECTIONS = math.ceil((NUM_GENES - (1 + NUM_CYTOKINES)) * args.input_fraction)
 SECRETION_LOW = args.secretion_low
 SECRETION_HIGH = args.secretion_high
 CYTOKINE_THRESHOLD = args.cytokine_threshold
@@ -86,7 +86,7 @@ VISUALIZE = args.visualize
 NEW = args.new
 LASSO_ALPHA = 0.005
 
-shutil.rmtree(OUTPUT_DIR)
+shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
 os.makedirs(OUTPUT_DIR)
 
 ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA) + " " + str(BETA) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD)
@@ -95,7 +95,9 @@ LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 
 if not VISUALIZE:
   if os.path.isfile(DOT_FILE):
+      filename, file_extension = os.path.splitext(DOT_FILE)
       os.remove(DOT_FILE)
+      os.remove(filename + ".png")
   DOT_FILE = None
 
 if NEW:
