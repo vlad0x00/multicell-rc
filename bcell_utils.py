@@ -219,7 +219,7 @@ def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, o
 
   return states
 
-def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_output_genes, num_cells, window_size, delay, timesteps, function, visualize):
+def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, window_size, delay, timesteps, function, visualize):
   with open(input_signal_file) as f:
     input_signal = [ int(x) for x in f.readline().split() ]
 
@@ -239,7 +239,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   states = states[window_size:]
   for state in states:
-    assert len(state) == num_cells * num_output_genes
+    assert len(state) == num_cells * num_genes
 
   def make_simulation_dots(states, output_dir):
     class Node:
@@ -305,7 +305,20 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   functions = { 'parity' : parity, 'median' : median }
 
-  x = states
+  output_states = []
+  for state in states:
+    output_states.append([])
+    for cell in range(num_output_cells):
+      if cell == 0:
+        cell_state = state[-((cell + 1) * num_genes):]
+      else:
+        cell_state = state[-((cell + 1) * num_genes):-(cell * num_genes)]
+      assert len(cell_state) == num_genes
+      output_states[-1] += cell_state[-num_output_genes:]
+  for state in output_states:
+    assert len(state) == len(output_states[0])
+
+  x = output_states
   y = functions[function]
 
   if delay > 0:
@@ -314,7 +327,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   assert len(x) == len(y)
   for s in x:
-    assert len(s) == num_cells * num_genes
+    assert len(s) == num_output_cells * num_output_genes
 
   x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
