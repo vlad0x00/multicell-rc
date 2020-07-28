@@ -1,5 +1,5 @@
 *.pyc
-output
+output*
 states
 model/nv
 model/varf
@@ -11,3 +11,4 @@ model/*.o
 model/*.so
 model/gene_networks.dot
 model/gene_networks.png
+scripts/results
