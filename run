@@ -49,7 +49,7 @@ parser.add_argument('-y', '--cytokines', type=zeroplus_int, default=3, help="Num
 parser.add_argument('-o', '--secretion-low', type=zeroplus_float, default=0, help="Cytokine secretion when the gene is off.")
 parser.add_argument('-i', '--secretion-high', type=zeroplus_float, default=200.0, help="Cytokine secretion when the gene is on.")
 parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=0.65, help="Cytokine threshold to turn a gene on.")
-parser.add_argument('-s', '--steps', type=abovezero_int, default=200, help="Number of simulation steps.")
+parser.add_argument('-s', '--steps', type=abovezero_int, default=300, help="Number of simulation steps.")
 parser.add_argument('-m', '--memory', type=zeroplus_int, default=0, help="Step delay between input signal and output layer prediction.")
 parser.add_argument('-w', '--window-size', type=abovezero_int, default=5, help="Window size of predicted functions.")
 parser.add_argument('-e', '--reuse', action='store_true', help="Use previously generated initial gene network states, functions, and input signal. Otherwise generate new.")
@@ -62,12 +62,12 @@ BIOCELLION_DIR = "biocellion/"
 OUTPUT_DIR = args.output
 BIOCELLION_BIN = BIOCELLION_DIR + "framework/main/biocellion.DP.SPAGENT.OPT"
 BIOCELLION_OUTPUT_FILE = os.path.join(OUTPUT_DIR, "biocellion_output")
-PARAMS_FILE = MODEL_DIR + "params.xml"
-NV_FILE = MODEL_DIR + "nv"
-VARF_FILE = MODEL_DIR + "varf"
-TT_FILE = MODEL_DIR + "tt"
-GENE_INITIAL_STATES_FILE = MODEL_DIR + "gene_initial_states"
-DOT_FILE = MODEL_DIR + "gene_networks.dot"
+PARAMS_FILE = OUTPUT_DIR + "params.xml"
+NV_FILE = OUTPUT_DIR + "nv"
+VARF_FILE = OUTPUT_DIR + "varf"
+TT_FILE = OUTPUT_DIR + "tt"
+GENE_INITIAL_STATES_FILE = OUTPUT_DIR + "gene_initial_states"
+DOT_FILE = OUTPUT_DIR + "gene_networks.dot"
 NUM_GENES = 1 + args.cytokines * 2 + args.genes
 NUM_CELLS = args.cells
 NUM_CELL_TYPES = args.cell_types
@@ -84,7 +84,7 @@ NUM_OUTPUT_CELLS = math.ceil(NUM_CELLS * args.output_cell_fraction)
 SIMULATION_STEPS = args.steps
 DELAY = args.memory
 WINDOW_SIZE = args.window_size
-INPUT_SIGNAL_FILE = MODEL_DIR + "input_signal"
+INPUT_SIGNAL_FILE = OUTPUT_DIR + "input_signal"
 INPUT_SIGNAL_LENGTH = SIMULATION_STEPS + 1
 FUNCTION = args.function
 VISUALIZE = args.visualize

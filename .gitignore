@@ -1,14 +1,6 @@
 *.pyc
 output*
 states
-model/nv
-model/varf
-model/tt
-model/gene_initial_states
-model/input_signal
-model/params.xml
 model/*.o
 model/*.so
-model/gene_networks.dot
-model/gene_networks.png
 scripts/results
