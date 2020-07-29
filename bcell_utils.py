@@ -260,7 +260,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
       for i, bit in enumerate(state):
         graph.add_node(Node(str(i)), label=bit)
 
-      filename = output_dir + "state" + str(idx).zfill(len(str(abs(timesteps))))
+      filename = os.path.join(output_dir, "state" + str(idx).zfill(len(str(abs(timesteps)))))
 
       pydot_graph = nx.drawing.nx_pydot.to_pydot(graph)
       pydot_graph.set_strict(False)
@@ -279,7 +279,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   else:
     for filename in os.listdir(output_dir):
       if filename.startswith("state"):
-        os.remove(output_dir + filename)
+        os.remove(os.path.join(output_dir, filename))
 
   parity = []
   for i in range(window_size, len(input_signal)):
