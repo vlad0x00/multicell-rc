@@ -20,6 +20,8 @@ NOTICE:  These data were produced by Battelle Memorial Institute (BATTELLE) unde
 
 using namespace std;
 
+#include <cmath>
+
 #if HAS_SPAGENT
 void ModelRoutine::updateSpAgentOutput( const VIdx& vIdx, const SpAgent& spAgent, REAL& color, Vector<REAL>& v_extraScalar, Vector<VReal>& v_extraVector ) {
 	/* MODEL START */

@@ -20,6 +20,8 @@ NOTICE:  These data were produced by Battelle Memorial Institute (BATTELLE) unde
 
 using namespace std;
 
+#include <cmath>
+
 #if HAS_SPAGENT
 void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VIdx& regionSize, const IfGridBoxData<BOOL>& ifGridHabitableBoxData, Vector<VIdx>& v_spAgentVIdx, Vector<SpAgentState>& v_spAgentState, Vector<VReal>& v_spAgentOffset ) {/* initialization */
 	/* MODEL START */

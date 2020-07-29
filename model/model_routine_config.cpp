@@ -22,6 +22,7 @@ using namespace std;
 
 #include <fstream>
 #include <sstream>
+#include <cmath>
 
 S32 gNumGenes;
 S32 gNumCells;
