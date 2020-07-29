@@ -1,6 +1,5 @@
 *.pyc
 output*
-states
 model/*.o
 model/*.so
 utils/results

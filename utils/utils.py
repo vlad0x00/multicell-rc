@@ -261,7 +261,7 @@ def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, o
     for values in gene_values:
       states[-1] += values
 
-  with open(STATES_FILE, 'w') as f:
+  with open(os.path.join(output_dir, STATES_FILE), 'w') as f:
     for state in states:
       for i, bit in enumerate(state):
         if i > 0:
