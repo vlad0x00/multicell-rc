@@ -12,6 +12,58 @@ import pandas as pd
 import numpy as np
 import shutil
 import subprocess
+import argparse
+
+def zeroplus_int(s):
+  i = int(s)
+  if i < 0: raise argparse.ArgumentTypeError(s + " is invalid, please input an integer >=0.")
+  return i
+
+def abovezero_int(s):
+  i = int(s)
+  if i <= 0: raise argparse.ArgumentTypeError(s + " is invalid, please input an integer >0.")
+  return i
+
+def zeroplus_float(s):
+  f = float(s)
+  if f < 0: raise argparse.ArgumentTypeError(s + " is invalid, please input a float >=0.")
+  return f
+
+def abovezero_float(s):
+  f = float(s)
+  if f <= 0: raise argparse.ArgumentTypeError(s + " is invalid, please input a float >0.")
+  return f
+
+def fraction_type(s):
+  f = float(s)
+  if f < 0 or f > 1: raise argparse.ArgumentTypeError(s + " is invalid, please input a number >=0 and <=1.")
+  return f
+
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('-g', '--genes', type=abovezero_int, default=20, help="Number of (internal) genes per cell.")
+parser.add_argument('-c', '--cells', type=abovezero_int, default=216, help="Number of cells in the simulation.")
+parser.add_argument('-p', '--cell-types', type=abovezero_int, default=9, help="Number of cell types in the simulation.")
+parser.add_argument('-u', '--output-gene-fraction', type=fraction_type, default=0.5, help="Fraction of (internal) genes used for output.")
+parser.add_argument('-l', '--output-cell-fraction', type=fraction_type, default=0.5, help="Fraction of cells used for output.")
+parser.add_argument('-d', '--degree', type=abovezero_int, default=2, help="Average node in-degree of gene network(s).")
+parser.add_argument('-r', '--input-fraction', type=fraction_type, default=0.5, help="Fraction of nodes connected to the input signal.")
+parser.add_argument('-f', '--function', choices=[ "median", "parity" ], default="parity", help="Function to learn")
+parser.add_argument('-a', '--alpha', type=zeroplus_float, default=0.1, help="Molecular decay rate.")
+parser.add_argument('-b', '--beta', type=zeroplus_float, default=5.0, help="Grid diffusion coefficient.")
+parser.add_argument('-y', '--cytokines', type=zeroplus_int, default=3, help="Number of cytokines in the simulation.")
+parser.add_argument('-o', '--secretion-low', type=zeroplus_float, default=0, help="Cytokine secretion when the gene is off.")
+parser.add_argument('-i', '--secretion-high', type=zeroplus_float, default=200.0, help="Cytokine secretion when the gene is on.")
+parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=0.65, help="Cytokine threshold to turn a gene on.")
+parser.add_argument('-s', '--steps', type=abovezero_int, default=300, help="Number of simulation steps.")
+parser.add_argument('-m', '--memory', type=zeroplus_int, default=0, help="Step delay between input signal and output layer prediction.")
+parser.add_argument('-w', '--window-size', type=abovezero_int, default=5, help="Window size of predicted functions.")
+parser.add_argument('-e', '--reuse', action='store_true', help="Use previously generated initial gene network states, functions, and input signal. Otherwise generate new.")
+parser.add_argument('-z', '--visualize', action='store_true', help="Generate a dot file of the gene network model and every state of the simulation for visualization and debugging.")
+parser.add_argument('-q', '--output', default="output", help="Path of simulation output directory")
+
+def parse_args(args=None):
+  global parser
+  return parser.parse_args(args)
 
 STATES_FILE = 'states'
 
