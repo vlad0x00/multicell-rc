@@ -1,0 +1,16 @@
+#!/bin/bash
+
+ITERATIONS=3
+
+cd "$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+cd ..
+
+accuracies=()
+for i in $(seq $ITERATIONS); do
+  accuracies+=($(./run | grep "Testing accuracy" | awk '{ print $3 }'))
+done
+
+sum=$(IFS="+"; bc <<< "${accuracies[*]}")
+len=${#accuracies[@]}
+
+echo $(bc <<< "scale=2; $sum / $len")

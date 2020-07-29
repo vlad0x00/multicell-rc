@@ -6,27 +6,28 @@ import sys
 import numpy as np
 import pandas as pd
 import math
+import os
 from . import utils
 sns.set(font_scale=1.1)
 
 data = { 'Cells' : [], 'Cell types' : [], 'Cytokines' : [], 'Lambda' : [], 'Threshold' : [], 'Window' : [], 'Accuracy': [] }
-with open(sys.argv[1], 'r') as f:
-  
-  for line in f:
+for dirpath, dirnames, filenames in os.walk(sys.argv[1]):
+  for filename in filenames:
+    if os.path.basename(filename) is 'stdout':
+      with open(filename, 'r') as f:
+        for line in f:
+          if line.startswith('PARAMS:'):
+            tokens = line.split()[1:]
+            args = utils.parse_args(tokens)
 
-    if line.startswith('PARAMS:'):
-      tokens = line.split()[1:]
-      args = utils.parse_args(tokens)
-
-      data['Cells'].append(args.cells)
-      data['Cell types'].append(args.cell_types)
-      data['Cytokines'].append(str(args.cytokines) + " cytokines")
-      data['Lambda'].append(round(math.sqrt(5.0 / args.alpha)))
-      data['Threshold'].append(args.threshold)
-      data['Window'].append(args.window)
-
-    if line.startswith('Testing accuracy:'):
-      data['Accuracy'].append(float(line.split()[2]))
+            data['Cells'].append(args.cells)
+            data['Cell types'].append(args.cell_types)
+            data['Cytokines'].append(str(args.cytokines) + " cytokines")
+            data['Lambda'].append(round(math.sqrt(5.0 / args.alpha)))
+            data['Threshold'].append(args.threshold)
+            data['Window'].append(args.window)
+          if line.startswith('Testing accuracy:'):
+            data['Accuracy'].append(float(line.split()[2]))
 
 data = pd.DataFrame(data)
 

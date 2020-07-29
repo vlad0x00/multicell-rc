@@ -46,7 +46,7 @@ parser.add_argument('-p', '--cell-types', type=abovezero_int, default=9, help="N
 parser.add_argument('-u', '--output-gene-fraction', type=fraction_type, default=0.5, help="Fraction of (internal) genes used for output.")
 parser.add_argument('-l', '--output-cell-fraction', type=fraction_type, default=0.5, help="Fraction of cells used for output.")
 parser.add_argument('-d', '--degree', type=abovezero_int, default=2, help="Average node in-degree of gene network(s).")
-parser.add_argument('-r', '--input-fraction', type=fraction_type, default=0.5, help="Fraction of nodes connected to the input signal.")
+parser.add_argument('-r', '--input-fraction', type=fraction_type, default=1.0, help="Fraction of nodes connected to the input signal.")
 parser.add_argument('-f', '--function', choices=[ "median", "parity" ], default="parity", help="Function to learn")
 parser.add_argument('-a', '--alpha', type=zeroplus_float, default=0.1, help="Molecular decay rate.")
 parser.add_argument('-b', '--beta', type=zeroplus_float, default=5.0, help="Grid diffusion coefficient.")
