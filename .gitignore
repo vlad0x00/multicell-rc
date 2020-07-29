@@ -3,4 +3,4 @@ output*
 states
 model/*.o
 model/*.so
-scripts/results
+utils/results

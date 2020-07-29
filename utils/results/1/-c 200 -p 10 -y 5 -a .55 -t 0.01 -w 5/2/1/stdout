@@ -1,3 +1,0 @@
-PARAMS: -c 200 -p 10 -y 5 -a .55 -t 0.01 -w 5
-Generating initial gene network(s) state(s), functions, and input signal... Done!
-Running Biocellion... 
