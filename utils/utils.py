@@ -386,7 +386,10 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
-  previous_OPENBLAS_NUM_THREADS = os.environ['OPENBLAS_NUM_THREADS']
+  if 'OPENBLAS_NUM_THREADS' in os.environ:
+    previous_OPENBLAS_NUM_THREADS = os.environ['OPENBLAS_NUM_THREADS']
+  else:
+    previous_OPENBLAS_NUM_THREADS = None
   os.environ['OPENBLAS_NUM_THREADS'] = str(threads)
   lasso = LassoCV(max_iter=10000, n_jobs=threads)
   #lasso = Lasso(alpha=LASSO_ALPHA)
@@ -399,7 +402,10 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   test_score = lasso.score(x_test, y_test)
   coeff_used = np.sum(lasso.coef_!=0)
 
-  os.environ['OPENBLAS_NUM_THREADS'] = previous_OPENBLAS_NUM_THREADS
+  if previous_OPENBLAS_NUM_THREADS is not None:
+    os.environ['OPENBLAS_NUM_THREADS'] = previous_OPENBLAS_NUM_THREADS
+  else:
+    del os.environ['OPENBLAS_NUM_THREADS']
 
   train_accuracy = sum([ 1 if a == b else 0 for a, b in zip(train_predicted, y_train) ]) / len(train_predicted)
   test_accuracy = sum([ 1 if a == b else 0 for a, b in zip(test_predicted, y_test) ]) / len(test_predicted)
