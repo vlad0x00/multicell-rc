@@ -111,7 +111,7 @@ void ModelRoutine::updateIfSubgridKappa( const S32 pdeIdx, const VIdx& vIdx, con
   /*
    * The following is disabled as the routine doesn't allow accessing neighbouring agents,
    * which are required to calculate occupied volume.
-   * /
+   */
   /*
   CHECK(subgridVOffset[0] == 0);
   CHECK(subgridVOffset[1] == 0);
