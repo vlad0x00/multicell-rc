@@ -1,19 +1,13 @@
 import os
-import numpy as np
 import random
-import xml.etree.ElementTree as ET
-from xml.etree.ElementTree import Element, SubElement, Comment
-from xml.dom import minidom
 import csv
-import networkx as nx
-from sklearn.linear_model import Lasso, LassoCV
-from sklearn.model_selection import train_test_split
-from sklearn.utils import parallel_backend
-import pandas as pd
-import numpy as np
 import shutil
 import subprocess
 import argparse
+
+import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import Element, SubElement, Comment
+from xml.dom import minidom
 
 def zeroplus_int(s):
   i = int(s)
@@ -82,6 +76,8 @@ class Node:
     return self.name.__hash__()
 
 def make_network_dot(num_genes, varf, dot_file):
+  import networkx as nx
+
   graph = nx.DiGraph()
 
   for cell_type, variable_matrix in enumerate(varf):
@@ -111,6 +107,8 @@ def make_network_dot(num_genes, varf, dot_file):
 
 def generate_gene_functions(num_cell_types, num_genes, connectivity, input_connections, num_cytokines, nv_file, varf_file, tt_file, dot_file):
   assert input_connections < num_genes
+
+  import numpy as np
 
   nv = []
   varf = []
@@ -180,12 +178,14 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
     make_network_dot(num_genes, varf, dot_file)
 
 def generate_input_signal(signal_len, signal_file):
+  import numpy as np
   arr = np.random.randint(2, size=signal_len)
   arr[0] = 0 # Initial substance level is 0, otherwise grid phi initialization is non-trivial
   with open(signal_file, 'w') as f:
     f.write(' '.join([str(x) for x in arr]))
 
 def generate_gene_initial_states(num_genes, num_cells, num_cytokines, input_signal_file, state_file):
+  import numpy as np
   with open(input_signal_file, 'r') as f:
     input_signal = [ int(x) for x in f.readline().split() ]
   with open(state_file, 'w') as f:
@@ -274,7 +274,12 @@ def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, o
 
   return states
 
-def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, window_size, delay, timesteps, function, visualize, threads):  
+def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, window_size, delay, timesteps, function, visualize, threads):
+  import numpy as np
+  from sklearn.linear_model import Lasso, LassoCV
+  from sklearn.model_selection import train_test_split
+  from sklearn.utils import parallel_backend
+
   with open(input_signal_file) as f:
     input_signal = [ int(x) for x in f.readline().split() ]
 
@@ -297,6 +302,8 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
     assert len(state) == num_cells * num_genes
 
   def make_simulation_dots(states, output_dir):
+    import networkx as nx
+
     class Node:
 
       def __init__(self, name):
@@ -341,7 +348,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
     bitsum = 0
     for bit in input_signal[(i - window_size):i]:
       bitsum += bit
-    if bitsum % 2 == 0: 
+    if bitsum % 2 == 0:
       parity.append(0)
     else:
       parity.append(1)
@@ -386,12 +393,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
-  if 'OPENBLAS_NUM_THREADS' in os.environ:
-    previous_OPENBLAS_NUM_THREADS = os.environ['OPENBLAS_NUM_THREADS']
-  else:
-    previous_OPENBLAS_NUM_THREADS = None
-  os.environ['OPENBLAS_NUM_THREADS'] = str(threads)
-  lasso = LassoCV(max_iter=10000, n_jobs=threads)
+  lasso = LassoCV(max_iter=10000, tol=0.0005, n_jobs=threads)
   #lasso = Lasso(alpha=LASSO_ALPHA)
   lasso.fit(x_train, y_train)
 
@@ -401,11 +403,6 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   train_score = lasso.score(x_train, y_train)
   test_score = lasso.score(x_test, y_test)
   coeff_used = np.sum(lasso.coef_!=0)
-
-  if previous_OPENBLAS_NUM_THREADS is not None:
-    os.environ['OPENBLAS_NUM_THREADS'] = previous_OPENBLAS_NUM_THREADS
-  else:
-    del os.environ['OPENBLAS_NUM_THREADS']
 
   train_accuracy = sum([ 1 if a == b else 0 for a, b in zip(train_predicted, y_train) ]) / len(train_predicted)
   test_accuracy = sum([ 1 if a == b else 0 for a, b in zip(test_predicted, y_test) ]) / len(test_predicted)
@@ -479,7 +476,7 @@ def make_params_xml(xml_path, output_dir, simulation_steps, additional_params, t
 
   xml_init_data = SubElement(xml_required, 'init_data')
   xml_init_data.set('partition_size', str(bcell_partition_size))
-  xml_init_data.set('src', 'code') 
+  xml_init_data.set('src', 'code')
 
   xml_output = SubElement(xml_required, 'output ')
   xml_output.set('path', bcell_path)

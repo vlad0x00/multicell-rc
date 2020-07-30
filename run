@@ -45,6 +45,13 @@ VISUALIZE = args.visualize
 NEW = not args.reuse
 THREADS = args.threads
 
+os.environ['OPENBLAS_NUM_THREADS'] = str(args.threads)
+os.environ['OMP_NUM_THREADS'] = str(args.threads)
+os.environ['MKL_NUM_THREADS'] = str(args.threads)
+os.environ['BLIS_NUM_THREADS'] = str(args.threads)
+os.environ['NUMEXPR_NUM_THREADS'] = str(args.threads)
+os.environ['VECLIB_MAXIMUM_THREADS'] = str(args.threads)
+
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
 os.makedirs(OUTPUT_DIR)
 
