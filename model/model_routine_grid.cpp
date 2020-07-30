@@ -71,14 +71,14 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
 
           const UBAgentData& ubAgentData = *(nbrUBAgentData.getConstPtr(i, j, k));
           VIdx ubVIdxOffset;
-          ubVIdxOffset[0] = i* -1;
-          ubVIdxOffset[1] = j* -1;
-          ubVIdxOffset[2] = k* -1;
+          ubVIdxOffset[0] = i * -1;
+          ubVIdxOffset[1] = j * -1;
+          ubVIdxOffset[2] = k * -1;
 
           for (const auto& agent: ubAgentData.v_spAgent) {
             const REAL ratio = Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, agent.vOffset, agent.state.getRadius(), ubVIdxOffset);
 
-            if(ratio > 0.0) {
+            if (ratio > 0.0) {
               // Don't really need those
               //REAL radius = agent.state.getRadius();
               //REAL vol = (4.0 * MY_PI / 3.0) * radius * radius * radius;
@@ -107,6 +107,26 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
 
 void ModelRoutine::updateIfSubgridKappa( const S32 pdeIdx, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridKappa ) {
   /* MODEL START */
+
+  /*
+   * The following is disabled as the routine doesn't allow accessing neighbouring agents,
+   * which are required to calculate occupied volume.
+   * /
+  /*
+  CHECK(subgridVOffset[0] == 0);
+  CHECK(subgridVOffset[1] == 0);
+  CHECK(subgridVOffset[2] == 0);
+
+  REAL occupiedVolume = 0.0;
+  VIdx vidx(0, 0, 0);
+  for (const auto& agent : ubAgentData.v_spAgent) {
+    const auto r = agent.state.getRadius();
+    const auto volume = 4.0 / 3.0 * M_PI * r * r * r;
+    occupiedVolume += volume * Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, agent.vOffset, r, vidx);
+  }
+  static const REAL ifVolume = IF_GRID_SPACING * IF_GRID_SPACING * IF_GRID_SPACING;
+  gridKappa = occupiedVolume / ifVolume;
+  */
 
   gridKappa = 1.0;
 
