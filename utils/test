@@ -62,6 +62,7 @@ function do_run() {
   echo "PARAMS: $1"
   outdir="output-"$(echo $1 | tr -d '-' | tr ' ' '_')"-#$2"
   ./run $1 -q $outdir
+  rm -rf $outdir
 }
 export -f do_run
 
