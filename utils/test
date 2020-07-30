@@ -1,15 +1,34 @@
 #!/bin/bash
 
+if [[ $# -ne 1 || ($1 != "ltss" && $1 != "ccc") ]]; then
+  echo "Must provide type of test: ltss (lambda/threshold/secretion/spacing) or ccc (cells/cell types/cytokines)."
+  exit 1
+fi
+
 # Lambda = sqrt(Beta / Alpha)
 # Beta = 5
 # Alpha = Beta / (Lambda ^ 2)
 
-CELLS=( 200 )
-CELL_TYPES=( 10 )
-CYTOKINES=( 5 )
-LAMBDAS=( 3 6 9 12 15 )
-THRESHOLDS=(0.01 0.05 0.1 0.5 1.0 2.0)
-WINDOWS=( 5 )
+if [[ $1 == "ltss" ]]; then
+  CELLS=( 216 )
+  CELL_TYPES=( 10 )
+  CYTOKINES=( 5 )
+  LAMBDAS=( 3 6 9 12 )
+  THRESHOLDS=( 0.5 1.0 1.5 2.0 2.5 )
+  SECRETIONS_HIGH=( 50 100 150 200 250 300 )
+  CELL_GRID_SPACINGS=( 2 3 4 )
+  WINDOWS=( 5 )
+else
+  CELLS=( 50 100 200 400 )
+  CELL_TYPES=( 1 3 9 18 )
+  CYTOKINES=( 1 3 9 18 )
+  LAMBDAS=( 3 )
+  THRESHOLDS=( 1.0 )
+  SECRETIONS_HIGH=( 200 )
+  CELL_GRID_SPACINGS=( 3 )
+  WINDOWS=( 5 )
+fi
+
 ITERATIONS=30
 
 cd "$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
@@ -23,10 +42,14 @@ for cytokines in ${CYTOKINES[@]}; do
 for lambda in ${LAMBDAS[@]}; do
 alpha=$(bc <<< "scale=2; 5 / ($lambda ^ 2)")
 for threshold in ${THRESHOLDS[@]}; do
+for secretion_high in ${SECRETIONS_HIGH[@]}; do
+for cell_grid_spacing in ${CELL_GRID_SPACINGS[@]}; do
 for window in ${WINDOWS[@]}; do
 for iteration in $(seq $ITERATIONS); do
-  params_sets+=("-c $cells -p $cell_types -y $cytokines -a $alpha -t $threshold -w $window")
+  params_sets+=("-c $cells -p $cell_types -y $cytokines -a $alpha -t $threshold -i $secretion_high -n $cell_grid_spacing -w $window")
   iterations+=($iteration)
+done
+done
 done
 done
 done
@@ -44,4 +67,4 @@ export -f do_run
 
 results_dir=utils/results
 rm -rf $results_dir
-parallel -j 2 --results $results_dir --link do_run  ::: "${params_sets[@]}" ::: "${iterations[@]}" >/dev/null
+parallel -j 8 --results $results_dir --link do_run  ::: "${params_sets[@]}" ::: "${iterations[@]}" >/dev/null

@@ -43,7 +43,7 @@ INPUT_SIGNAL_LENGTH = SIMULATION_STEPS + 1
 FUNCTION = args.function
 VISUALIZE = args.visualize
 NEW = not args.reuse
-LASSO_ALPHA = 0.005
+THREADS = args.threads
 
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
 os.makedirs(OUTPUT_DIR)
@@ -68,14 +68,14 @@ if NEW:
   utils.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
   utils.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_CYTOKINES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
   print("Done!", flush=True)
-utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS)
+utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS, THREADS)
 
 print("Running Biocellion... ", end='', flush=True)
 os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE)
 print("Done!", flush=True)
 
 print("Training LASSO... ", end='', flush=True)
-train_accuracy, test_accuracy, coeff_used, cells_correct_input = utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, VISUALIZE)
+train_accuracy, test_accuracy, coeff_used, cells_correct_input = utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, VISUALIZE, THREADS)
 print("Done!", flush=True)
 print("Training accuracy:", train_accuracy)
 print("Testing accuracy:", test_accuracy)

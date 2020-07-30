@@ -31,11 +31,11 @@ for dirpath, dirnames, filenames in os.walk(sys.argv[1]):
 
 data = pd.DataFrame(data)
 
-grid = sns.FacetGrid(data=data, hue='Lambda')
+grid = sns.FacetGrid(data=data, hue='Lambda', height=8)
 grid = grid.map(sns.lineplot, 'Threshold', 'Accuracy')
 grid.add_legend()
 #grid.axes[0, 0].set_ylabel('Accuracy', rotation=0, labelpad=37)
 #grid.axes[1, 0].set_ylabel('Accuracy', rotation=0, labelpad=37)
-plt.subplots_adjust(left=0.125, top=0.7)
+#plt.subplots_adjust(left=0.125, top=0.7)
 #grid.fig.suptitle("Cells = 27, Cell types = 9, Genes = 5, In Degree = 2,\nFunction = parity, Beta = 5.0, Simulation steps = 100")
-plt.savefig('fig.png')
+plt.savefig('plot.png')

@@ -8,6 +8,7 @@ import csv
 import networkx as nx
 from sklearn.linear_model import Lasso, LassoCV
 from sklearn.model_selection import train_test_split
+from sklearn.utils import parallel_backend
 import pandas as pd
 import numpy as np
 import shutil
@@ -48,10 +49,10 @@ parser.add_argument('-l', '--output-cell-fraction', type=fraction_type, default=
 parser.add_argument('-d', '--degree', type=abovezero_int, default=2, help="Average node in-degree of gene network(s).")
 parser.add_argument('-r', '--input-fraction', type=fraction_type, default=1.0, help="Fraction of nodes connected to the input signal.")
 parser.add_argument('-f', '--function', choices=[ "median", "parity" ], default="parity", help="Function to learn")
-parser.add_argument('-a', '--alpha', type=zeroplus_float, default=0.1, help="Molecular decay rate.")
+parser.add_argument('-a', '--alpha', type=zeroplus_float, default=0.55, help="Molecular decay rate.")
 parser.add_argument('-b', '--beta', type=zeroplus_float, default=5.0, help="Grid diffusion coefficient.")
 parser.add_argument('-y', '--cytokines', type=zeroplus_int, default=3, help="Number of cytokines in the simulation.")
-parser.add_argument('-o', '--secretion-low', type=zeroplus_float, default=0, help="Cytokine secretion when the gene is off.")
+parser.add_argument('-o', '--secretion-low', type=zeroplus_float, default=0.0, help="Cytokine secretion when the gene is off.")
 parser.add_argument('-i', '--secretion-high', type=zeroplus_float, default=200.0, help="Cytokine secretion when the gene is on.")
 parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=1.00, help="Cytokine threshold to turn a gene on.")
 parser.add_argument('-n', '--cell-grid-spacing', type=abovezero_float, default=3.00, help="Space between cells in the grid. Cell radius is 1.0.")
@@ -61,6 +62,7 @@ parser.add_argument('-w', '--window-size', type=abovezero_int, default=5, help="
 parser.add_argument('-e', '--reuse', action='store_true', help="Use previously generated initial gene network states, functions, and input signal. Otherwise generate new.")
 parser.add_argument('-z', '--visualize', action='store_true', help="Generate a dot file of the gene network model and every state of the simulation for visualization and debugging.")
 parser.add_argument('-q', '--output', default="output", help="Path of simulation output directory")
+parser.add_argument('-j', '--threads', type=abovezero_int, default=4, help="Number of threads to use for the run.")
 
 def parse_args(args=None):
   global parser
@@ -272,7 +274,7 @@ def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, o
 
   return states
 
-def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, window_size, delay, timesteps, function, visualize):
+def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, window_size, delay, timesteps, function, visualize, threads):  
   with open(input_signal_file) as f:
     input_signal = [ int(x) for x in f.readline().split() ]
 
@@ -384,7 +386,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
-  lasso = LassoCV(max_iter=10000)
+  lasso = LassoCV(max_iter=10000, n_jobs=threads)
   #lasso = Lasso(alpha=LASSO_ALPHA)
   lasso.fit(x_train, y_train)
 
@@ -407,7 +409,7 @@ def prettify(elem):
   reparsed = minidom.parseString(rough_string)
   return reparsed.toprettyxml(indent="  ")
 
-def make_params_xml(xml_path, output_dir, simulation_steps, additional_params):
+def make_params_xml(xml_path, output_dir, simulation_steps, additional_params, threads):
   xml_file = open(xml_path, 'w')
 
   # Biocellion required parameters
@@ -429,7 +431,7 @@ def make_params_xml(xml_path, output_dir, simulation_steps, additional_params):
   bcell_input_param = additional_params
   bcell_verbosity = 0 # [0-5]
 
-  bcell_num_threads = 1
+  bcell_num_threads = threads
   bcell_num_node_groups = 1
   bcell_num_nodes_per_group = 1
   bcell_num_sockets_per_node = 1
