@@ -39,9 +39,9 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 		Vector<VIdx> coordsVIdx;
 		Vector<VReal> coordsOffset;
 
-		for (S32 z = (CELL_GRID_SPACING * -zLayers / 2); z < (CELL_GRID_SPACING * (zLayers - zLayers / 2)); z += CELL_GRID_SPACING) {
-			for (S32 y = (CELL_GRID_SPACING * -yLayers / 2); y < (CELL_GRID_SPACING * (yLayers - yLayers / 2)); y += CELL_GRID_SPACING) {
-				for (S32 x = (CELL_GRID_SPACING * -xLayers / 2); x < (CELL_GRID_SPACING * (xLayers - xLayers / 2)); x += CELL_GRID_SPACING) {
+		for (S32 z = (gCellGridSpacing * -zLayers / 2); z < (gCellGridSpacing * (zLayers - zLayers / 2)); z += gCellGridSpacing) {
+			for (S32 y = (gCellGridSpacing * -yLayers / 2); y < (gCellGridSpacing * (yLayers - yLayers / 2)); y += gCellGridSpacing) {
+				for (S32 x = (gCellGridSpacing * -xLayers / 2); x < (gCellGridSpacing * (xLayers - xLayers / 2)); x += gCellGridSpacing) {
 					vIdx[0] = x / IF_GRID_SPACING + regionSize[0] / 2;
 					vIdx[1] = y / IF_GRID_SPACING + regionSize[1] / 2;
 					vIdx[2] = z / IF_GRID_SPACING + regionSize[2] / 2;

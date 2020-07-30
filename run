@@ -32,6 +32,7 @@ INPUT_CONNECTIONS = math.ceil((NUM_GENES - (1 + NUM_CYTOKINES)) * args.input_fra
 SECRETION_LOW = args.secretion_low
 SECRETION_HIGH = args.secretion_high
 CYTOKINE_THRESHOLD = args.cytokine_threshold
+CELL_GRID_SPACING = args.cell_grid_spacing
 NUM_OUTPUT_GENES = math.ceil(args.genes * args.output_gene_fraction)
 NUM_OUTPUT_CELLS = math.ceil(NUM_CELLS * args.output_cell_fraction)
 SIMULATION_STEPS = args.steps
@@ -47,7 +48,7 @@ LASSO_ALPHA = 0.005
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
 os.makedirs(OUTPUT_DIR)
 
-ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA) + " " + str(BETA) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD)
+ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA) + " " + str(BETA) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_GRID_SPACING)
 
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 

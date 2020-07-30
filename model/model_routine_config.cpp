@@ -40,6 +40,7 @@ S32 gNumCytokines;
 REAL gSecretionLow;
 REAL gSecretionHigh;
 REAL gCytokineThreshold;
+REAL gCellGridSpacing;
 
 static Vector<string> readXMLParameters() {
 	Vector<string> v_modelParam; // This will be returned
@@ -420,20 +421,21 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	Vector<string> v_modelParam = readXMLParameters();
 
 	S32 param = 0;
-	S32 numGenes = std::stoi(v_modelParam[param++]);
-	S32 numCells = std::stoi(v_modelParam[param++]);
-	S32 numCellTypes = std::stoi(v_modelParam[param++]);
+	const S32 numGenes = std::stoi(v_modelParam[param++]);
+	const S32 numCells = std::stoi(v_modelParam[param++]);
+	const S32 numCellTypes = std::stoi(v_modelParam[param++]);
   auto nvFile = std::ifstream(v_modelParam[param++]);
 	auto varfFile = std::ifstream(v_modelParam[param++]);
 	auto ttFile = std::ifstream(v_modelParam[param++]);
 	auto geneInitialStatesFile = std::ifstream(v_modelParam[param++]);
 	auto inputSignalFile = std::ifstream(v_modelParam[param++]);
-	REAL alpha = std::stod(v_modelParam[param++]);
-  REAL beta = std::stod(v_modelParam[param++]);
-	S32 numCytokines = std::stoi(v_modelParam[param++]);
-	REAL secretionLow = std::stod(v_modelParam[param++]);
-	REAL secretionHigh = std::stod(v_modelParam[param++]);
-	REAL cytokineThreshold = std::stod(v_modelParam[param++]);
+  const REAL alpha = std::stod(v_modelParam[param++]);
+  const REAL beta = std::stod(v_modelParam[param++]);
+	const S32 numCytokines = std::stoi(v_modelParam[param++]);
+	const REAL secretionLow = std::stod(v_modelParam[param++]);
+	const REAL secretionHigh = std::stod(v_modelParam[param++]);
+	const REAL cytokineThreshold = std::stod(v_modelParam[param++]);
+	const REAL cellGridSpacing = std::stod(v_modelParam[param++]);
 
 	Vector<S32> nv;
 	Vector<S32> varfOffsets;
@@ -522,9 +524,6 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	format.numCytokines = size;
 	size += sizeof(numCytokines);
 
-	format.numCytokines = size;
-	size += sizeof(numCytokines);
-
 	format.secretionLow = size;
 	size += sizeof(secretionLow);
 
@@ -533,6 +532,9 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 
 	format.cytokineThreshold = size;
 	size += sizeof(cytokineThreshold);
+
+	format.cellGridSpacing = size;
+	size += sizeof(cellGridSpacing);
 
 	v_globalData.resize(size);
 	memcpy(&(v_globalData[0]), &format, sizeof(format));
@@ -552,6 +554,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 	memcpy(&(v_globalData[format.secretionLow]), &secretionLow, sizeof(secretionLow));
 	memcpy(&(v_globalData[format.secretionHigh]), &secretionHigh, sizeof(secretionHigh));
 	memcpy(&(v_globalData[format.cytokineThreshold]), &cytokineThreshold, sizeof(cytokineThreshold));
+	memcpy(&(v_globalData[format.cellGridSpacing]), &cellGridSpacing, sizeof(cellGridSpacing));
 
 	/* MODEL END */
 
@@ -580,6 +583,7 @@ void ModelRoutine::init( void ) {
 	gSecretionLow = *((REAL*)(&(g[f.secretionLow])));
   gSecretionHigh = *((REAL*)(&(g[f.secretionHigh])));
   gCytokineThreshold = *((REAL*)(&(g[f.cytokineThreshold])));
+	gCellGridSpacing = *((REAL*)(&(g[f.cellGridSpacing])));
 
 	/* MODEL END */
 

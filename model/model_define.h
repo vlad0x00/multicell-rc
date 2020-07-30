@@ -26,7 +26,6 @@ typedef enum _model_rng_type_e {
 } model_rng_type_e;
 
 const REAL CELL_RADIUS = 1.0;
-const REAL CELL_GRID_SPACING = 3.0;
 
 const REAL INPUT_SIGNAL_DIRICHLET_VAL = 500;
 const REAL INPUT_SIGNAL_THRESHOLD = 0.10;
@@ -61,6 +60,7 @@ extern S32 gNumCytokines;
 extern REAL gSecretionLow;
 extern REAL gSecretionHigh;
 extern REAL gCytokineThreshold;
+extern REAL gCellGridSpacing;
 
 typedef struct {
   S64 numGenes;
@@ -79,6 +79,7 @@ typedef struct {
 	S64 secretionLow;
 	S64 secretionHigh;
 	S64 cytokineThreshold;
+	S64 cellGridSpacing;
 } GlobalDataFormat;
 
 static inline S32* getNv(S32 cellType) {
