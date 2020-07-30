@@ -387,7 +387,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
   previous_OPENBLAS_NUM_THREADS = os.environ['OPENBLAS_NUM_THREADS']
-  os.environ['OPENBLAS_NUM_THREADS'] = threads
+  os.environ['OPENBLAS_NUM_THREADS'] = str(threads)
   lasso = LassoCV(max_iter=10000, n_jobs=threads)
   #lasso = Lasso(alpha=LASSO_ALPHA)
   lasso.fit(x_train, y_train)
