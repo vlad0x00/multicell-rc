@@ -24,189 +24,189 @@ using namespace std;
 
 #if HAS_SPAGENT
 void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VIdx& regionSize, const IfGridBoxData<BOOL>& ifGridHabitableBoxData, Vector<VIdx>& v_spAgentVIdx, Vector<SpAgentState>& v_spAgentState, Vector<VReal>& v_spAgentOffset ) {/* initialization */
-	/* MODEL START */
+  /* MODEL START */
 
-	if (init == true) {
-		VIdx vIdx;      // The location of each cell defined by the unit box index, and position offset.
-		VReal vOffset;  // Position offset is the vector distance from the center of the unit box.
-		SpAgentState state;
+  if (init == true) {
+    VIdx vIdx;      // The location of each cell defined by the unit box index, and position offset.
+    VReal vOffset;  // Position offset is the vector distance from the center of the unit box.
+    SpAgentState state;
 
-		S32 zLayers = std::cbrt(gNumCells);
-		S32 yLayers = std::sqrt(gNumCells / zLayers);
-		S32 xLayers = gNumCells / zLayers / yLayers;
-		zLayers = std::ceil(std::cbrt(gNumCells));
+    S32 zLayers = std::cbrt(gNumCells);
+    S32 yLayers = std::sqrt(gNumCells / zLayers);
+    S32 xLayers = gNumCells / zLayers / yLayers;
+    zLayers = std::ceil(std::cbrt(gNumCells));
 
-		Vector<VIdx> coordsVIdx;
-		Vector<VReal> coordsOffset;
+    Vector<VIdx> coordsVIdx;
+    Vector<VReal> coordsOffset;
 
-		for (S32 z = (gCellGridSpacing * -zLayers / 2); z < (gCellGridSpacing * (zLayers - zLayers / 2)); z += gCellGridSpacing) {
-			for (S32 y = (gCellGridSpacing * -yLayers / 2); y < (gCellGridSpacing * (yLayers - yLayers / 2)); y += gCellGridSpacing) {
-				for (S32 x = (gCellGridSpacing * -xLayers / 2); x < (gCellGridSpacing * (xLayers - xLayers / 2)); x += gCellGridSpacing) {
-					vIdx[0] = x / IF_GRID_SPACING + regionSize[0] / 2;
-					vIdx[1] = y / IF_GRID_SPACING + regionSize[1] / 2;
-					vIdx[2] = z / IF_GRID_SPACING + regionSize[2] / 2;
-					vOffset[0] = x - std::floor(x / IF_GRID_SPACING) * IF_GRID_SPACING;
-					vOffset[1] = y - std::floor(y / IF_GRID_SPACING) * IF_GRID_SPACING;
-					vOffset[2] = z - std::floor(z / IF_GRID_SPACING) * IF_GRID_SPACING;
-					for (S32 dim = 0; dim < 3; dim++) {
-						while (vOffset[dim] < -IF_GRID_SPACING / 2.0)               { vIdx[dim] -= 1; vOffset[dim] += IF_GRID_SPACING; }
-						while (vOffset[dim] > IF_GRID_SPACING / 2.0) { vIdx[dim] += 1; vOffset[dim] -= IF_GRID_SPACING; }
-					}
-					coordsVIdx.push_back(vIdx);
-					coordsOffset.push_back(vOffset);
-				}
-			}
-		}
+    for (S32 z = (gCellGridSpacing * -zLayers / 2); z < (gCellGridSpacing * (zLayers - zLayers / 2)); z += gCellGridSpacing) {
+      for (S32 y = (gCellGridSpacing * -yLayers / 2); y < (gCellGridSpacing * (yLayers - yLayers / 2)); y += gCellGridSpacing) {
+        for (S32 x = (gCellGridSpacing * -xLayers / 2); x < (gCellGridSpacing * (xLayers - xLayers / 2)); x += gCellGridSpacing) {
+          vIdx[0] = x / IF_GRID_SPACING + regionSize[0] / 2;
+          vIdx[1] = y / IF_GRID_SPACING + regionSize[1] / 2;
+          vIdx[2] = z / IF_GRID_SPACING + regionSize[2] / 2;
+          vOffset[0] = x - std::floor(x / IF_GRID_SPACING) * IF_GRID_SPACING;
+          vOffset[1] = y - std::floor(y / IF_GRID_SPACING) * IF_GRID_SPACING;
+          vOffset[2] = z - std::floor(z / IF_GRID_SPACING) * IF_GRID_SPACING;
+          for (S32 dim = 0; dim < 3; dim++) {
+            while (vOffset[dim] < -IF_GRID_SPACING / 2.0)               { vIdx[dim] -= 1; vOffset[dim] += IF_GRID_SPACING; }
+            while (vOffset[dim] > IF_GRID_SPACING / 2.0) { vIdx[dim] += 1; vOffset[dim] -= IF_GRID_SPACING; }
+          }
+          coordsVIdx.push_back(vIdx);
+          coordsOffset.push_back(vOffset);
+        }
+      }
+    }
 
-		for (S32 cell = 0; cell < gNumCells; cell++) {
-			S32 cellType = cell % gNumCellTypes;
+    for (S32 cell = 0; cell < gNumCells; cell++) {
+      S32 cellType = cell % gNumCellTypes;
 
-			vIdx = coordsVIdx[cell];
-			vOffset = coordsOffset[cell];
+      vIdx = coordsVIdx[cell];
+      vOffset = coordsOffset[cell];
 
-			/* Initialize state */
-			state.setType(cellType);
-			state.setRadius(CELL_RADIUS);
+      /* Initialize state */
+      state.setType(cellType);
+      state.setRadius(CELL_RADIUS);
 
-			for (S32 gene = 0; gene < gNumGenes; gene++) {
-				state.setBoolVal(gene, getGeneInitialStates(cell)[gene]);
-			}
-			state.setModelInt(0, cell);
+      for (S32 gene = 0; gene < gNumGenes; gene++) {
+        state.setBoolVal(gene, getGeneInitialStates(cell)[gene]);
+      }
+      state.setModelInt(0, cell);
 
-			/* Initialize return vectors {v_spAgentState, v_spAgentVIdx, v_spAgentOffset} by using .push_back() */
-			CHECK(ifGridHabitableBoxData.get(vIdx) == true);
-			v_spAgentVIdx.push_back(vIdx);
-			v_spAgentOffset.push_back(vOffset);
-			v_spAgentState.push_back(state);
+      /* Initialize return vectors {v_spAgentState, v_spAgentVIdx, v_spAgentOffset} by using .push_back() */
+      CHECK(ifGridHabitableBoxData.get(vIdx) == true);
+      v_spAgentVIdx.push_back(vIdx);
+      v_spAgentOffset.push_back(vOffset);
+      v_spAgentState.push_back(state);
 
-		}
-	}
+    }
+  }
 
-	/* MODEL END */
+  /* MODEL END */
 
-	return;
+  return;
 }
 
 void ModelRoutine::spAgentCRNODERHS( const S32 odeNetIdx, const VIdx& vIdx, const SpAgent& spAgent, const NbrUBEnv& nbrUBEnv, const Vector<double>& v_y, Vector<double>& v_f ) {
-	/* MODEL START */
+  /* MODEL START */
 
-	// Empty
+  // Empty
 
-	/* MODEL END */
+  /* MODEL END */
 
-	return;
+  return;
 }
 
 void ModelRoutine::updateSpAgentState( const VIdx& vIdx, const JunctionData& junctionData, const VReal& vOffset, const NbrUBEnv& nbrUBEnv, SpAgentState& state/* INOUT */ ) {
-	/* MODEL START */
+  /* MODEL START */
 
-	// Empty
+  // Empty
 
-	/* MODEL END */
+  /* MODEL END */
 
-	return;
+  return;
 }
 
 void ModelRoutine::spAgentSecretionBySpAgent( const VIdx& vIdx, const JunctionData& junctionData, const VReal& vOffset, const MechIntrctData& mechIntrctData, const NbrUBEnv& nbrUBEnv, SpAgentState& state/* INOUT */, Vector<SpAgentState>& v_spAgentState, Vector<VReal>& v_spAgentDisp ) {
-	/* MODEL START */
+  /* MODEL START */
 
-	// Empty
+  // Empty
 
-	/* MODEL END */
+  /* MODEL END */
 
-	return;
+  return;
 }
 
 void ModelRoutine::updateSpAgentBirthDeath( const VIdx& vIdx, const SpAgent& spAgent, const MechIntrctData& mechIntrctData, const NbrUBEnv& nbrUBEnv, BOOL& divide, BOOL& disappear ) {
-	/* MODEL START */
+  /* MODEL START */
 
- 	divide = false;
+   divide = false;
   disappear = false;
 
-	/* MODEL END */
+  /* MODEL END */
 
-	return;
+  return;
 }
 
 void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junctionData, const VReal& vOffset, const MechIntrctData& mechIntrctData, const NbrUBEnv& nbrUBEnv, SpAgentState& state/* INOUT */, VReal& disp ) {/* if not dividing or disappearing */
-	/* MODEL START */
+  /* MODEL START */
 
-	const auto cellType = state.getType();
+  const auto cellType = state.getType();
 
-	REAL aaaRatio[3][3][3];
-	REAL* avgPhi = nullptr;
-	avgPhi = new REAL[1 + gNumCytokines];
-	avgPhi[0] = 0.0;
-	for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-		avgPhi[1 + cytokine] = 0.0;
-	}
-	Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, vOffset, state.getRadius(), aaaRatio);
-	for(S32 i = -1 ; i <= 1; i++) {
-		for(S32 j = -1 ; j <= 1; j++) {
-			for(S32 k = -1 ; k <= 1; k++) {
-				avgPhi[0] += nbrUBEnv.getPhi(i, j, k, 0) * aaaRatio[i + 1][j + 1][k + 1];
-				for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-					avgPhi[1 + cytokine] += nbrUBEnv.getPhi(i, j, k, 1 + cytokine) * aaaRatio[i + 1][j + 1][k + 1];
-				}
-			}
-		}
-	}
+  REAL aaaRatio[3][3][3];
+  REAL* avgPhi = nullptr;
+  avgPhi = new REAL[1 + gNumCytokines];
+  avgPhi[0] = 0.0;
+  for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+    avgPhi[1 + cytokine] = 0.0;
+  }
+  Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, vOffset, state.getRadius(), aaaRatio);
+  for(S32 i = -1 ; i <= 1; i++) {
+    for(S32 j = -1 ; j <= 1; j++) {
+      for(S32 k = -1 ; k <= 1; k++) {
+        avgPhi[0] += nbrUBEnv.getPhi(i, j, k, 0) * aaaRatio[i + 1][j + 1][k + 1];
+        for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+          avgPhi[1 + cytokine] += nbrUBEnv.getPhi(i, j, k, 1 + cytokine) * aaaRatio[i + 1][j + 1][k + 1];
+        }
+      }
+    }
+  }
 
-	Vector<BOOL> newBools;
+  Vector<BOOL> newBools;
 
-	newBools.push_back((avgPhi[0] > gCytokineThreshold) ? 1 : 0);
+  newBools.push_back((avgPhi[0] > gCytokineThreshold) ? 1 : 0);
 
-	for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-		if (avgPhi[cytokine] > gCytokineThreshold) {
-			newBools.push_back(1);	
-		} else {
-			newBools.push_back(0);
-		}
-	}
+  for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+    if (avgPhi[cytokine] > gCytokineThreshold) {
+      newBools.push_back(1);
+    } else {
+      newBools.push_back(0);
+    }
+  }
 
-	for (S32 gene = 1 + gNumCytokines; gene < gNumGenes; gene++) {
-		const auto nv = getNv(cellType)[gene];
-		CHECK(nv >= 0);
+  for (S32 gene = 1 + gNumCytokines; gene < gNumGenes; gene++) {
+    const auto nv = getNv(cellType)[gene];
+    CHECK(nv >= 0);
 
-		if (nv > 0 ) {
-			const auto varf = getVarf(cellType, gene);
-			const auto tt = getTt(cellType, gene);
+    if (nv > 0 ) {
+      const auto varf = getVarf(cellType, gene);
+      const auto tt = getTt(cellType, gene);
 
-			U32 ttEntry = 0;
-			for (U32 j = 0; j < (U32)nv; j++) {
-				CHECK(varf[j] >= 0 && varf[j] < gNumGenes);
-				const auto var_val = state.getBoolVal(varf[j]);
-				CHECK(var_val != -1);
-				if (var_val) {
-					ttEntry |= (1 << j);
-				}
-			}
+      U32 ttEntry = 0;
+      for (U32 j = 0; j < (U32)nv; j++) {
+        CHECK(varf[j] >= 0 && varf[j] < gNumGenes);
+        const auto var_val = state.getBoolVal(varf[j]);
+        CHECK(var_val != -1);
+        if (var_val) {
+          ttEntry |= (1 << j);
+        }
+      }
 
-			const auto tt_val = tt[ttEntry];
-			CHECK(tt_val != -1);
-			newBools.push_back(tt_val);
-		} else {
-			newBools.push_back(state.getBoolVal(gene));
-		}
-	}
+      const auto tt_val = tt[ttEntry];
+      CHECK(tt_val != -1);
+      newBools.push_back(tt_val);
+    } else {
+      newBools.push_back(state.getBoolVal(gene));
+    }
+  }
 
-	state.setBoolValArray(newBools);
+  state.setBoolValArray(newBools);
 
-	delete[] avgPhi;
+  delete[] avgPhi;
 
-	/* MODEL END */
+  /* MODEL END */
 
-	return;
+  return;
 }
 
 void ModelRoutine::divideSpAgent( const VIdx& vIdx, const JunctionData& junctionData, const VReal& vOffset, const MechIntrctData& mechIntrctData, const NbrUBEnv& nbrUBEnv, SpAgentState& motherState/* INOUT */, VReal& motherDisp, SpAgentState& daughterState, VReal& daughterDisp, Vector<BOOL>& v_junctionDivide, BOOL& motherDaughterLinked, JunctionEnd& motherEnd, JunctionEnd& daughterEnd ) {
-	/* MODEL START */
+  /* MODEL START */
 
-	// Empty
+  // Empty
 
-	/* MODEL END */
+  /* MODEL END */
 
-	return;
+  return;
 }
 #endif
 

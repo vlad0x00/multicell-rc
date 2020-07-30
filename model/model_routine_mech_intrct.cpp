@@ -23,24 +23,24 @@ using namespace std;
 #if HAS_SPAGENT
 void ModelRoutine::initJunctionSpAgent( const VIdx& vIdx0, const SpAgent& spAgent0, const VIdx& vIdx1, const SpAgent& spAgent1, const VReal& dir/* unit direction vector from spAgent1 to spAgent0 */, const REAL& dist, BOOL& link, JunctionEnd& end0/* dummy if link == false */, JunctionEnd& end1/* dummy if link == false */
 ) {
-	/* MODEL START */
+  /* MODEL START */
 
-	link = false;
+  link = false;
 
-	/* MODEL END */
+  /* MODEL END */
 
-	return;
+  return;
 }
 
 void ModelRoutine::computeMechIntrctSpAgent( const S32 iter, const VIdx& vIdx0, const SpAgent& spAgent0, const UBEnv& ubEnv0, const VIdx& vIdx1, const SpAgent& spAgent1, const UBEnv& ubEnv1, const VReal& dir/* unit direction vector from spAgent1 to spAgent0 */, const REAL& dist, MechIntrctData& mechIntrctData0, MechIntrctData& mechIntrctData1, BOOL& link, JunctionEnd& end0/* dummy if link == false */, JunctionEnd& end1/* dummy if link == false */, BOOL& unlink ) {
-	/* MODEL START */
+  /* MODEL START */
 
-	link = false;
-	unlink = false;	
+  link = false;
+  unlink = false;
 
-	/* MODEL END */
+  /* MODEL END */
 
-	return;
+  return;
 }
 #endif
 
