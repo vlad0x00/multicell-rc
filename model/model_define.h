@@ -30,6 +30,8 @@ const REAL CELL_RADIUS = 1.0;
 const REAL INPUT_SIGNAL_DIRICHLET_VAL = 500;
 const REAL INPUT_SIGNAL_THRESHOLD = 0.10;
 
+const BOOL ENABLE_SUMMARY = false;
+
 /* IF_GRID_SPACING is the unit length of each voxel in the Simulation Domain
  The Simulation Domain size is set in the model XML file
  The Grid spacing can not be less than maximum cell agent diameter */

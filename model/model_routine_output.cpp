@@ -54,16 +54,18 @@ void ModelRoutine::updateSpAgentOutput( const VIdx& vIdx, const SpAgent& spAgent
 void ModelRoutine::updateSummaryVar( const VIdx& vIdx, const NbrUBAgentData& nbrUBAgentData, const NbrUBEnv& nbrUBEnv, Vector<REAL>& v_realVal/* [elemIdx] */, Vector<S32>& v_intVal/* [elemIdx] */ ) {
   /* MODEL START */
 
-  CHECK(v_realVal.size() == (U32)((1 + gNumCytokines) * 3));
-  CHECK(v_intVal.size() == 0);
+  if (ENABLE_SUMMARY) {
+    CHECK(v_realVal.size() == (U32)((1 + gNumCytokines) * 3));
+    CHECK(v_intVal.size() == 0);
 
-  v_realVal[0] = nbrUBEnv.getPhi(0, 0, 0, 0);
-  v_realVal[1] = nbrUBEnv.getPhi(0, 0, 0, 0);
-  v_realVal[2] = nbrUBEnv.getPhi(0, 0, 0, 0);
+    v_realVal[0] = nbrUBEnv.getPhi(0, 0, 0, 0);
+    v_realVal[1] = nbrUBEnv.getPhi(0, 0, 0, 0);
+    v_realVal[2] = nbrUBEnv.getPhi(0, 0, 0, 0);
 
-  for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-    for (S32 i = 0; i < 3; i++) {
-      v_realVal[cytokine * 3 + i] = nbrUBEnv.getPhi(0, 0, 0, 1 + cytokine);
+    for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+      for (S32 i = 0; i < 3; i++) {
+        v_realVal[cytokine * 3 + i] = nbrUBEnv.getPhi(0, 0, 0, 1 + cytokine);
+      }
     }
   }
 

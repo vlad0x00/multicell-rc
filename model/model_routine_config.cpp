@@ -361,8 +361,8 @@ void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
     fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("genebits_" + std::to_string(i));
   }
   fileOutputInfo.v_particleExtraOutputVectorVarName.clear();
-  fileOutputInfo.v_gridPhiOutput.assign(1 + numCytokines, true);
-  fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(1 + numCytokines, true);
+  fileOutputInfo.v_gridPhiOutput.assign(1 + numCytokines, false);
+  fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(1 + numCytokines, false);
 
 
   /* MODEL END */
@@ -388,26 +388,28 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
   v_summaryOutputIntInfo.clear();
   v_summaryOutputRealInfo.clear();
 
-  info.name = "input_signal_min";
-  info.type = SUMMARY_TYPE_MIN;
-  v_summaryOutputRealInfo.push_back(info);
-  info.name = "input_signal_max";
-  info.type = SUMMARY_TYPE_MAX;
-  v_summaryOutputRealInfo.push_back(info);
-  info.name = "input_signal_avg";
-  info.type = SUMMARY_TYPE_AVG;
-  v_summaryOutputRealInfo.push_back(info);
-
-  for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
-    info.name = "cytokine" + std::to_string(cytokine) + "_min";
+  if (ENABLE_SUMMARY) {
+    info.name = "input_signal_min";
     info.type = SUMMARY_TYPE_MIN;
     v_summaryOutputRealInfo.push_back(info);
-    info.name = "cytokine" + std::to_string(cytokine) + "_max";
+    info.name = "input_signal_max";
     info.type = SUMMARY_TYPE_MAX;
     v_summaryOutputRealInfo.push_back(info);
-    info.name = "cytokine" + std::to_string(cytokine) + "_avg";
+    info.name = "input_signal_avg";
     info.type = SUMMARY_TYPE_AVG;
     v_summaryOutputRealInfo.push_back(info);
+
+    for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
+      info.name = "cytokine" + std::to_string(cytokine) + "_min";
+      info.type = SUMMARY_TYPE_MIN;
+      v_summaryOutputRealInfo.push_back(info);
+      info.name = "cytokine" + std::to_string(cytokine) + "_max";
+      info.type = SUMMARY_TYPE_MAX;
+      v_summaryOutputRealInfo.push_back(info);
+      info.name = "cytokine" + std::to_string(cytokine) + "_avg";
+      info.type = SUMMARY_TYPE_AVG;
+      v_summaryOutputRealInfo.push_back(info);
+    }
   }
 
   /* MODEL END */
