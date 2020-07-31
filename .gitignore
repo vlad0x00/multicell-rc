@@ -5,3 +5,4 @@ model/*.so
 utils/results
 utils/results.csv
 utils/plot.png
+utils/Rplots.pdf
