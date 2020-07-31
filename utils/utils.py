@@ -393,7 +393,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
-  lasso = LassoCV(tol=0.0005, n_jobs=threads)
+  lasso = LassoCV(n_jobs=threads)
   #lasso = Lasso(alpha=LASSO_ALPHA)
   lasso.fit(x_train, y_train)
 
