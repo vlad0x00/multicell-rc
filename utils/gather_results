@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+import sys
+import numpy as np
+import pandas as pd
+import math
+import os
+import utils
+sns.set(font_scale=1.1)
+
+data = { 'Cells' : [], 'Cell types' : [], 'Cytokines' : [], 'Lambda' : [], 'Threshold' : [], 'Secretion' : [], 'Cell grid spacing' : [], 'Window' : [], 'Accuracy': [] }
+for dirpath, dirnames, filenames in os.walk(sys.argv[1]):
+  for filename in filenames:
+    if os.path.basename(filename) == 'stdout':
+      with open(os.path.join(dirpath, filename), 'r') as f:
+        params_found = False
+        accuracy_found = False
+        for line in f:
+          if line.startswith('PARAMS:'):
+            tokens = line.split()[1:]
+            args = utils.parse_args(tokens)
+
+            data['Cells'].append(args.cells)
+            data['Cell types'].append(args.cell_types)
+            data['Cytokines'].append(str(args.cytokines) + " cytokines")
+            data['Lambda'].append("Lambda = " + str(round(math.sqrt(5.0 / args.alpha))) + ", Alpha = " + str(args.alpha))
+            data['Threshold'].append(args.cytokine_threshold)
+            data['Secretion'].append(args.secretion_high)
+            data['Cell grid spacing'].append(args.cell_grid_spacing)
+            data['Window'].append(args.window_size)
+
+            params_found = True
+          if line.startswith('Testing accuracy:'):
+            data['Accuracy'].append(float(line.split()[2]))
+            accuracy_found = True
+        assert params_found and accuracy_found
+
+pd.DataFrame(data).to_csv('results.csv')

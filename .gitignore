@@ -3,4 +3,5 @@ output*
 model/*.o
 model/*.so
 utils/results
+utils/results.csv
 utils/plot.png

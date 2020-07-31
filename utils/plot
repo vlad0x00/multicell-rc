@@ -1,41 +1,15 @@
-#!/usr/bin/env python3
+#!/usr/bin/env Rscript
 
-import seaborn as sns
-import matplotlib.pyplot as plt
-import sys
-import numpy as np
-import pandas as pd
-import math
-import os
-import utils
-sns.set(font_scale=1.1)
+library(tidyverse)
+library(reshape2)
+library(dplyr)
+library(grid)
+library(gridExtra)
 
-data = { 'Cells' : [], 'Cell types' : [], 'Cytokines' : [], 'Lambda' : [], 'Threshold' : [], 'Window' : [], 'Accuracy': [] }
-for dirpath, dirnames, filenames in os.walk(sys.argv[1]):
-  for filename in filenames:
-    if os.path.basename(filename) == 'stdout':
-      with open(os.path.join(dirpath, filename), 'r') as f:
-        for line in f:
-          if line.startswith('PARAMS:'):
-            tokens = line.split()[1:]
-            args = utils.parse_args(tokens)
+results <- read.csv('results.csv')
 
-            data['Cells'].append(args.cells)
-            data['Cell types'].append(args.cell_types)
-            data['Cytokines'].append(str(args.cytokines) + " cytokines")
-            data['Lambda'].append("Lambda = " + str(round(math.sqrt(5.0 / args.alpha))) + ", Alpha = " + str(args.alpha))
-            data['Threshold'].append(args.cytokine_threshold)
-            data['Window'].append(args.window_size)
-          if line.startswith('Testing accuracy:'):
-            data['Accuracy'].append(float(line.split()[2]))
-
-data = pd.DataFrame(data)
-
-grid = sns.FacetGrid(data=data, hue='Lambda', height=8)
-grid = grid.map(sns.lineplot, 'Threshold', 'Accuracy')
-grid.add_legend()
-#grid.axes[0, 0].set_ylabel('Accuracy', rotation=0, labelpad=37)
-#grid.axes[1, 0].set_ylabel('Accuracy', rotation=0, labelpad=37)
-#plt.subplots_adjust(left=0.125, top=0.7)
-#grid.fig.suptitle("Cells = 27, Cell types = 9, Genes = 5, In Degree = 2,\nFunction = parity, Beta = 5.0, Simulation steps = 100")
-plt.savefig('plot.png')
+results %>% ggplot(aes(x=Threshold, y=Accuracy)) +
+  geom_line(aes(color=`Cell grid spacing`, shape=Secretion)) +
+  theme_bw() +
+  theme(axis.title.y = element_text(angle = 90)) +
+  facet_wrap(~Lambda, scales = "free") +
