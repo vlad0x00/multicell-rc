@@ -25,6 +25,7 @@ void ModelRoutine::initIfGridVar( const VIdx& vIdx, const UBAgentData& ubAgentDa
     ubEnv.setPhi(1 + cytokine, 0.0);
     ubEnv.setModelReal(1 + cytokine, 0.0);
   }
+  ubEnv.setModelReal(1 + gNumCytokines, 0.0);
 
   /* MODEL END */
 
@@ -52,53 +53,58 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
   REAL *rhs = nullptr;
   if (gNumCytokines > 0) {
     rhs = new REAL[gNumCytokines];
-
     for(S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
       rhs[cytokine] = 0.0;
     }
+  }
 
-    /* iterate over 3 * 3 * 3 boxes */
-    for(S32 i = -1; i <= 1; i++) {
-      const auto x = i + vIdx[0];
-      for(S32 j = -1; j <= 1; j++) {
-        const auto y = j + vIdx[1];
-        for(S32 k = -1; k <= 1; k++) {
-          const auto z = k + vIdx[2];
+  REAL occupiedVolume = 0.0;
 
-          if (x < 0 || x >= Info::getDomainSize(0)) { continue; }
-          if (y < 0 || y >= Info::getDomainSize(1)) { continue; }
-          if (z < 0 || z >= Info::getDomainSize(2)) { continue; }
+  /* iterate over 3 * 3 * 3 boxes */
+  for(S32 i = -1; i <= 1; i++) {
+    const auto x = i + vIdx[0];
+    for(S32 j = -1; j <= 1; j++) {
+      const auto y = j + vIdx[1];
+      for(S32 k = -1; k <= 1; k++) {
+        const auto z = k + vIdx[2];
 
-          const UBAgentData& ubAgentData = *(nbrUBAgentData.getConstPtr(i, j, k));
-          VIdx ubVIdxOffset;
-          ubVIdxOffset[0] = i * -1;
-          ubVIdxOffset[1] = j * -1;
-          ubVIdxOffset[2] = k * -1;
+        if (x < 0 || x >= Info::getDomainSize(0)) { continue; }
+        if (y < 0 || y >= Info::getDomainSize(1)) { continue; }
+        if (z < 0 || z >= Info::getDomainSize(2)) { continue; }
 
-          for (const auto& agent: ubAgentData.v_spAgent) {
-            const REAL ratio = Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, agent.vOffset, agent.state.getRadius(), ubVIdxOffset);
+        const UBAgentData& ubAgentData = *(nbrUBAgentData.getConstPtr(i, j, k));
+        VIdx ubVIdxOffset;
+        ubVIdxOffset[0] = i * -1;
+        ubVIdxOffset[1] = j * -1;
+        ubVIdxOffset[2] = k * -1;
 
-            if (ratio > 0.0) {
-              // Don't really need those
-              //REAL radius = agent.state.getRadius();
-              //REAL vol = (4.0 * MY_PI / 3.0) * radius * radius * radius;
+        for (const auto& agent: ubAgentData.v_spAgent) {
+          const auto radius = agent.state.getRadius();
+          const auto ratio = Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, agent.vOffset, radius, ubVIdxOffset);
 
-              for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-                rhs[cytokine] += ratio * dt * (agent.state.getBoolVal(1 + gNumCytokines + cytokine) ? gSecretionHigh : gSecretionLow);
-              }
+          if (ratio > 0.0) {
+            const auto vol = (4.0 * MY_PI / 3.0) * radius * radius * radius;
+
+            for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+              rhs[cytokine] += ratio * dt * (agent.state.getBoolVal(1 + gNumCytokines + cytokine) ? gSecretionHigh : gSecretionLow);
             }
+            occupiedVolume += vol * ratio;
           }
         }
       }
     }
+  }
 
-    for(S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-      rhs[cytokine] /= (IF_GRID_SPACING * IF_GRID_SPACING * IF_GRID_SPACING);
-      nbrUBEnv.setModelReal(0, 0, 0, 1 + cytokine, rhs[cytokine]);
-    }
+  for(S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+    rhs[cytokine] /= (IF_GRID_SPACING * IF_GRID_SPACING * IF_GRID_SPACING);
+    nbrUBEnv.setModelReal(0, 0, 0, 1 + cytokine, rhs[cytokine]);
+  }
 
+  if (gNumCytokines > 0) {
     delete[] rhs;
   }
+
+  nbrUBEnv.setModelReal(0, 0, 0, 1 + gNumCytokines, occupiedVolume);
 
   /* MODEL END */
 
@@ -108,27 +114,12 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
 void ModelRoutine::updateIfSubgridKappa( const S32 pdeIdx, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridKappa ) {
   /* MODEL START */
 
-  /*
-   * The following is disabled as the routine doesn't allow accessing neighbouring agents,
-   * which are required to calculate occupied volume.
-   */
-  /*
   CHECK(subgridVOffset[0] == 0);
   CHECK(subgridVOffset[1] == 0);
   CHECK(subgridVOffset[2] == 0);
 
-  REAL occupiedVolume = 0.0;
-  VIdx vidx(0, 0, 0);
-  for (const auto& agent : ubAgentData.v_spAgent) {
-    const auto r = agent.state.getRadius();
-    const auto volume = 4.0 / 3.0 * M_PI * r * r * r;
-    occupiedVolume += volume * Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, agent.vOffset, r, vidx);
-  }
   static const REAL ifVolume = IF_GRID_SPACING * IF_GRID_SPACING * IF_GRID_SPACING;
-  gridKappa = occupiedVolume / ifVolume;
-  */
-
-  gridKappa = 1.0;
+  gridKappa = 1.0 - ubEnv.getModelReal(1 + gNumCytokines) / ifVolume;
 
   /* MODEL END */
 

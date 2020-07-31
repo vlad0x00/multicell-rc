@@ -302,15 +302,19 @@ void ModelRoutine::updateIfGridModelVarInfo( Vector<IfGridModelVarInfo>& v_ifGri
   v_ifGridModelRealInfo.clear();
   IfGridModelVarInfo info;
 
-  info.name = "input_substance_rhs" ;
+  info.name = "input_substance_rhs";
   info.syncMethod = VAR_SYNC_METHOD_DELTA;
   v_ifGridModelRealInfo.push_back(info);
 
   for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
-    info.name = std::to_string(cytokine) + "_rhs" ;
+    info.name = std::to_string(cytokine) + "_rhs";
     info.syncMethod = VAR_SYNC_METHOD_DELTA;
     v_ifGridModelRealInfo.push_back(info);
   }
+
+  info.name = "occupied_volume";
+  info.syncMethod = VAR_SYNC_METHOD_OVERWRITE;
+  v_ifGridModelRealInfo.push_back(info);
 
   v_ifGridModelIntInfo.clear();
 
