@@ -25,17 +25,10 @@ typedef enum _model_rng_type_e {
   NUM_MODEL_RNGS
 } model_rng_type_e;
 
-const REAL CELL_RADIUS = 1.0;
-
 const REAL INPUT_SIGNAL_DIRICHLET_VAL = 500;
 const REAL INPUT_SIGNAL_THRESHOLD = 0.10;
 
 const BOOL ENABLE_SUMMARY = false;
-
-/* IF_GRID_SPACING is the unit length of each voxel in the Simulation Domain
- The Simulation Domain size is set in the model XML file
- The Grid spacing can not be less than maximum cell agent diameter */
-const REAL IF_GRID_SPACING = 10.0; // Micrometers
 
 /* A baseline time step is the largest time step used in Biocellion
  Users can split a baseline time step into one or more state-and-grid time steps */
@@ -62,7 +55,8 @@ extern S32 gNumCytokines;
 extern REAL gSecretionLow;
 extern REAL gSecretionHigh;
 extern REAL gCytokineThreshold;
-extern REAL gCellGridSpacing;
+extern REAL gCellRadius;
+extern REAL gIfGridSpacing;
 
 typedef struct {
   S64 numGenes;
@@ -81,7 +75,8 @@ typedef struct {
 	S64 secretionLow;
 	S64 secretionHigh;
 	S64 cytokineThreshold;
-	S64 cellGridSpacing;
+	S64 cellRadius;
+	S64 ifGridSpacing;
 } GlobalDataFormat;
 
 static inline S32* getNv(S32 cellType) {

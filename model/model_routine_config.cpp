@@ -40,10 +40,28 @@ S32 gNumCytokines;
 REAL gSecretionLow;
 REAL gSecretionHigh;
 REAL gCytokineThreshold;
-REAL gCellGridSpacing;
+REAL gCellRadius;
+REAL gIfGridSpacing;
+
+const S32 NUM_GENES_PARAM = 0;
+const S32 NUM_CELLS_PARAM = 1;
+const S32 NUM_CELL_TYPES_PARAM = 2;
+const S32 NV_FILE_PARAM = 3;
+const S32 VARF_FILE_PARAM = 4;
+const S32 TT_FILE_PARAM = 5;
+const S32 GENE_INITIAL_STATES_FILE_PARAM = 6;
+const S32 INPUT_SIGNAL_FILE_PARAM = 7;
+const S32 ALPHA_PARAM = 8;
+const S32 BETA_PARAM = 9;
+const S32 NUM_CYTOKINES_PARAM = 10;
+const S32 SECRETION_LOW_PARAM = 11;
+const S32 SECRETION_HIGH_PARAM = 12;
+const S32 CYTOKINE_THRESHOLD_PARAM = 13;
+const S32 CELL_RADIUS_PARAM = 14;
+const S32 IF_GRID_SPACING_PARAM = 15;
 
 static Vector<string> readXMLParameters() {
-  Vector<string> v_modelParam; // This will be returned
+  Vector<string> params;
 
   std::string paramsString = Info::getModelParam();
   std::string delimiter = " ";
@@ -53,21 +71,21 @@ static Vector<string> readXMLParameters() {
   while ((pos = paramsString.find(delimiter)) != std::string::npos) {
     token = paramsString.substr(0, pos);
     if (token == "") { continue; }
-    v_modelParam.push_back(token);
+    params.push_back(token);
     paramsString.erase(0, pos + delimiter.length());
   }
   if (!paramsString.empty()) {
-    v_modelParam.push_back(paramsString);
+    params.push_back(paramsString);
   }
 
-  return v_modelParam;
+  return params;
 }
 
 void ModelRoutine::updateIfGridSpacing( REAL& ifGridSpacing ) {
   /* MODEL START */
 
-  /* Initialize Interface Grid Spacing (which was declared in model_define.h) */
-  ifGridSpacing = IF_GRID_SPACING;
+  const auto params = readXMLParameters();
+  ifGridSpacing = std::stod(params[IF_GRID_SPACING_PARAM]);
 
   /* MODEL END */
 
@@ -142,16 +160,16 @@ void ModelRoutine::updateSyncMethod( sync_method_e& mechIntrctSyncMethod, sync_m
 void ModelRoutine::updateSpAgentInfo( Vector<SpAgentInfo>& v_spAgentInfo ) {/* set the mechanical interaction range & the numbers of model specific variables */
   /* MODEL START */
 
-  auto params = readXMLParameters();
-
-  S32 numGenes = std::stoi(params[0]);
-  S32 numCellTypes = std::stoi(params[2]);
+  const auto params = readXMLParameters();
+  const S32 numGenes = std::stoi(params[NUM_GENES_PARAM]);
+  const S32 numCellTypes = std::stoi(params[NUM_CELL_TYPES_PARAM]);
+  const REAL ifGridSpacing = std::stod(params[IF_GRID_SPACING_PARAM]);
 
   /* Provide information about the discrete agent types in the user model */
   SpAgentInfo info;
 
   for (S32 cellType = 0; cellType < numCellTypes; cellType++) {
-    info.dMax = IF_GRID_SPACING;
+    info.dMax = ifGridSpacing;
     info.numBoolVars = numGenes;
     info.numStateModelReals = 0;
     info.numStateModelInts = 1;
@@ -182,9 +200,8 @@ void ModelRoutine::updateJunctionEndInfo( Vector<JunctionEndInfo>& v_junctionEnd
 void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
   /* MODEL START */
 
-  auto params = readXMLParameters();
-
-  S32 numCytokines = std::stoi(params[10]);
+  const auto params = readXMLParameters();
+  const S32 numCytokines = std::stoi(params[NUM_CYTOKINES_PARAM]);
 
   PDEInfo pdeInfo;
   GridPhiInfo gridPhiInfo;
@@ -295,9 +312,8 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
 void ModelRoutine::updateIfGridModelVarInfo( Vector<IfGridModelVarInfo>& v_ifGridModelRealInfo, Vector<IfGridModelVarInfo>& v_ifGridModelIntInfo ) {
   /* MODEL START */
 
-  auto params = readXMLParameters();
-
-  S32 numCytokines = std::stoi(params[10]);
+  const auto params = readXMLParameters();
+  const S32 numCytokines = std::stoi(params[NUM_CYTOKINES_PARAM]);
 
   v_ifGridModelRealInfo.clear();
   IfGridModelVarInfo info;
@@ -327,9 +343,9 @@ void ModelRoutine::updateRNGInfo( Vector<RNGInfo>& v_rngInfo ) {
   /* MODEL START */
 
   /* We use two different RGN's in this model */
-  CHECK( NUM_MODEL_RNGS == 2 );
+  CHECK(NUM_MODEL_RNGS == 2);
 
-  v_rngInfo.resize( NUM_MODEL_RNGS );
+  v_rngInfo.resize(NUM_MODEL_RNGS);
 
   RNGInfo rngInfo;
   /* Uniform distribution (min=0 and max=1) */
@@ -354,9 +370,9 @@ void ModelRoutine::updateRNGInfo( Vector<RNGInfo>& v_rngInfo ) {
 void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
   /* MODEL START */
 
-  Vector<string> params = readXMLParameters();
-  const auto numGenes = std::stoi(params[0]);
-  const auto numCytokines = std::stoi(params[10]);
+  const auto params = readXMLParameters();
+  const auto numGenes = std::stoi(params[NUM_GENES_PARAM]);
+  const auto numCytokines = std::stoi(params[NUM_CYTOKINES_PARAM]);
 
   /* FileOutputInfo class holds the information related to file output of simulation results. */
   fileOutputInfo.particleOutput = true;
@@ -367,7 +383,6 @@ void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
   fileOutputInfo.v_particleExtraOutputVectorVarName.clear();
   fileOutputInfo.v_gridPhiOutput.assign(1 + numCytokines, false);
   fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(1 + numCytokines, false);
-
 
   /* MODEL END */
 
@@ -385,8 +400,8 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
     value. summary type e is used to set the reduction method. Choose one of these summary types:
     {SUMMARY_TYPE_SUM, SUMMARY_TYPE_AVG, SUMMARY_TYPE_MIN, SUMMARY_TYPE_MAX} */
 
-  Vector<string> params = readXMLParameters();
-  const auto numCytokines = std::stoi(params[10]);
+  const auto params = readXMLParameters();
+  const auto numCytokines = std::stoi(params[NUM_CYTOKINES_PARAM]);
 
   SummaryOutputInfo info;
   v_summaryOutputIntInfo.clear();
@@ -424,24 +439,23 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
 void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   /* MODEL START */
 
-  Vector<string> v_modelParam = readXMLParameters();
-
-  S32 param = 0;
-  const S32 numGenes = std::stoi(v_modelParam[param++]);
-  const S32 numCells = std::stoi(v_modelParam[param++]);
-  const S32 numCellTypes = std::stoi(v_modelParam[param++]);
-  auto nvFile = std::ifstream(v_modelParam[param++]);
-  auto varfFile = std::ifstream(v_modelParam[param++]);
-  auto ttFile = std::ifstream(v_modelParam[param++]);
-  auto geneInitialStatesFile = std::ifstream(v_modelParam[param++]);
-  auto inputSignalFile = std::ifstream(v_modelParam[param++]);
-  const REAL alpha = std::stod(v_modelParam[param++]);
-  const REAL beta = std::stod(v_modelParam[param++]);
-  const S32 numCytokines = std::stoi(v_modelParam[param++]);
-  const REAL secretionLow = std::stod(v_modelParam[param++]);
-  const REAL secretionHigh = std::stod(v_modelParam[param++]);
-  const REAL cytokineThreshold = std::stod(v_modelParam[param++]);
-  const REAL cellGridSpacing = std::stod(v_modelParam[param++]);
+  const auto params = readXMLParameters();
+  const S32 numGenes = std::stoi(params[NUM_GENES_PARAM]);
+  const S32 numCells = std::stoi(params[NUM_CELLS_PARAM]);
+  const S32 numCellTypes = std::stoi(params[NUM_CELL_TYPES_PARAM]);
+  auto nvFile = std::ifstream(params[NV_FILE_PARAM]);
+  auto varfFile = std::ifstream(params[VARF_FILE_PARAM]);
+  auto ttFile = std::ifstream(params[TT_FILE_PARAM]);
+  auto geneInitialStatesFile = std::ifstream(params[GENE_INITIAL_STATES_FILE_PARAM]);
+  auto inputSignalFile = std::ifstream(params[INPUT_SIGNAL_FILE_PARAM]);
+  const REAL alpha = std::stod(params[ALPHA_PARAM]);
+  const REAL beta = std::stod(params[BETA_PARAM]);
+  const S32 numCytokines = std::stoi(params[NUM_CYTOKINES_PARAM]);
+  const REAL secretionLow = std::stod(params[SECRETION_LOW_PARAM]);
+  const REAL secretionHigh = std::stod(params[SECRETION_HIGH_PARAM]);
+  const REAL cytokineThreshold = std::stod(params[CYTOKINE_THRESHOLD_PARAM]);
+  const REAL cellRadius = std::stod(params[CELL_RADIUS_PARAM]);
+  const REAL ifGridSpacing = std::stod(params[IF_GRID_SPACING_PARAM]);
 
   Vector<S32> nv;
   Vector<S32> varfOffsets;
@@ -539,8 +553,11 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   format.cytokineThreshold = size;
   size += sizeof(cytokineThreshold);
 
-  format.cellGridSpacing = size;
-  size += sizeof(cellGridSpacing);
+  format.cellRadius = size;
+  size += sizeof(cellRadius);
+
+  format.ifGridSpacing = size;
+  size += sizeof(ifGridSpacing);
 
   v_globalData.resize(size);
   memcpy(&(v_globalData[0]), &format, sizeof(format));
@@ -560,7 +577,8 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   memcpy(&(v_globalData[format.secretionLow]), &secretionLow, sizeof(secretionLow));
   memcpy(&(v_globalData[format.secretionHigh]), &secretionHigh, sizeof(secretionHigh));
   memcpy(&(v_globalData[format.cytokineThreshold]), &cytokineThreshold, sizeof(cytokineThreshold));
-  memcpy(&(v_globalData[format.cellGridSpacing]), &cellGridSpacing, sizeof(cellGridSpacing));
+  memcpy(&(v_globalData[format.cellRadius]), &cellRadius, sizeof(cellRadius));
+  memcpy(&(v_globalData[format.ifGridSpacing]), &ifGridSpacing, sizeof(ifGridSpacing));
 
   /* MODEL END */
 
@@ -571,7 +589,7 @@ void ModelRoutine::init( void ) {
   /* MODEL START */
 
   const auto& g = Info::getGlobalDataRef();
-  GlobalDataFormat f = *((GlobalDataFormat*)(&(g[0])));
+  const GlobalDataFormat f = *((GlobalDataFormat*)(&(g[0])));
 
   gNumGenes = *((S32*)(&(g[f.numGenes])));
   gNumCells = *((S32*)(&(g[f.numCells])));
@@ -589,7 +607,8 @@ void ModelRoutine::init( void ) {
   gSecretionLow = *((REAL*)(&(g[f.secretionLow])));
   gSecretionHigh = *((REAL*)(&(g[f.secretionHigh])));
   gCytokineThreshold = *((REAL*)(&(g[f.cytokineThreshold])));
-  gCellGridSpacing = *((REAL*)(&(g[f.cellGridSpacing])));
+  gCellRadius = *((REAL*)(&(g[f.cellRadius])));
+  gIfGridSpacing = *((REAL*)(&(g[f.ifGridSpacing])));
 
   /* MODEL END */
 

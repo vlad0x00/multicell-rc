@@ -96,7 +96,7 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
   }
 
   for(S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-    rhs[cytokine] /= (IF_GRID_SPACING * IF_GRID_SPACING * IF_GRID_SPACING);
+    rhs[cytokine] /= (gIfGridSpacing * gIfGridSpacing * gIfGridSpacing);
     nbrUBEnv.setModelReal(0, 0, 0, 1 + cytokine, rhs[cytokine]);
   }
 
@@ -118,7 +118,7 @@ void ModelRoutine::updateIfSubgridKappa( const S32 pdeIdx, const VIdx& vIdx, con
   CHECK(subgridVOffset[1] == 0);
   CHECK(subgridVOffset[2] == 0);
 
-  static const REAL ifVolume = IF_GRID_SPACING * IF_GRID_SPACING * IF_GRID_SPACING;
+  static const REAL ifVolume = gIfGridSpacing * gIfGridSpacing * gIfGridSpacing;
   gridKappa = 1.0 - ubEnv.getModelReal(1 + gNumCytokines) / ifVolume;
 
   /* MODEL END */

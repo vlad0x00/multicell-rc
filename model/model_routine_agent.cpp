@@ -34,29 +34,36 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
     S32 zLayers = std::cbrt(gNumCells);
     S32 yLayers = std::sqrt(gNumCells / zLayers);
     S32 xLayers = gNumCells / zLayers / yLayers;
-    zLayers = std::ceil(std::cbrt(gNumCells));
+    if (xLayers * yLayers * zLayers < gNumCells) {
+      zLayers++;
+    }
 
     Vector<VIdx> coordsVIdx;
     Vector<VReal> coordsOffset;
 
-    for (S32 z = (gCellGridSpacing * -zLayers / 2); z < (gCellGridSpacing * (zLayers - zLayers / 2)); z += gCellGridSpacing) {
-      for (S32 y = (gCellGridSpacing * -yLayers / 2); y < (gCellGridSpacing * (yLayers - yLayers / 2)); y += gCellGridSpacing) {
-        for (S32 x = (gCellGridSpacing * -xLayers / 2); x < (gCellGridSpacing * (xLayers - xLayers / 2)); x += gCellGridSpacing) {
-          vIdx[0] = x / IF_GRID_SPACING + regionSize[0] / 2;
-          vIdx[1] = y / IF_GRID_SPACING + regionSize[1] / 2;
-          vIdx[2] = z / IF_GRID_SPACING + regionSize[2] / 2;
-          vOffset[0] = x - std::floor(x / IF_GRID_SPACING) * IF_GRID_SPACING;
-          vOffset[1] = y - std::floor(y / IF_GRID_SPACING) * IF_GRID_SPACING;
-          vOffset[2] = z - std::floor(z / IF_GRID_SPACING) * IF_GRID_SPACING;
+    static const REAL cellGridSpacing = gIfGridSpacing;
+
+    for (REAL z = (cellGridSpacing * -zLayers / 2.0); z < (cellGridSpacing * (zLayers - zLayers / 2)) - cellGridSpacing / 2.0; z += cellGridSpacing) {
+      for (REAL y = (cellGridSpacing * -yLayers / 2.0); y < (cellGridSpacing * (yLayers - yLayers / 2)) - cellGridSpacing / 2.0; y += cellGridSpacing) {
+        for (REAL x = (cellGridSpacing * -xLayers / 2.0); x < (cellGridSpacing * (xLayers - xLayers / 2)) - cellGridSpacing / 2.0; x += cellGridSpacing) {
+          vIdx[0] = x / gIfGridSpacing + regionSize[0] / 2;
+          vIdx[1] = y / gIfGridSpacing + regionSize[1] / 2;
+          vIdx[2] = z / gIfGridSpacing + regionSize[2] / 2;
+          vOffset[0] = x - std::floor(x / gIfGridSpacing) * gIfGridSpacing;
+          vOffset[1] = y - std::floor(y / gIfGridSpacing) * gIfGridSpacing;
+          vOffset[2] = z - std::floor(z / gIfGridSpacing) * gIfGridSpacing;
           for (S32 dim = 0; dim < 3; dim++) {
-            while (vOffset[dim] < -IF_GRID_SPACING / 2.0)               { vIdx[dim] -= 1; vOffset[dim] += IF_GRID_SPACING; }
-            while (vOffset[dim] > IF_GRID_SPACING / 2.0) { vIdx[dim] += 1; vOffset[dim] -= IF_GRID_SPACING; }
+            while (vOffset[dim] < -gIfGridSpacing / 2.0)               { vIdx[dim] -= 1; vOffset[dim] += gIfGridSpacing; }
+            while (vOffset[dim] > gIfGridSpacing / 2.0) { vIdx[dim] += 1; vOffset[dim] -= gIfGridSpacing; }
           }
           coordsVIdx.push_back(vIdx);
           coordsOffset.push_back(vOffset);
         }
       }
     }
+
+    CHECK(coordsVIdx.size() == (U64)(xLayers * yLayers * zLayers));
+    CHECK(coordsOffset.size() == (U64)(xLayers * yLayers * zLayers));
 
     for (S32 cell = 0; cell < gNumCells; cell++) {
       S32 cellType = cell % gNumCellTypes;
@@ -66,7 +73,7 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 
       /* Initialize state */
       state.setType(cellType);
-      state.setRadius(CELL_RADIUS);
+      state.setRadius(gCellRadius);
 
       for (S32 gene = 0; gene < gNumGenes; gene++) {
         state.setBoolVal(gene, getGeneInitialStates(cell)[gene]);
@@ -120,7 +127,7 @@ void ModelRoutine::spAgentSecretionBySpAgent( const VIdx& vIdx, const JunctionDa
 void ModelRoutine::updateSpAgentBirthDeath( const VIdx& vIdx, const SpAgent& spAgent, const MechIntrctData& mechIntrctData, const NbrUBEnv& nbrUBEnv, BOOL& divide, BOOL& disappear ) {
   /* MODEL START */
 
-   divide = false;
+  divide = false;
   disappear = false;
 
   /* MODEL END */
