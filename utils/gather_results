@@ -35,6 +35,6 @@ for dirpath, dirnames, filenames in os.walk('results/'):
           if line.startswith('Testing accuracy:'):
             data['Accuracy'].append(float(line.split()[2]))
             accuracy_found = True
-        assert params_found and accuracy_found
+      assert params_found and accuracy_found
 
 pd.DataFrame(data).to_csv('results.csv')

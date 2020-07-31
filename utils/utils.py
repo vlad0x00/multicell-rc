@@ -90,7 +90,7 @@ def make_network_dot(num_genes, varf, dot_file):
       node = Node(str(cell_type) + "_" + str(gene))
       for v in variables:
         var_node = Node(str(cell_type) + "_" + str(v))
-        graph.add_edge(node, var_node)
+        graph.add_edge(var_node, node)
 
   pydot_graph = nx.drawing.nx_pydot.to_pydot(graph)
   pydot_graph.set_strict(False)
