@@ -17,7 +17,7 @@ if [[ $1 == "ltss" ]]; then
   THRESHOLDS=( 0.01 0.05 0.1 0.5 1.0 1.5 2.0 2.5 )
   SECRETIONS_HIGH=( 20 50 80 110 140 170)
   CELL_RADIUSES=( 1 )
-  IF_GRID_SPACINGS=( 2.5 )
+  IF_GRID_SPACINGS=( 2.3 2.5 2.7 )
   WINDOWS=( 5 )
 else
   CELLS=( 50 100 200 400 )
