@@ -48,7 +48,7 @@ parser.add_argument('-b', '--beta', type=zeroplus_float, default=5.0, help="Grid
 parser.add_argument('-y', '--cytokines', type=zeroplus_int, default=3, help="Number of cytokines in the simulation.")
 parser.add_argument('-o', '--secretion-low', type=zeroplus_float, default=0.0, help="Cytokine secretion when the gene is off.")
 parser.add_argument('-i', '--secretion-high', type=zeroplus_float, default=50.0, help="Cytokine secretion when the gene is on.")
-parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=2.00, help="Cytokine threshold to turn a gene on.")
+parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=0.50, help="Cytokine threshold to turn a gene on.")
 parser.add_argument('-r', '--cell-radius', type=abovezero_float, default=1.00, help="Cell radius.")
 parser.add_argument('-x', '--grid-spacing', type=abovezero_float, default=2.5, help="Simulation space voxel length.")
 parser.add_argument('-s', '--steps', type=abovezero_int, default=300, help="Number of simulation steps.")
@@ -341,7 +341,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
     make_simulation_dots(states, output_dir)
   else:
     for filename in os.listdir(output_dir):
-      if filename.startswith("state"):
+      if filename.startswith("state") and filename.endswith('.dot'):
         os.remove(os.path.join(output_dir, filename))
 
   parity = []
