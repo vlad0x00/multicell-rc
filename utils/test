@@ -16,7 +16,7 @@ if [[ $1 == "ltss" ]]; then
   LAMBDAS=( 2 4 6 8 10 )
   THRESHOLDS=( 0.01 0.05 0.1 0.5 1.0 1.5 2.0 2.5 )
   SECRETIONS_HIGH=( 20 50 80 110 140 170)
-  CELL_RADIUS=( 1 )
+  CELL_RADIUSES=( 1 )
   IF_GRID_SPACINGS=( 2.5 )
   WINDOWS=( 5 )
 else
@@ -26,7 +26,7 @@ else
   LAMBDAS=( 3 )
   THRESHOLDS=( 2.0 )
   SECRETIONS_HIGH=( 50 )
-  CELL_RADIUS=( 1 )
+  CELL_RADIUSES=( 1 )
   IF_GRID_SPACINGS=( 2.5 )
   WINDOWS=( 5 )
 fi
@@ -49,8 +49,9 @@ for cell_radius in ${CELL_RADIUSES[@]}; do
 for if_grid_spacing in ${IF_GRID_SPACINGS[@]}; do
 for window in ${WINDOWS[@]}; do
 for iteration in $(seq $ITERATIONS); do
-  params_sets+=("-c $cells -p $cell_types -y $cytokines -a $alpha -t $threshold -i $secretion_high -n $cell_grid_spacing -w $window")
+  params_sets+=("-c $cells -p $cell_types -y $cytokines -a $alpha -t $threshold -i $secretion_high -r $cell_radius -x $if_grid_spacing -w $window")
   iterations+=($iteration)
+done
 done
 done
 done
