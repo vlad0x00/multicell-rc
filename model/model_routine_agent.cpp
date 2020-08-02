@@ -43,12 +43,12 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 
     static const REAL cellGridSpacing = gIfGridSpacing;
 
-    for (REAL z = (cellGridSpacing * -zLayers / 2.0); z < (cellGridSpacing * (zLayers - zLayers / 2)) - cellGridSpacing / 2.0; z += cellGridSpacing) {
-      for (REAL y = (cellGridSpacing * -yLayers / 2.0); y < (cellGridSpacing * (yLayers - yLayers / 2)) - cellGridSpacing / 2.0; y += cellGridSpacing) {
-        for (REAL x = (cellGridSpacing * -xLayers / 2.0); x < (cellGridSpacing * (xLayers - xLayers / 2)) - cellGridSpacing / 2.0; x += cellGridSpacing) {
-          vIdx[0] = x / gIfGridSpacing + regionSize[0] / 2;
-          vIdx[1] = y / gIfGridSpacing + regionSize[1] / 2;
-          vIdx[2] = z / gIfGridSpacing + regionSize[2] / 2;
+    for (REAL z = (cellGridSpacing * -zLayers / 2.0); z < (cellGridSpacing * (zLayers - zLayers / 2.0)) - cellGridSpacing / 2.0; z += cellGridSpacing) {
+      for (REAL y = (cellGridSpacing * -yLayers / 2.0); y < (cellGridSpacing * (yLayers - yLayers / 2.0)) - cellGridSpacing / 2.0; y += cellGridSpacing) {
+        for (REAL x = (cellGridSpacing * -xLayers / 2.0); x < (cellGridSpacing * (xLayers - xLayers / 2.0)) - cellGridSpacing / 2.0; x += cellGridSpacing) {
+          vIdx[0] = std::round(x / gIfGridSpacing) + regionSize[0] / 2;
+          vIdx[1] = std::round(y / gIfGridSpacing) + regionSize[1] / 2;
+          vIdx[2] = std::round(z / gIfGridSpacing) + regionSize[2] / 2;
           vOffset[0] = x - std::floor(x / gIfGridSpacing) * gIfGridSpacing;
           vOffset[1] = y - std::floor(y / gIfGridSpacing) * gIfGridSpacing;
           vOffset[2] = z - std::floor(z / gIfGridSpacing) * gIfGridSpacing;
