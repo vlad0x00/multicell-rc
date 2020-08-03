@@ -28,7 +28,8 @@ for dirpath, dirnames, filenames in os.walk('results/'):
             data['Lambda'].append("Lambda = " + str(round(math.sqrt(5.0 / args.alpha))) + ", Alpha = " + str(args.alpha))
             data['Threshold'].append(args.cytokine_threshold)
             data['Secretion'].append(args.secretion_high)
-            data['Cell grid spacing'].append(args.cell_grid_spacing)
+            data['Cell radius'].append(args.cell_radius)
+            data['If grid spacing'].append(args.grid_spacing)
             data['Window'].append(args.window_size)
 
             params_found = True
