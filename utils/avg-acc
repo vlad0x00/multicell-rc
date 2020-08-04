@@ -1,14 +1,17 @@
 #!/bin/bash
 
-ITERATIONS=10
+ITERATIONS=30
 
 cd "$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd ..
 
+params=""
+echo $params
+
 accuracies=()
 for i in $(seq $ITERATIONS); do
-  echo "$i / $ITERATIONS"
-  accuracies+=($(./run | grep "Testing accuracy" | awk '{ print $3 }'))
+  printf "\rIteration: $i / $ITERATIONS"
+  accuracies+=($(./run $params | grep "Testing accuracy" | awk '{ print $3 }'))
 done
 
 sum=$(IFS="+"; bc <<< "${accuracies[*]}")
