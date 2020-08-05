@@ -4,6 +4,7 @@ import csv
 import shutil
 import subprocess
 import argparse
+import struct
 
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element, SubElement, Comment
@@ -204,6 +205,7 @@ def get_gene_values(output_file, num_genes, num_cells):
 
   raw_start = 0
   raw_end = 0
+  cell_id_offsets = []
   genebits_offsets = []
   genebits_updated = False
   for i, line in enumerate(lines):
@@ -220,6 +222,8 @@ def get_gene_values(output_file, num_genes, num_cells):
         if not tmp[i].isdigit():
           offset = int(tmp[:i])
           break
+      if b'Name="cell_id"' in line:
+        cell_id_offsets.append(offset)
       if b'Name="genebits_' in line:
         genebits_offsets.append(offset)
         genebits_updated = True
@@ -231,10 +235,19 @@ def get_gene_values(output_file, num_genes, num_cells):
   for line in lines[raw_start:raw_end]:
     raw_data += line
   raw_data = raw_data[1:] # Remove the underscore
+  raw_data = raw_data[:-1] # Remove the newline
 
   if genebits_updated:
     genebits_offsets.append(len(raw_data))
     genebits_updated = False
+
+  cell_id_offsets.append(genebits_offsets[0])
+
+  cell_ids = []
+  for i in range(num_cells - 1, -1, -1):
+    id_start = cell_id_offsets[1] - i * 8 - 8
+    id_end = cell_id_offsets[1] - i * 8
+    cell_ids.append(int(struct.unpack('d', raw_data[id_start:id_end])[0]))
 
   gene_values = []
   for _ in range(num_cells):
@@ -253,9 +266,12 @@ def get_gene_values(output_file, num_genes, num_cells):
         gene_values[cell].append(val)
     if gene_num + bitPos >= num_genes: break
     gene_num += 64
-  gene_values.reverse()
 
-  return gene_values
+  reordered_gene_values = []
+  for cell in range(num_cells):
+    reordered_gene_values.append(gene_values[cell_ids.index(cell)])
+
+  return reordered_gene_values
 
 def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir):
   states = []

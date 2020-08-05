@@ -29,19 +29,21 @@ void ModelRoutine::updateSpAgentOutput( const VIdx& vIdx, const SpAgent& spAgent
   const auto numGenebits = std::ceil(double(gNumGenes) / (sizeof(REAL) * 8));
 
   color = spAgent.state.getType();
-  CHECK(v_extraScalar.size() == size_t(numGenebits));
+  CHECK(v_extraScalar.size() == 1 + size_t(numGenebits));
   CHECK(v_extraVector.size() == 0);
+
+  v_extraScalar[0] = spAgent.state.getModelInt(0);
 
   CHECK(sizeof(REAL) == sizeof(U64));
   for (S32 genebits = 0; genebits < numGenebits; genebits++) {
-    *((U64*)(&(v_extraScalar[genebits]))) = 0;
+    *((U64*)(&(v_extraScalar[1 + genebits]))) = 0;
   }
 
   for (S32 gene = 0; gene < gNumGenes; gene++) {
     const S32 genebits = gene / (sizeof(REAL) * 8);
     const S32 genebitPos = gene % (sizeof(REAL) * 8);
     if (spAgent.state.getBoolVal(gene)) {
-      *((U64*)(&(v_extraScalar[genebits]))) |= ((U64)(1) << genebitPos);
+      *((U64*)(&(v_extraScalar[1 + genebits]))) |= ((U64)(1) << genebitPos);
     }
   }
 
