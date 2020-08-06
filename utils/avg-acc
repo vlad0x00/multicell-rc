@@ -6,7 +6,7 @@ cd "$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd ..
 
 params=""
-echo $params
+echo "Params: $params"
 
 rm -f err
 accuracies=()
@@ -14,9 +14,9 @@ cells_with_input_signal=()
 for i in $(seq $ITERATIONS); do
   printf "\rIteration: $i / $ITERATIONS"
   output=$(./run $params 2>> err)
-  accuracies+=($(echo $output | grep "Testing accuracy" | awk '{ print $3 }'))
-  cells_with=$(echo $output | grep "Cells with correct input signal:" | awk '{ print $6 }')
-  cells_out_of=$(echo $output | grep "Cells with correct input signal:" | awk '{ print $8 }')
+  accuracies+=($(echo "$output" | grep "Testing accuracy" | awk '{ print $3 }'))
+  cells_with=$(echo "$output" | grep "Cells with correct input signal:" | awk '{ print $6 }')
+  cells_out_of=$(echo "$output" | grep "Cells with correct input signal:" | awk '{ print $8 }')
   cells_with_input_signal+=($(bc <<< "scale=2; $cells_with / $cells_out_of"))
 done
 echo

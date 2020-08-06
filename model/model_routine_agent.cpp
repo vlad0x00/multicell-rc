@@ -65,8 +65,11 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
     CHECK(coordsVIdx.size() == (U64)(xLayers * yLayers * zLayers));
     CHECK(coordsOffset.size() == (U64)(xLayers * yLayers * zLayers));
 
+    CHECK(gNumCellTypes > 0);
     for (S32 cell = 0; cell < gNumCells; cell++) {
-      S32 cellType = cell % gNumCellTypes;
+      S32 cellType = gNumCellTypes * Util::getModelRand(MODEL_RNG_UNIFORM);
+      if (cellType == gNumCellTypes) { cellType--; }
+      CHECK(cellType >= 0 && cellType < gNumCellTypes);
 
       vIdx = coordsVIdx[cell];
       vOffset = coordsOffset[cell];
@@ -85,7 +88,6 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
       v_spAgentVIdx.push_back(vIdx);
       v_spAgentOffset.push_back(vOffset);
       v_spAgentState.push_back(state);
-
     }
   }
 
