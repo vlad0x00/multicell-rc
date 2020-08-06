@@ -72,4 +72,4 @@ export -f do_run
 
 results_dir=utils/results
 rm -rf $results_dir
-parallel -j 60 --results $results_dir --link do_run  ::: "${params_sets[@]}" ::: "${iterations[@]}" >/dev/null
+parallel -j 40 --results $results_dir --link do_run  ::: "${params_sets[@]}" ::: "${iterations[@]}" >/dev/null
