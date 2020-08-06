@@ -10,7 +10,7 @@ import os
 import utils
 sns.set(font_scale=1.1)
 
-data = { 'Cells' : [], 'Cell types' : [], 'Cytokines' : [], 'Lambda' : [], 'Threshold' : [], 'Secretion' : [], 'Cell radius' : [], 'If grid spacing' : [], 'Window' : [], 'Accuracy': [] }
+data = { 'Cells' : [], 'Cell types' : [], 'Cytokines' : [], 'Lambda' : [], 'Threshold' : [], 'Secretion' : [], 'Cell radius' : [], 'If grid spacing' : [], 'Window' : [], 'Accuracy': [], 'Cells with correct signal' : [] }
 for dirpath, dirnames, filenames in os.walk('results/'):
   for filename in filenames:
     if os.path.basename(filename) == 'stdout':
@@ -36,6 +36,13 @@ for dirpath, dirnames, filenames in os.walk('results/'):
           if line.startswith('Testing accuracy:'):
             data['Accuracy'].append(float(line.split()[2]))
             accuracy_found = True
+
+          if line.startswith("Cells with correct input signal:"):
+            tokens = line.split(":")[1].split("/")
+            data['Cells with correct signal'].append(float(tokens[0]) / float(tokens[1]))
+
         assert params_found and accuracy_found
+
+print("Average fraction of cells with correct input signal:", sum(data['Cells with correct signal']) / len(data['Cells with correct signal']))
 
 pd.DataFrame(data).to_csv('results.csv')
