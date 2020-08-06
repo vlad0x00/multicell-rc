@@ -38,20 +38,20 @@ def fraction_type(s):
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-g', '--genes', type=abovezero_int, default=20, help="Number of (internal) genes per cell.")
 parser.add_argument('-c', '--cells', type=abovezero_int, default=216, help="Number of cells in the simulation.")
-parser.add_argument('-p', '--cell-types', type=abovezero_int, default=9, help="Number of cell types in the simulation.")
+parser.add_argument('-p', '--cell-types', type=abovezero_int, default=12, help="Number of cell types in the simulation.")
 parser.add_argument('-u', '--output-gene-fraction', type=fraction_type, default=0.5, help="Fraction of (internal) genes used for output.")
 parser.add_argument('-d', '--output-cell-fraction', type=fraction_type, default=0.5, help="Fraction of cells used for output.")
 parser.add_argument('-k', '--degree', type=abovezero_int, default=2, help="Average node in-degree of gene network(s).")
 parser.add_argument('-l', '--input-fraction', type=fraction_type, default=1.0, help="Fraction of nodes connected to the input signal.")
 parser.add_argument('-f', '--function', choices=[ "median", "parity" ], default="parity", help="Function to learn")
-parser.add_argument('-a', '--alpha', type=zeroplus_float, default=0.13, help="Molecular decay rate.")
+parser.add_argument('-a', '--alpha', type=zeroplus_float, default=0.55, help="Molecular decay rate.")
 parser.add_argument('-b', '--beta', type=zeroplus_float, default=5.0, help="Grid diffusion coefficient.")
-parser.add_argument('-y', '--cytokines', type=zeroplus_int, default=3, help="Number of cytokines in the simulation.")
+parser.add_argument('-y', '--cytokines', type=zeroplus_int, default=2, help="Number of cytokines in the simulation.")
 parser.add_argument('-o', '--secretion-low', type=zeroplus_float, default=0.0, help="Cytokine secretion when the gene is off.")
-parser.add_argument('-i', '--secretion-high', type=zeroplus_float, default=50.0, help="Cytokine secretion when the gene is on.")
-parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=0.50, help="Cytokine threshold to turn a gene on.")
+parser.add_argument('-i', '--secretion-high', type=zeroplus_float, default=40.0, help="Cytokine secretion when the gene is on.")
+parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=1.25, help="Cytokine threshold to turn a gene on.")
 parser.add_argument('-r', '--cell-radius', type=abovezero_float, default=1.00, help="Cell radius.")
-parser.add_argument('-x', '--grid-spacing', type=abovezero_float, default=2.5, help="Simulation space voxel length.")
+parser.add_argument('-x', '--grid-spacing', type=abovezero_float, default=2.3, help="Simulation space voxel length.")
 parser.add_argument('-s', '--steps', type=abovezero_int, default=300, help="Number of simulation steps.")
 parser.add_argument('-m', '--memory', type=zeroplus_int, default=0, help="Step delay between input signal and output layer prediction.")
 parser.add_argument('-w', '--window-size', type=abovezero_int, default=5, help="Window size of predicted functions.")
@@ -438,18 +438,18 @@ def make_params_xml(xml_path, output_dir, simulation_steps, additional_params, t
 
   # Biocellion required parameters
   bcell_num_baseline = simulation_steps
-  bcell_nx = '9'
-  bcell_ny = '9'
-  bcell_nz = '9'
-  bcell_partition_size = 9
+  bcell_nx = '10'
+  bcell_ny = '10'
+  bcell_nz = '10'
+  bcell_partition_size = 10
   bcell_path = output_dir
   bcell_interval = 1
   bcell_start_x = 0
   bcell_start_y = 0
   bcell_start_z = 0
-  bcell_size_x = 9
-  bcell_size_y = 9
-  bcell_size_z = 9
+  bcell_size_x = 10
+  bcell_size_y = 10
+  bcell_size_z = 10
 
   # Biocellion optional parameteres
   bcell_input_param = additional_params

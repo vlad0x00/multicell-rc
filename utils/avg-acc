@@ -8,14 +8,26 @@ cd ..
 params=""
 echo $params
 
+rm -f err
 accuracies=()
+cells_with_input_signal=()
 for i in $(seq $ITERATIONS); do
   printf "\rIteration: $i / $ITERATIONS"
-  accuracies+=($(./run $params 2> err | grep "Testing accuracy" | awk '{ print $3 }'))
+  output=$(./run $params 2>> err)
+  accuracies+=($(echo $output | grep "Testing accuracy" | awk '{ print $3 }'))
+  cells_with=$(echo $output | grep "Cells with correct input signal:" | awk '{ print $6 }')
+  cells_out_of=$(echo $output | grep "Cells with correct input signal:" | awk '{ print $8 }')
+  cells_with_input_signal+=($(bc <<< "scale=2; $cells_with / $cells_out_of"))
 done
 echo
 
-sum=$(IFS="+"; bc <<< "${accuracies[*]}")
-len=${#accuracies[@]}
+cells_with_sum=$(IFS="+"; bc <<< "${cells_with_input_signal[*]}")
+cells_with_len=${#cells_with_input_signal[@]}
 
-echo $(bc <<< "scale=2; $sum / $len")
+accuracies_sum=$(IFS="+"; bc <<< "${accuracies[*]}")
+accuracies_len=${#accuracies[@]}
+
+echo -n "Cells with correct input signal: "
+echo $(bc <<< "scale=2; $cells_with_sum / $cells_with_len")
+echo -n "Average accuracy: "
+echo $(bc <<< "scale=2; $accuracies_sum / $accuracies_len")
