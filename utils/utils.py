@@ -385,11 +385,12 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   functions = { 'parity' : parity, 'median' : median }
 
   output_states = []
+  output_cells = random.sample(range(num_cells), num_output_cells)
   for state in states:
     output_states.append([])
-    for cell in range(num_output_cells):
+    for cell in output_cells:
       if cell == 0:
-        cell_state = state[-((cell + 1) * num_genes):]
+        cell_state = state[-num_genes:]
       else:
         cell_state = state[-((cell + 1) * num_genes):-(cell * num_genes)]
       assert len(cell_state) == num_genes
