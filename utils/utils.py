@@ -222,7 +222,7 @@ def get_gene_values(output_file, num_genes, num_cells):
         if not tmp[i].isdigit():
           offset = int(tmp[:i])
           break
-      if b'Name="cell_id"' in line:
+      if b'Name="color"' in line:
         cell_id_offsets.append(offset)
       if b'Name="genebits_' in line:
         genebits_offsets.append(offset)

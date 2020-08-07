@@ -377,7 +377,6 @@ void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
   /* FileOutputInfo class holds the information related to file output of simulation results. */
   fileOutputInfo.particleOutput = true;
   fileOutputInfo.v_particleExtraOutputScalarVarName.clear();
-  fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("cell_id");
   for (S32 i = 0; i < std::ceil(double(numGenes) / (sizeof(REAL) * 8)); i++) {
     fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("genebits_" + std::to_string(i));
   }
