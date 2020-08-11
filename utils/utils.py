@@ -41,6 +41,7 @@ parser.add_argument('-c', '--cells', type=abovezero_int, default=216, help="Numb
 parser.add_argument('-p', '--cell-types', type=abovezero_int, default=12, help="Number of cell types in the simulation.")
 parser.add_argument('-u', '--output-gene-fraction', type=fraction_type, default=0.5, help="Fraction of (internal) genes used for output.")
 parser.add_argument('-d', '--output-cell-fraction', type=fraction_type, default=0.5, help="Fraction of cells used for output.")
+parser.add_argument('-n', '--output-cell-type-fraction', type=fraction_type, default=0.5, help="Fraction of cell types used for output.")
 parser.add_argument('-k', '--degree', type=abovezero_int, default=2, help="Average node in-degree of gene network(s).")
 parser.add_argument('-l', '--input-fraction', type=fraction_type, default=1.0, help="Fraction of nodes connected to the input signal.")
 parser.add_argument('-f', '--function', choices=[ "median", "parity" ], default="parity", help="Function to learn")
@@ -48,10 +49,10 @@ parser.add_argument('-a', '--alpha', type=zeroplus_float, default=0.55, help="Mo
 parser.add_argument('-b', '--beta', type=zeroplus_float, default=5.0, help="Grid diffusion coefficient.")
 parser.add_argument('-y', '--cytokines', type=zeroplus_int, default=2, help="Number of cytokines in the simulation.")
 parser.add_argument('-o', '--secretion-low', type=zeroplus_float, default=0.0, help="Cytokine secretion when the gene is off.")
-parser.add_argument('-i', '--secretion-high', type=zeroplus_float, default=40.0, help="Cytokine secretion when the gene is on.")
-parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=1.25, help="Cytokine threshold to turn a gene on.")
+parser.add_argument('-i', '--secretion-high', type=zeroplus_float, default=55.0, help="Cytokine secretion when the gene is on.")
+parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=1.00, help="Cytokine threshold to turn a gene on.")
 parser.add_argument('-r', '--cell-radius', type=abovezero_float, default=1.00, help="Cell radius.")
-parser.add_argument('-x', '--grid-spacing', type=abovezero_float, default=2.3, help="Simulation space voxel length.")
+parser.add_argument('-x', '--grid-spacing', type=abovezero_float, default=2.7, help="Simulation space voxel length.")
 parser.add_argument('-s', '--steps', type=abovezero_int, default=300, help="Number of simulation steps.")
 parser.add_argument('-m', '--memory', type=zeroplus_int, default=0, help="Step delay between input signal and output layer prediction.")
 parser.add_argument('-w', '--window-size', type=abovezero_int, default=5, help="Window size of predicted functions.")
@@ -250,7 +251,18 @@ def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, o
 
   return states
 
-def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, window_size, delay, timesteps, function, visualize, threads):
+def get_cell_types(output_file):
+  cell_type_map = {}
+  with open(output_file, 'r') as f:
+    for line in f:
+      if line.startswith("Cell:"):
+        tokens = line.split(',')
+        cell = int(tokens[0].split(':')[1])
+        cell_type = int(tokens[1].split(':')[1])
+        cell_type_map[cell] = cell_type
+  return cell_type_map
+
+def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, window_size, delay, timesteps, function, visualize, threads):
   import numpy as np
   from sklearn.linear_model import Lasso, LassoCV
   from sklearn.model_selection import train_test_split
@@ -343,10 +355,13 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   functions = { 'parity' : parity, 'median' : median }
 
+  cell_types_map = get_cell_types(biocellion_output_file)
+
   output_states = []
   for state in states:
     output_states.append([])
     for cell in range(num_output_cells):
+      if cell_types_map[cell] >= num_output_cell_types: continue
       if cell == 0:
         cell_state = state[-num_genes:]
       else:
@@ -365,12 +380,11 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   assert len(x) == len(y)
   for s in x:
-    assert len(s) == num_output_cells * num_output_genes
+    assert len(s) <= num_output_cells * num_output_genes
 
   x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
   lasso = LassoCV(n_jobs=threads)
-  #lasso = LassoCV(max_iter=10000, tol=0.0005, n_jobs=threads)
   #lasso = Lasso(alpha=LASSO_ALPHA)
   lasso.fit(x_train, y_train)
 

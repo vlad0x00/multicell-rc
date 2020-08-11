@@ -36,6 +36,7 @@ CELL_RADIUS = args.cell_radius
 IF_GRID_SPACING = args.grid_spacing
 NUM_OUTPUT_GENES = math.ceil(args.genes * args.output_gene_fraction)
 NUM_OUTPUT_CELLS = math.ceil(NUM_CELLS * args.output_cell_fraction)
+NUM_OUTPUT_CELL_TYPES = math.ceil(NUM_CELL_TYPES * args.output_cell_type_fraction)
 SIMULATION_STEPS = args.steps
 DELAY = args.memory
 WINDOW_SIZE = args.window_size
@@ -85,7 +86,7 @@ os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_
 print("Done!", flush=True)
 
 print("Training LASSO... ", end='', flush=True)
-train_accuracy, test_accuracy, coeff_used, cells_correct_input = utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, VISUALIZE, THREADS)
+train_accuracy, test_accuracy, coeff_used, cells_correct_input = utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, VISUALIZE, THREADS)
 print("Done!", flush=True)
 print("Training accuracy:", train_accuracy)
 print("Testing accuracy:", test_accuracy)
