@@ -200,72 +200,31 @@ def generate_gene_initial_states(num_genes, num_cells, num_cytokines, input_sign
       f.write('\n')
 
 def get_gene_values(output_file, num_genes, num_cells):
-  with open(output_file, "rb") as f:
-    lines = f.readlines()
+  import numpy as np
+  from vtk import vtkXMLPolyDataReader
+  from vtk.util import numpy_support as VN
 
-  raw_start = 0
-  raw_end = 0
-  cell_id_offsets = []
-  genebits_offsets = []
-  genebits_updated = False
-  for i, line in enumerate(lines):
-    if b'<AppendedData encoding=\"raw\">' in line: raw_start = i + 1
-    if b'</AppendedData>' in line: raw_end = i
-    if b'offset' in line:
-      tmp = line.decode('utf-8').split()
-      for token in tmp:
-        if 'offset' in token:
-          tmp = token.split('=')
-      assert tmp[0] == 'offset'
-      tmp = tmp[1][1:]
-      for i in range(len(tmp)):
-        if not tmp[i].isdigit():
-          offset = int(tmp[:i])
-          break
-      if b'Name="color"' in line:
-        cell_id_offsets.append(offset)
-      if b'Name="genebits_' in line:
-        genebits_offsets.append(offset)
-        genebits_updated = True
-      elif genebits_updated:
-        genebits_offsets.append(offset)
-        genebits_updated = False
-
-  raw_data = b''
-  for line in lines[raw_start:raw_end]:
-    raw_data += line
-  raw_data = raw_data[1:] # Remove the underscore
-  raw_data = raw_data[:-1] # Remove the newline
-
-  if genebits_updated:
-    genebits_offsets.append(len(raw_data))
-    genebits_updated = False
-
-  cell_id_offsets.append(genebits_offsets[0])
+  reader = vtkXMLPolyDataReader()
+  reader.SetFileName(output_file)
+  reader.Update()
+  data = reader.GetOutput()
 
   cell_ids = []
-  for i in range(num_cells - 1, -1, -1):
-    id_start = cell_id_offsets[1] - i * 8 - 8
-    id_end = cell_id_offsets[1] - i * 8
-    cell_ids.append(int(struct.unpack('d', raw_data[id_start:id_end])[0]))
+  for cell in range(data.GetNumberOfPoints()):
+    cell_ids.append(data.GetPointData().GetArray(1).GetTuple(cell)[0])
 
   gene_values = []
-  for _ in range(num_cells):
+  for cell in range(num_cells):
+    gene_count = 0
     gene_values.append([])
-
-  gene_num = 0
-  for i in range(1, len(genebits_offsets)):
-    data_end = genebits_offsets[i]
-    data_start = data_end - num_cells * 8
-
-    genebits = raw_data[data_start:data_end]
-    for cell in range(num_cells):
-      for bitPos in range(64):
-        if gene_num + bitPos >= num_genes: break
-        val = (genebits[(cell * 8):((cell + 1) * 8)][bitPos // 8] & (1 << (bitPos % 8))) >> (bitPos % 8)
+    for g in range(2, data.GetPointData().GetNumberOfArrays()):
+      bits = data.GetPointData().GetArray(g).GetTuple(cell)[0]
+      bits = struct.unpack('Q', struct.pack('d', bits))[0]
+      for bitposition in range(64):
+        val = ((bits >> bitposition) & 1)
         gene_values[cell].append(val)
-    if gene_num + bitPos >= num_genes: break
-    gene_num += 64
+        gene_count += 1
+        if gene_count >= num_genes: break
 
   reordered_gene_values = []
   for cell in range(num_cells):
@@ -411,6 +370,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
   lasso = LassoCV(n_jobs=threads)
+  #lasso = LassoCV(max_iter=10000, tol=0.0005, n_jobs=threads)
   #lasso = Lasso(alpha=LASSO_ALPHA)
   lasso.fit(x_train, y_train)
 
