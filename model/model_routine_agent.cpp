@@ -41,21 +41,15 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
     Vector<VIdx> coordsVIdx;
     Vector<VReal> coordsOffset;
 
-    static const REAL cellGridSpacing = gIfGridSpacing;
-
-    for (REAL z = (cellGridSpacing * -zLayers / 2.0); z < (cellGridSpacing * (zLayers - zLayers / 2.0)) - cellGridSpacing / 2.0; z += cellGridSpacing) {
-      for (REAL y = (cellGridSpacing * -yLayers / 2.0); y < (cellGridSpacing * (yLayers - yLayers / 2.0)) - cellGridSpacing / 2.0; y += cellGridSpacing) {
-        for (REAL x = (cellGridSpacing * -xLayers / 2.0); x < (cellGridSpacing * (xLayers - xLayers / 2.0)) - cellGridSpacing / 2.0; x += cellGridSpacing) {
-          vIdx[0] = std::round(x / gIfGridSpacing) + regionSize[0] / 2;
-          vIdx[1] = std::round(y / gIfGridSpacing) + regionSize[1] / 2;
-          vIdx[2] = std::round(z / gIfGridSpacing) + regionSize[2] / 2;
-          vOffset[0] = x - std::floor(x / gIfGridSpacing) * gIfGridSpacing;
-          vOffset[1] = y - std::floor(y / gIfGridSpacing) * gIfGridSpacing;
-          vOffset[2] = z - std::floor(z / gIfGridSpacing) * gIfGridSpacing;
-          for (S32 dim = 0; dim < 3; dim++) {
-            while (vOffset[dim] < -gIfGridSpacing / 2.0)               { vIdx[dim] -= 1; vOffset[dim] += gIfGridSpacing; }
-            while (vOffset[dim] > gIfGridSpacing / 2.0) { vIdx[dim] += 1; vOffset[dim] -= gIfGridSpacing; }
-          }
+    for (S32 z = -zLayers / 2; z < zLayers - zLayers / 2; z += 1) {
+      for (S32 y = -yLayers / 2; y < yLayers - yLayers / 2; y += 1) {
+        for (S32 x = -xLayers / 2; x < xLayers - xLayers / 2; x += 1) {
+          vIdx[0] = x + regionSize[0] / 2;
+          vIdx[1] = y + regionSize[1] / 2;
+          vIdx[2] = z + regionSize[2] / 2;
+          vOffset[0] = 0;
+          vOffset[1] = 0;
+          vOffset[2] = 0;
           coordsVIdx.push_back(vIdx);
           coordsOffset.push_back(vOffset);
         }
