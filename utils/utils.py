@@ -5,6 +5,8 @@ import shutil
 import subprocess
 import argparse
 import struct
+import math
+import matplotlib.pyplot as plt
 
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element, SubElement, Comment
@@ -37,10 +39,10 @@ def fraction_type(s):
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-g', '--genes', type=abovezero_int, default=20, help="Number of (internal) genes per cell.")
-parser.add_argument('-c', '--cells', type=abovezero_int, default=216, help="Number of cells in the simulation.")
-parser.add_argument('-p', '--cell-types', type=abovezero_int, default=12, help="Number of cell types in the simulation.")
+parser.add_argument('-c', '--cells', type=abovezero_int, default=343, help="Number of cells in the simulation.")
+parser.add_argument('-p', '--cell-types', type=abovezero_int, default=20, help="Number of cell types in the simulation.")
 parser.add_argument('-u', '--output-gene-fraction', type=fraction_type, default=0.5, help="Fraction of (internal) genes used for output.")
-parser.add_argument('-d', '--output-cell-fraction', type=fraction_type, default=0.5, help="Fraction of cells used for output.")
+parser.add_argument('-d', '--output-cell-fraction', type=fraction_type, default=0.2, help="Fraction of cells used for output.")
 parser.add_argument('-n', '--output-cell-type-fraction', type=fraction_type, default=0.5, help="Fraction of cell types used for output.")
 parser.add_argument('-k', '--degree', type=abovezero_int, default=2, help="Average node in-degree of gene network(s).")
 parser.add_argument('-l', '--input-fraction', type=fraction_type, default=1.0, help="Fraction of nodes connected to the input signal.")
@@ -53,7 +55,7 @@ parser.add_argument('-i', '--secretion-high', type=zeroplus_float, default=55.0,
 parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=1.00, help="Cytokine threshold to turn a gene on.")
 parser.add_argument('-r', '--cell-radius', type=abovezero_float, default=1.00, help="Cell radius.")
 parser.add_argument('-x', '--grid-spacing', type=abovezero_float, default=2.7, help="Simulation space voxel length.")
-parser.add_argument('-s', '--steps', type=abovezero_int, default=300, help="Number of simulation steps.")
+parser.add_argument('-s', '--steps', type=abovezero_int, default=400, help="Number of simulation steps.")
 parser.add_argument('-m', '--memory', type=zeroplus_int, default=0, help="Step delay between input signal and output layer prediction.")
 parser.add_argument('-w', '--window-size', type=abovezero_int, default=5, help="Window size of predicted functions.")
 parser.add_argument('-e', '--reuse', action='store_true', help="Use previously generated initial gene network states, functions, and input signal. Otherwise generate new.")
@@ -361,7 +363,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   for state in states:
     output_states.append([])
     for cell in range(num_output_cells):
-      if cell_types_map[cell] >= num_output_cell_types: continue
+      if cell_types_map[num_cells - cell - 1] >= num_output_cell_types: continue
       if cell == 0:
         cell_state = state[-num_genes:]
       else:
@@ -385,7 +387,6 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
   lasso = LassoCV(n_jobs=threads)
-  #lasso = Lasso(alpha=LASSO_ALPHA)
   lasso.fit(x_train, y_train)
 
   train_predicted = [ 1 if x > 0.5 else 0 for x in lasso.predict(x_train) ]
@@ -393,12 +394,61 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   train_score = lasso.score(x_train, y_train)
   test_score = lasso.score(x_test, y_test)
-  coeff_used = np.sum(lasso.coef_!=0)
+  coeff_used = np.sum(lasso.coef_ != 0)
+  coeff_max = len(output_states[0])
 
   train_accuracy = sum([ 1 if a == b else 0 for a, b in zip(train_predicted, y_train) ]) / len(train_predicted)
   test_accuracy = sum([ 1 if a == b else 0 for a, b in zip(test_predicted, y_test) ]) / len(test_predicted)
 
-  return train_accuracy, test_accuracy, coeff_used, cells_correct_input
+  cell_feature_count = {}
+  cell_type_feature_count = {}
+  for cell in range(num_output_cells):
+    cell_type = cell_types_map[num_cells - cell - 1] 
+    if cell_type >= num_output_cell_types: continue
+    feature_count = np.sum(lasso.coef_[(cell * num_output_genes):((cell + 1) * num_output_genes)] != 0)
+    if feature_count > 0:
+      if cell in cell_feature_count:
+        cell_feature_count[cell] += feature_count
+      else:
+        cell_feature_count[cell] = feature_count
+      if cell_type in cell_type_feature_count:
+        cell_type_feature_count[cell_type] += feature_count
+      else:
+        cell_type_feature_count[cell_type] = feature_count
+  
+  plt.figure()
+  plt.bar(range(len(cell_feature_count)), sorted(cell_feature_count.values(), reverse=True))
+  xticks = [math.ceil(x) for x in plt.xticks()[0]]
+  xticks_new = []
+  for xtick in xticks:
+    if xtick < 0: continue
+    if xtick >= len(cell_feature_count):
+      xticks_new.append(len(cell_feature_count) - 1)
+      break
+    else:
+      xticks_new.append(xtick)
+  xticks = xticks_new
+  plt.xticks(xticks)
+  plt.yticks([math.ceil(y) for y in plt.yticks()[0]])
+  plt.savefig(os.path.join(output_dir, "cell_feature_count.png"))
+
+  plt.figure()
+  plt.bar(range(len(cell_type_feature_count)), sorted(cell_type_feature_count.values(), reverse=True))
+  xticks = [math.ceil(x) for x in plt.xticks()[0]]
+  xticks_new = []
+  for xtick in xticks:
+    if xtick < 0: continue
+    if xtick >= len(cell_type_feature_count):
+      xticks_new.append(len(cell_type_feature_count) - 1)
+      break
+    else:
+      xticks_new.append(xtick)
+  xticks = xticks_new
+  plt.xticks(xticks)
+  plt.yticks([math.ceil(y) for y in plt.yticks()[0]])
+  plt.savefig(os.path.join(output_dir, "cell_type_feature_count.png"))
+
+  return train_accuracy, test_accuracy, coeff_used, coeff_max, cells_correct_input
 
 def prettify(elem):
   """Return a pretty-printed XML string for the Element.
