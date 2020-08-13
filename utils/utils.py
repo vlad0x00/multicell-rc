@@ -1,4 +1,5 @@
 import os
+import sys
 import random
 import csv
 import shutil
@@ -364,10 +365,11 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   cell_types_map = get_cell_types(biocellion_output_file)
 
+  output_cells = range(num_cells - 1, num_cells - num_output_cells - 1, -1)
   output_states = []
   for state in states:
     output_states.append([])
-    for cell in range(num_cells - 1, num_cells - num_output_cells - 1, -1):
+    for cell in output_cells:
       cell_type = cell_types_map[cell]
       if cell_type >= num_output_cell_types: continue
       cell_state = state[(cell * num_genes):((cell + 1) * num_genes)]
@@ -375,6 +377,9 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
       output_states[-1] += cell_state[-num_output_genes:]
   for state in output_states:
     assert len(state) == len(output_states[0])
+  if all([ cell_type >= num_output_cell_types for cell_type in [ cell_types_map[cell] for cell in output_cells ] ]):
+    print("\nNone of the output cells belong to the output cell type. Exiting...")
+    sys.exit(1)
 
   x = output_states
   y = functions[function]
