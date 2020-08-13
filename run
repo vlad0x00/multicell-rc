@@ -48,7 +48,9 @@ FUNCTION = args.function
 VISUALIZE = args.visualize
 NEW = not args.reuse
 THREADS = args.threads
+WARMUP_STEPS = 10
 
+assert SIMULATION_STEPS > WARMUP_STEPS
 assert CELL_RADIUS <= IF_GRID_SPACING
 
 os.environ['OPENBLAS_NUM_THREADS'] = str(args.threads)
@@ -88,7 +90,7 @@ os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_
 print("Done!", flush=True)
 
 print("Training LASSO... ", end='', flush=True)
-train_accuracy, test_accuracy, coeff_used, coeff_max, cells_correct_input = utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, VISUALIZE, THREADS)
+train_accuracy, test_accuracy, coeff_used, coeff_max, cells_correct_input = utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, VISUALIZE, THREADS, WARMUP_STEPS)
 print("Done!", flush=True)
 print("Training accuracy:", train_accuracy)
 print("Testing accuracy:", test_accuracy)

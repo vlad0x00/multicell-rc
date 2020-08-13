@@ -267,7 +267,7 @@ def get_cell_types(output_file):
         cell_type_map[cell] = cell_type
   return cell_type_map
 
-def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, window_size, delay, timesteps, function, visualize, threads):
+def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, window_size, delay, timesteps, function, visualize, threads, warmup_steps):
   import numpy as np
   from sklearn.linear_model import Lasso, LassoCV
   from sklearn.model_selection import train_test_split
@@ -293,7 +293,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   assert cells_correct_input > 0
   assert cell_correct_input_ids[0] == 0
 
-  states = states[window_size:]
+  states = states[(window_size - 1):]
   for state in states:
     assert len(state) == num_cells * num_genes
 
@@ -340,7 +340,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
         os.remove(os.path.join(output_dir, filename))
 
   parity = []
-  for i in range(window_size, len(input_signal)):
+  for i in range(window_size, len(input_signal) + 1):
     bitsum = 0
     for bit in input_signal[(i - window_size):i]:
       bitsum += bit
@@ -348,10 +348,10 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
       parity.append(0)
     else:
       parity.append(1)
-  assert len(input_signal) == len(parity) + window_size
+  assert len(input_signal) == len(parity) + window_size - 1
 
   median = []
-  for i in range(window_size, len(input_signal)):
+  for i in range(window_size, len(input_signal) + 1):
     bitsum = 0
     for bit in input_signal[(i - window_size):i]:
       bitsum += bit
@@ -359,7 +359,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
       median.append(1)
     else:
       median.append(0)
-  assert len(input_signal) == len(median) + window_size
+  assert len(input_signal) == len(median) + window_size - 1
 
   functions = { 'parity' : parity, 'median' : median }
 
@@ -387,6 +387,10 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   if delay > 0:
     x = x[delay:]
     y = y[:-delay]
+
+  if warmup_steps > 0:
+    x = x[warmup_steps:]
+    y = y[warmup_steps:]
 
   assert len(x) == len(y)
   for s in x:
