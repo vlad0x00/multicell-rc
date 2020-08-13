@@ -48,7 +48,7 @@ FUNCTION = args.function
 VISUALIZE = args.visualize
 NEW = not args.reuse
 THREADS = args.threads
-WARMUP_STEPS = 10
+WARMUP_STEPS = args.warmup_steps
 
 assert SIMULATION_STEPS > WARMUP_STEPS
 assert CELL_RADIUS <= IF_GRID_SPACING
