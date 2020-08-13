@@ -217,6 +217,8 @@ void ModelRoutine::updateIfGridDirichletBCVal( const S32 elemIdx, const VReal& p
   CHECK(elemIdx == 0);
   if (dim == 2 && lowSide) {
     bcVal = gInputSignal[Info::getCurBaselineTimeStep() + 1] * gDirichletBoundary;
+  } else {
+    bcVal = 0;
   }
 
   /* MODEL END */
