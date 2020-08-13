@@ -13,7 +13,15 @@ colnames(results)[2] <- 'Cell types'
 colnames(results)[7] <- 'Cell radius'
 colnames(results)[8] <- 'If grid spacing'
 results$Secretion <- factor(results$Secretion)
-results$Cells <- paste(results$Cells, 'cells')
+
+if_grid_spacing <- paste(results$`If grid spacing`, 'cell spacing')
+if_grid_spacing_levels <- paste(unique(sort(results$`If grid spacing`)), 'cell spacing')
+
+cells <- paste(results$Cells, 'cells')
+cells_levels <- paste(unique(sort(results$Cells)), 'cells')
+
+results$`If grid spacing` <- factor(if_grid_spacing, levels = if_grid_spacing_levels)
+results$Cells <- factor(cells, levels = cells_levels)
 
 mean_cl_quantile <- function(x, q = c(0.45, 0.55), na.rm = TRUE){
   dat <- data.frame(y = mean(x, na.rm = na.rm),
@@ -22,18 +30,16 @@ mean_cl_quantile <- function(x, q = c(0.45, 0.55), na.rm = TRUE){
   return(dat)
 }
 
-results %>% ggplot(aes(x=Threshold, y=Accuracy, color=Secretion)) +
-  stat_summary(geom = "line", fun = mean, size = 0.7) +
-  theme_bw() +
-  theme(axis.title.y = element_text(angle = 0)) +
-  facet_wrap(~`If grid spacing` + Lambda) +
-  ggtitle('Cells = 216, Cell types = 10, Cytokines = 3, Beta = 5, L = 1, K = 2, Output cells = 0.5, Output (internal) genes = 0.5,\nFunction = parity, Window = 5, 30 Iterations per parameter set')
-ggsave('plot.png', width = 11, height = 7)
-
-# results %>% ggplot(aes(x=`Cell types`, y=Accuracy, color=Cytokines)) +
+# results %>% ggplot(aes(x=Threshold, y=Accuracy, color=Secretion)) +
 #   stat_summary(geom = "line", fun = mean, size = 0.7) +
 #   theme_bw() +
 #   theme(axis.title.y = element_text(angle = 0)) +
-#   facet_wrap(~Cells) +
-#   ggtitle('Lambda = 3, Beta = 5, Threshold = 2, Secretion = 50, Cell grid spacing = 2, L = 1, K = 2, Output cells = 0.5,\nOutput (internal) genes = 0.5, Function = parity, Window = 5, 30 Iterations per parameter set')
-# ggsave('plot.png', width = 11, height = 7)
+#   facet_wrap(~`If grid spacing` + Lambda + Cytokines)
+# ggsave('plot.png', width = 20, height = 15)
+
+results %>% ggplot(aes(x=`Cell types`, y=Accuracy, color=Cytokines)) +
+  stat_summary(geom = "line", fun = mean, size = 0.7) +
+  theme_bw() +
+  theme(axis.title.y = element_text(angle = 0)) +
+  facet_wrap(~Cells)
+ggsave('plot.png', width = 11, height = 7)

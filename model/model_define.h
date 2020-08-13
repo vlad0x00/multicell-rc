@@ -25,9 +25,6 @@ typedef enum _model_rng_type_e {
   NUM_MODEL_RNGS
 } model_rng_type_e;
 
-const REAL INPUT_SIGNAL_DIRICHLET_VAL = 500;
-const REAL INPUT_SIGNAL_THRESHOLD = 0.10;
-
 const BOOL ENABLE_SUMMARY = false;
 
 /* A baseline time step is the largest time step used in Biocellion
@@ -57,6 +54,8 @@ extern REAL gSecretionHigh;
 extern REAL gCytokineThreshold;
 extern REAL gCellRadius;
 extern REAL gIfGridSpacing;
+extern REAL gDirichletBoundary;
+extern REAL gInputThreshold;
 
 typedef struct {
   S64 numGenes;
@@ -77,6 +76,8 @@ typedef struct {
 	S64 cytokineThreshold;
 	S64 cellRadius;
 	S64 ifGridSpacing;
+	S64 dirichletBoundary;
+	S64 inputThreshold;
 } GlobalDataFormat;
 
 static inline S32* getNv(S32 cellType) {

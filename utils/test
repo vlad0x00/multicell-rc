@@ -49,7 +49,7 @@ for cell_radius in ${CELL_RADIUSES[@]}; do
 for if_grid_spacing in ${IF_GRID_SPACINGS[@]}; do
 for window in ${WINDOWS[@]}; do
 for iteration in $(seq $ITERATIONS); do
-  params_sets+=("-c $cells -p $cell_types -y $cytokines -a $alpha -t $threshold -i $secretion_high -r $cell_radius -x $if_grid_spacing -w $window")
+  params_sets+=("-c $cells -p $cell_types -y $cytokines -a $alpha -t $threshold -H $secretion_high -r $cell_radius -x $if_grid_spacing -w $window")
   iterations+=($iteration)
 done
 done
@@ -65,7 +65,7 @@ done
 function do_run() {
   echo "PARAMS: $1"
   outdir="output-"$(echo $1 | tr -d '-' | tr ' ' '_')"-#$2"
-  ./run $1 -q $outdir
+  ./run $1 -O $outdir
   rm -rf $outdir
 }
 export -f do_run

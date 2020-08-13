@@ -41,26 +41,28 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument('-g', '--genes', type=abovezero_int, default=20, help="Number of (internal) genes per cell.")
 parser.add_argument('-c', '--cells', type=abovezero_int, default=343, help="Number of cells in the simulation.")
 parser.add_argument('-p', '--cell-types', type=abovezero_int, default=20, help="Number of cell types in the simulation.")
-parser.add_argument('-u', '--output-gene-fraction', type=fraction_type, default=0.5, help="Fraction of (internal) genes used for output.")
-parser.add_argument('-d', '--output-cell-fraction', type=fraction_type, default=0.2, help="Fraction of cells used for output.")
-parser.add_argument('-n', '--output-cell-type-fraction', type=fraction_type, default=0.5, help="Fraction of cell types used for output.")
+parser.add_argument('-G', '--output-gene-fraction', type=fraction_type, default=0.5, help="Fraction of (internal) genes used for output.")
+parser.add_argument('-C', '--output-cell-fraction', type=fraction_type, default=0.2, help="Fraction of cells used for output.")
+parser.add_argument('-P', '--output-cell-type-fraction', type=fraction_type, default=0.5, help="Fraction of cell types used for output.")
 parser.add_argument('-k', '--degree', type=abovezero_int, default=2, help="Average node in-degree of gene network(s).")
 parser.add_argument('-l', '--input-fraction', type=fraction_type, default=1.0, help="Fraction of nodes connected to the input signal.")
+parser.add_argument('-D', '--dirichlet-boundary', type=abovezero_float, default=1000.0, help="Value of dirichlet boundary when input signal is on. The value is 0 when the signal is off.")
+parser.add_argument('-T', '--input-threshold', type=abovezero_float, default=0.1, help="Threshold for the molecular concentration of input signal for cells to consider it on.")
 parser.add_argument('-f', '--function', choices=[ "median", "parity" ], default="parity", help="Function to learn")
 parser.add_argument('-a', '--alpha', type=zeroplus_float, default=0.55, help="Molecular decay rate.")
 parser.add_argument('-b', '--beta', type=zeroplus_float, default=5.0, help="Grid diffusion coefficient.")
 parser.add_argument('-y', '--cytokines', type=zeroplus_int, default=2, help="Number of cytokines in the simulation.")
-parser.add_argument('-o', '--secretion-low', type=zeroplus_float, default=0.0, help="Cytokine secretion when the gene is off.")
-parser.add_argument('-i', '--secretion-high', type=zeroplus_float, default=55.0, help="Cytokine secretion when the gene is on.")
-parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=1.00, help="Cytokine threshold to turn a gene on.")
+parser.add_argument('-L', '--secretion-low', type=zeroplus_float, default=0.0, help="Cytokine secretion when the gene is off.")
+parser.add_argument('-H', '--secretion-high', type=zeroplus_float, default=55.0, help="Cytokine secretion when the gene is on.")
+parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=1.5, help="Cytokine threshold to turn a gene on.")
 parser.add_argument('-r', '--cell-radius', type=abovezero_float, default=1.00, help="Cell radius.")
-parser.add_argument('-x', '--grid-spacing', type=abovezero_float, default=2.7, help="Simulation space voxel length.")
+parser.add_argument('-x', '--grid-spacing', type=abovezero_float, default=2.3, help="Simulation space voxel length.")
 parser.add_argument('-s', '--steps', type=abovezero_int, default=400, help="Number of simulation steps.")
 parser.add_argument('-m', '--memory', type=zeroplus_int, default=0, help="Step delay between input signal and output layer prediction.")
 parser.add_argument('-w', '--window-size', type=abovezero_int, default=5, help="Window size of predicted functions.")
-parser.add_argument('-e', '--reuse', action='store_true', help="Use previously generated initial gene network states, functions, and input signal. Otherwise generate new.")
+parser.add_argument('-R', '--reuse', action='store_true', help="Use previously generated initial gene network states, functions, and input signal. Otherwise generate new.")
 parser.add_argument('-z', '--visualize', action='store_true', help="Generate a dot and png file of the gene network model and every state of the simulation for visualization and debugging.")
-parser.add_argument('-q', '--output', default="output", help="Path of simulation output directory")
+parser.add_argument('-O', '--output', default="output", help="Path of simulation output directory")
 parser.add_argument('-j', '--threads', type=abovezero_int, default=2, help="Number of threads to use for the run.")
 
 def parse_args(args=None):
@@ -282,10 +284,13 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
     for cell in range(num_cells):
       cell_input_matches[cell].append(signal == genes[cell * num_genes])
   cells_correct_input = 0
-  for cell_matches in cell_input_matches:
+  cell_correct_input_ids = []
+  for cell, cell_matches in enumerate(cell_input_matches):
+    cell_correct_input_ids.append(cell)
     if all(cell_matches):
       cells_correct_input += 1
   assert cells_correct_input > 0
+  assert cell_correct_input_ids[0] == 0
 
   states = states[window_size:]
   for state in states:
@@ -362,12 +367,10 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   output_states = []
   for state in states:
     output_states.append([])
-    for cell in range(num_output_cells):
-      if cell_types_map[num_cells - cell - 1] >= num_output_cell_types: continue
-      if cell == 0:
-        cell_state = state[-num_genes:]
-      else:
-        cell_state = state[-((cell + 1) * num_genes):-(cell * num_genes)]
+    for cell in range(num_cells - 1, num_cells - num_output_cells - 1, -1):
+      cell_type = cell_types_map[cell]
+      if cell_type >= num_output_cell_types: continue
+      cell_state = state[(cell * num_genes):((cell + 1) * num_genes)]
       assert len(cell_state) == num_genes
       output_states[-1] += cell_state[-num_output_genes:]
   for state in output_states:
@@ -402,10 +405,12 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   cell_feature_count = {}
   cell_type_feature_count = {}
-  for cell in range(num_output_cells):
-    cell_type = cell_types_map[num_cells - cell - 1] 
+  for cell in range(num_cells - 1, num_cells - num_output_cells - 1, -1):
+    cell_type = cell_types_map[cell]
     if cell_type >= num_output_cell_types: continue
-    feature_count = np.sum(lasso.coef_[(cell * num_output_genes):((cell + 1) * num_output_genes)] != 0)
+    coeff_start = (num_cells - 1 - cell) * num_output_genes
+    coeff_end = (num_cells - cell) * num_output_genes
+    feature_count = np.sum(lasso.coef_[coeff_start:coeff_end] != 0)
     if feature_count > 0:
       if cell in cell_feature_count:
         cell_feature_count[cell] += feature_count
@@ -462,18 +467,18 @@ def make_params_xml(xml_path, output_dir, simulation_steps, additional_params, t
 
   # Biocellion required parameters
   bcell_num_baseline = simulation_steps
-  bcell_nx = '10'
-  bcell_ny = '10'
-  bcell_nz = '10'
-  bcell_partition_size = 10
+  bcell_nx = '12'
+  bcell_ny = '12'
+  bcell_nz = '12'
+  bcell_partition_size = 12
   bcell_path = output_dir
   bcell_interval = 1
   bcell_start_x = 0
   bcell_start_y = 0
   bcell_start_z = 0
-  bcell_size_x = 10
-  bcell_size_y = 10
-  bcell_size_z = 10
+  bcell_size_x = 12
+  bcell_size_y = 12
+  bcell_size_z = 12
 
   # Biocellion optional parameteres
   bcell_input_param = additional_params

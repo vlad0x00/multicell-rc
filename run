@@ -29,6 +29,8 @@ ALPHA = args.alpha
 BETA = args.beta
 NUM_CYTOKINES = args.cytokines
 INPUT_CONNECTIONS = math.ceil((NUM_GENES - (1 + NUM_CYTOKINES)) * args.input_fraction)
+DIRICHLET_BOUNDARY = args.dirichlet_boundary
+INPUT_THRESHOLD = args.input_threshold
 SECRETION_LOW = args.secretion_low
 SECRETION_HIGH = args.secretion_high
 CYTOKINE_THRESHOLD = args.cytokine_threshold
@@ -59,7 +61,7 @@ os.environ['VECLIB_MAXIMUM_THREADS'] = str(args.threads)
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
 os.makedirs(OUTPUT_DIR)
 
-ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA) + " " + str(BETA) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING)
+ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA) + " " + str(BETA) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD)
 
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 

@@ -158,7 +158,7 @@ void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junction
 
   Vector<BOOL> newBools;
 
-  newBools.push_back((avgPhi[0] > INPUT_SIGNAL_THRESHOLD) ? 1 : 0);
+  newBools.push_back((avgPhi[0] > gInputThreshold) ? 1 : 0);
 
   for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
     if (avgPhi[1 + cytokine] > gCytokineThreshold) {

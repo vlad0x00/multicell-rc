@@ -42,6 +42,8 @@ REAL gSecretionHigh;
 REAL gCytokineThreshold;
 REAL gCellRadius;
 REAL gIfGridSpacing;
+REAL gDirichletBoundary;
+REAL gInputThreshold;
 
 const S32 NUM_GENES_PARAM = 0;
 const S32 NUM_CELLS_PARAM = 1;
@@ -59,6 +61,8 @@ const S32 SECRETION_HIGH_PARAM = 12;
 const S32 CYTOKINE_THRESHOLD_PARAM = 13;
 const S32 CELL_RADIUS_PARAM = 14;
 const S32 IF_GRID_SPACING_PARAM = 15;
+const S32 DIRICHLET_BOUNDARY_PARAM = 16;
+const S32 INPUT_THRESHOLD_PARAM = 17;
 
 static Vector<string> readXMLParameters() {
   Vector<string> params;
@@ -456,6 +460,8 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   const REAL cytokineThreshold = std::stod(params[CYTOKINE_THRESHOLD_PARAM]);
   const REAL cellRadius = std::stod(params[CELL_RADIUS_PARAM]);
   const REAL ifGridSpacing = std::stod(params[IF_GRID_SPACING_PARAM]);
+  const REAL dirichletBoundary = std::stod(params[DIRICHLET_BOUNDARY_PARAM]);
+  const REAL inputThreshold = std::stod(params[INPUT_THRESHOLD_PARAM]);
 
   Vector<S32> nv;
   Vector<S32> varfOffsets;
@@ -559,6 +565,12 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   format.ifGridSpacing = size;
   size += sizeof(ifGridSpacing);
 
+  format.dirichletBoundary = size;
+  size += sizeof(dirichletBoundary);
+
+  format.inputThreshold = size;
+  size += sizeof(inputThreshold);
+
   v_globalData.resize(size);
   memcpy(&(v_globalData[0]), &format, sizeof(format));
   memcpy(&(v_globalData[format.numGenes]), &numGenes, sizeof(numGenes));
@@ -579,6 +591,8 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   memcpy(&(v_globalData[format.cytokineThreshold]), &cytokineThreshold, sizeof(cytokineThreshold));
   memcpy(&(v_globalData[format.cellRadius]), &cellRadius, sizeof(cellRadius));
   memcpy(&(v_globalData[format.ifGridSpacing]), &ifGridSpacing, sizeof(ifGridSpacing));
+  memcpy(&(v_globalData[format.dirichletBoundary]), &dirichletBoundary, sizeof(dirichletBoundary));
+  memcpy(&(v_globalData[format.inputThreshold]), &inputThreshold, sizeof(inputThreshold));
 
   /* MODEL END */
 
@@ -609,6 +623,8 @@ void ModelRoutine::init( void ) {
   gCytokineThreshold = *((REAL*)(&(g[f.cytokineThreshold])));
   gCellRadius = *((REAL*)(&(g[f.cellRadius])));
   gIfGridSpacing = *((REAL*)(&(g[f.ifGridSpacing])));
+  gDirichletBoundary = *((REAL*)(&(g[f.dirichletBoundary])));
+  gInputThreshold = *((REAL*)(&(g[f.inputThreshold])));
 
   /* MODEL END */
 
