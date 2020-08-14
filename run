@@ -67,8 +67,9 @@ ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_T
 
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 
-if not os.path.exists(os.path.join(MODEL_DIR, "libmodel.DP.SPAGENT.so")):
-  subprocess.run([ "cd model; make" ], shell=True)
+script_dir = os.path.dirname(os.path.realpath(__file__))
+if not os.path.exists(os.path.join(script_dir, MODEL_DIR, "libmodel.DP.SPAGENT.so")):
+  subprocess.run([ "cd " + os.path.join(script_dir, MODEL_DIR) + "; make" ], shell=True)
 
 if not VISUALIZE:
   if os.path.isfile(DOT_FILE):
