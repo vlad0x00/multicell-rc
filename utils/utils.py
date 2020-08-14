@@ -57,8 +57,9 @@ parser.add_argument('-L', '--secretion-low', type=zeroplus_float, default=0.0, h
 parser.add_argument('-H', '--secretion-high', type=zeroplus_float, default=55.0, help="Cytokine secretion when the gene is on.")
 parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=1.5, help="Cytokine threshold to turn a gene on.")
 parser.add_argument('-r', '--cell-radius', type=abovezero_float, default=1.00, help="Cell radius.")
-parser.add_argument('-x', '--grid-spacing', type=abovezero_float, default=2.3, help="Simulation space voxel length.")
+parser.add_argument('-x', '--grid-spacing', type=abovezero_float, default=2.3, help="Simulation space voxel edge length.")
 parser.add_argument('-s', '--steps', type=abovezero_int, default=400, help="Number of simulation steps.")
+parser.add_argument('-U', '--universe-size', type=abovezero_int, default=12, help="Cube simulation universe edge length.")
 parser.add_argument('-W', '--warmup-steps', type=zeroplus_int, default=10, help="Number of initial simulation steps to exclude from training.")
 parser.add_argument('-m', '--memory', type=zeroplus_int, default=0, help="Step delay between input signal and output layer prediction.")
 parser.add_argument('-w', '--window-size', type=abovezero_int, default=5, help="Window size of predicted functions.")
@@ -472,23 +473,23 @@ def prettify(elem):
   reparsed = minidom.parseString(rough_string)
   return reparsed.toprettyxml(indent="  ")
 
-def make_params_xml(xml_path, output_dir, simulation_steps, additional_params, threads):
+def make_params_xml(xml_path, output_dir, simulation_steps, additional_params, threads, universe_size):
   xml_file = open(xml_path, 'w')
 
   # Biocellion required parameters
   bcell_num_baseline = simulation_steps
-  bcell_nx = '12'
-  bcell_ny = '12'
-  bcell_nz = '12'
-  bcell_partition_size = 12
+  bcell_nx = str(universe_size)
+  bcell_ny = str(universe_size)
+  bcell_nz = str(universe_size)
+  bcell_partition_size = universe_size
   bcell_path = output_dir
   bcell_interval = 1
   bcell_start_x = 0
   bcell_start_y = 0
   bcell_start_z = 0
-  bcell_size_x = 12
-  bcell_size_y = 12
-  bcell_size_z = 12
+  bcell_size_x = universe_size
+  bcell_size_y = universe_size
+  bcell_size_z = universe_size
 
   # Biocellion optional parameteres
   bcell_input_param = additional_params
