@@ -36,6 +36,7 @@ for dirpath, dirnames, filenames in os.walk('results/'):
             data['Cell radius'].append(args.cell_radius)
             data['If grid spacing'].append(args.grid_spacing)
             data['Window'].append(args.window_size)
+            data['Memory'].append(args.memory)
             data['Accuracy'].append(float(line.split()[2]))
             accuracy_found = True
 
