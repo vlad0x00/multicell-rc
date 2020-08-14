@@ -288,8 +288,8 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   cells_correct_input = 0
   cell_correct_input_ids = []
   for cell, cell_matches in enumerate(cell_input_matches):
-    cell_correct_input_ids.append(cell)
     if all(cell_matches):
+      cell_correct_input_ids.append(cell)
       cells_correct_input += 1
   assert cells_correct_input > 0
   assert cell_correct_input_ids[0] == 0
