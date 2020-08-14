@@ -44,6 +44,7 @@ REAL gCellRadius;
 REAL gIfGridSpacing;
 REAL gDirichletBoundary;
 REAL gInputThreshold;
+S32 gTissueDepth;
 
 const S32 NUM_GENES_PARAM = 0;
 const S32 NUM_CELLS_PARAM = 1;
@@ -63,6 +64,7 @@ const S32 CELL_RADIUS_PARAM = 14;
 const S32 IF_GRID_SPACING_PARAM = 15;
 const S32 DIRICHLET_BOUNDARY_PARAM = 16;
 const S32 INPUT_THRESHOLD_PARAM = 17;
+const S32 TISSUE_DEPTH_PARAM = 18;
 
 static Vector<string> readXMLParameters() {
   Vector<string> params;
@@ -462,6 +464,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   const REAL ifGridSpacing = std::stod(params[IF_GRID_SPACING_PARAM]);
   const REAL dirichletBoundary = std::stod(params[DIRICHLET_BOUNDARY_PARAM]);
   const REAL inputThreshold = std::stod(params[INPUT_THRESHOLD_PARAM]);
+  const S32 tissueDepth = std::stoi(params[TISSUE_DEPTH_PARAM]);
 
   Vector<S32> nv;
   Vector<S32> varfOffsets;
@@ -571,6 +574,9 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   format.inputThreshold = size;
   size += sizeof(inputThreshold);
 
+  format.tissueDepth = size;
+  size += sizeof(tissueDepth);
+
   v_globalData.resize(size);
   memcpy(&(v_globalData[0]), &format, sizeof(format));
   memcpy(&(v_globalData[format.numGenes]), &numGenes, sizeof(numGenes));
@@ -593,6 +599,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   memcpy(&(v_globalData[format.ifGridSpacing]), &ifGridSpacing, sizeof(ifGridSpacing));
   memcpy(&(v_globalData[format.dirichletBoundary]), &dirichletBoundary, sizeof(dirichletBoundary));
   memcpy(&(v_globalData[format.inputThreshold]), &inputThreshold, sizeof(inputThreshold));
+  memcpy(&(v_globalData[format.tissueDepth]), &tissueDepth, sizeof(tissueDepth));
 
   /* MODEL END */
 
@@ -625,6 +632,7 @@ void ModelRoutine::init( void ) {
   gIfGridSpacing = *((REAL*)(&(g[f.ifGridSpacing])));
   gDirichletBoundary = *((REAL*)(&(g[f.dirichletBoundary])));
   gInputThreshold = *((REAL*)(&(g[f.inputThreshold])));
+  gTissueDepth = *((S32*)(&(g[f.tissueDepth])));
 
   /* MODEL END */
 

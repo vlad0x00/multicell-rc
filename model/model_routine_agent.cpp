@@ -31,7 +31,7 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
     VReal vOffset;  // Position offset is the vector distance from the center of the unit box.
     SpAgentState state;
 
-    S32 zLayers = std::cbrt(gNumCells);
+    S32 zLayers = gTissueDepth;
     S32 yLayers = std::sqrt(gNumCells / zLayers);
     S32 xLayers = gNumCells / zLayers / yLayers;
     if (xLayers * yLayers * zLayers < gNumCells) {

@@ -56,6 +56,7 @@ extern REAL gCellRadius;
 extern REAL gIfGridSpacing;
 extern REAL gDirichletBoundary;
 extern REAL gInputThreshold;
+extern S32 gTissueDepth;
 
 typedef struct {
   S64 numGenes;
@@ -78,6 +79,7 @@ typedef struct {
 	S64 ifGridSpacing;
 	S64 dirichletBoundary;
 	S64 inputThreshold;
+	S64 tissueDepth;
 } GlobalDataFormat;
 
 static inline S32* getNv(S32 cellType) {
