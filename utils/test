@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [[ $# -ne 1 || ($1 != "ltss" && $1 != "ccc") ]]; then
-  echo "Must provide type of test: ltss (lambda/threshold/secretion/spacing) or ccc (cells/cell types/cytokines)."
+if [[ $# -ne 1 || ($1 != "ltss" && $1 != "ccc" && $1 != "m") ]]; then
+  echo "Must provide type of test: ltss (lambda/threshold/secretion/spacing), ccc (cells/cell types/cytokines), or m (memory)."
   exit 1
 fi
 
@@ -10,8 +10,8 @@ fi
 # Alpha = Beta / (Lambda ^ 2)
 
 if [[ $1 == "ltss" ]]; then
-  CELLS=( 216 )
-  CELL_TYPES=( 12 )
+  CELLS=( 343 )
+  CELL_TYPES=( 20 )
   CYTOKINES=( 1 2 3 )
   LAMBDAS=( 3 4 5 6 7 )
   THRESHOLDS=( 1.0 1.25 1.50 )
@@ -19,16 +19,32 @@ if [[ $1 == "ltss" ]]; then
   CELL_RADIUSES=( 1 )
   IF_GRID_SPACINGS=( 2.1 2.3 2.5 2.7 )
   WINDOWS=( 5 )
-else
+  MEMORIES=( 0 )
+elif if [[ $1 == "ccc" ]]; then
   CELLS=( 50 100 200 400 )
   CELL_TYPES=( 1 10 25 50 )
   CYTOKINES=( 0 1 2 3 4 5 )
   LAMBDAS=( 3 )
-  THRESHOLDS=( 1.25 )
+  THRESHOLDS=( 1.5 )
   SECRETIONS_HIGH=( 55 )
   CELL_RADIUSES=( 1 )
   IF_GRID_SPACINGS=( 2.3 )
   WINDOWS=( 5 )
+  MEMORIES=( 0 )
+elif if [[ $1 == "m" ]]; then
+  CELLS=( 512 )
+  CELL_TYPES=( 64 )
+  CYTOKINES=( 2 )
+  LAMBDAS=( 3 )
+  THRESHOLDS=( 1.5 )
+  SECRETIONS_HIGH=( 55 )
+  CELL_RADIUSES=( 1 )
+  IF_GRID_SPACINGS=( 2.3 )
+  WINDOWS=( 5 )
+  MEMORIES=( 0 1 2 3 4 5 6 7 )
+else
+  echo "Invalid parameter"
+  exit 1
 fi
 
 ITERATIONS=30
@@ -48,9 +64,11 @@ for secretion_high in ${SECRETIONS_HIGH[@]}; do
 for cell_radius in ${CELL_RADIUSES[@]}; do
 for if_grid_spacing in ${IF_GRID_SPACINGS[@]}; do
 for window in ${WINDOWS[@]}; do
+for memory in ${MEMORIES[@]}; do
 for iteration in $(seq $ITERATIONS); do
-  params_sets+=("-c $cells -p $cell_types -y $cytokines -a $alpha -t $threshold -H $secretion_high -r $cell_radius -x $if_grid_spacing -w $window")
+  params_sets+=("-c $cells -p $cell_types -y $cytokines -a $alpha -t $threshold -H $secretion_high -r $cell_radius -x $if_grid_spacing -w $window -m $memory")
   iterations+=($iteration)
+done
 done
 done
 done
