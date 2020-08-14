@@ -42,7 +42,7 @@ elif [[ $1 == "m" ]]; then
   IF_GRID_SPACINGS=( 2.3 )
   WINDOWS=( 5 )
   MEMORIES=( 0 1 2 3 4 5 6 7 )
-if [[ $1 == "ltsm" ]]; then
+elif [[ $1 == "ltsm" ]]; then
   CELLS=( 343 )
   CELL_TYPES=( 64 )
   CYTOKINES=( 2 )
