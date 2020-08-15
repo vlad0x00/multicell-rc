@@ -10,14 +10,14 @@ fi
 # Alpha = Beta / (Lambda ^ 2)
 
 if [[ $1 == "ltss" ]]; then
-  CELLS=( 343 )
+  CELLS=( 384 )
   CELL_TYPES=( 20 )
-  CYTOKINES=( 1 2 3 )
+  CYTOKINES=( 2 4 6 )
   LAMBDAS=( 3 4 5 6 7 )
-  THRESHOLDS=( 1.0 1.25 1.50 )
-  SECRETIONS_HIGH=( 25 40 55 )
+  THRESHOLDS=( 0.5 0.875 1.25 1.625 2.0 )
+  SECRETIONS_HIGH=( 20 40 60 80 )
   CELL_RADIUSES=( 1 )
-  IF_GRID_SPACINGS=( 2.1 2.3 2.5 2.7 )
+  IF_GRID_SPACINGS=( 2.3 2.5 2.7 )
   WINDOWS=( 5 )
   MEMORIES=( 0 )
 elif [[ $1 == "ccc" ]]; then
