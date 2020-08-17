@@ -270,7 +270,7 @@ def get_cell_types(output_file):
         cell_type_map[cell] = cell_type
   return cell_type_map
 
-def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, window_size, delay, timesteps, function, visualize, threads, warmup_steps):
+def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, window_size, delay, timesteps, function, visualize, threads, warmup_steps, tissue_depth):
   import numpy as np
   from sklearn.linear_model import Lasso, LassoCV
   from sklearn.model_selection import train_test_split
@@ -287,14 +287,23 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   for signal, genes in zip(input_signal, states):
     for cell in range(num_cells):
       cell_input_matches[cell].append(signal == genes[cell * num_genes])
-  cells_correct_input = 0
-  cell_correct_input_ids = []
+  input_signal_info = {}
+  for layer in range(tissue_depth):
+    input_signal_info[layer] = { "correct_cells" : 0, "total_cells" : 0 }
+  z_layers = tissue_depth
+  y_layers = math.sqrt(num_cells // z_layers)
+  x_layers = y_layers
+  if x_layers * y_layers * z_layers < num_cells:
+    z_layers += 1
   for cell, cell_matches in enumerate(cell_input_matches):
+    layer = cell // (x_layers * y_layers)
     if all(cell_matches):
-      cell_correct_input_ids.append(cell)
-      cells_correct_input += 1
-  assert cells_correct_input > 0
-  assert cell_correct_input_ids[0] == 0
+      input_signal_info[layer]["correct_cells"] += 1
+    input_signal_info[layer]["total_cells"] += 1
+  assert input_signal_info[0]["correct_cells"] > 0
+  cells_correct_input = 0
+  for layer in range(tissue_depth):
+    cells_correct_input += input_signal_info[layer]["correct_cells"]
 
   states = states[(window_size - 1):]
   for state in states:
@@ -465,7 +474,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   plt.yticks([math.ceil(y) for y in plt.yticks()[0]])
   plt.savefig(os.path.join(output_dir, "cell_type_feature_count.png"))
 
-  return train_accuracy, test_accuracy, coeff_used, coeff_max, cells_correct_input
+  return train_accuracy, test_accuracy, coeff_used, coeff_max, cells_correct_input, input_signal_info
 
 def prettify(elem):
   """Return a pretty-printed XML string for the Element.

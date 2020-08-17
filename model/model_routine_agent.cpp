@@ -32,8 +32,8 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
     SpAgentState state;
 
     S32 zLayers = gTissueDepth;
-    S32 yLayers = std::sqrt(gNumCells / zLayers);
-    S32 xLayers = gNumCells / zLayers / yLayers;
+    S32 yLayers = std::sqrt(std::floor(gNumCells / zLayers));
+    S32 xLayers = yLayers;
     if (xLayers * yLayers * zLayers < gNumCells) {
       zLayers++;
     }
