@@ -290,11 +290,12 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   input_signal_info = {}
   for layer in range(tissue_depth):
     input_signal_info[layer] = { "correct_cells" : 0, "total_cells" : 0 }
+
   z_layers = tissue_depth
-  y_layers = math.sqrt(num_cells // z_layers)
-  x_layers = y_layers
-  if x_layers * y_layers * z_layers < num_cells:
-    z_layers += 1
+  y_layers = math.ceil(math.sqrt(num_cells / z_layers))
+  x_layers = math.ceil(num_cells / z_layers / y_layers)
+  assert x_layers * y_layers * z_layers >= num_cells
+
   for cell, cell_matches in enumerate(cell_input_matches):
     layer = cell // (x_layers * y_layers)
     if all(cell_matches):
