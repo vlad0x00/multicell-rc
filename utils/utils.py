@@ -235,9 +235,9 @@ def get_gene_values(output_file, num_genes, num_cells):
         gene_count += 1
         if gene_count >= num_genes: break
 
-  reordered_gene_values = []
+  reordered_gene_values = [ [] ] * num_cells
   for cell in range(num_cells):
-    reordered_gene_values.append(gene_values[cell_ids.index(cell)])
+    reordered_gene_values[cell] = gene_values[cell_ids.index(cell)]
 
   return reordered_gene_values
 
