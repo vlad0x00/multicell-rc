@@ -36,6 +36,8 @@ const S32 SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL = 2;
 const S32 NUM_AMR_LEVELS = 1;
 const REAL GRID_PHI_NORM_THRESHOLD = 1e-10;
 
+const REAL SIDE_BOUNDARY_INPUT_WALL_FRACTION = 0.3;
+
 extern S32 gNumGenes;
 extern S32 gNumCells;
 extern S32 gNumCellTypes;
