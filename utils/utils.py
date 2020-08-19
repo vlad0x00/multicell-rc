@@ -218,28 +218,28 @@ def get_gene_values(output_file, num_genes, num_cells):
   reader.Update()
   data = reader.GetOutput()
 
-  cell_ids = []
-  for cell in range(data.GetNumberOfPoints()):
-    cell_ids.append(data.GetPointData().GetArray(1).GetTuple(cell)[0])
+  assert data.GetNumberOfPoints() == num_cells
 
-  gene_values = []
+  cell_ids = [ 0 ] * num_cells
   for cell in range(num_cells):
+    cell_ids[cell] = int(data.GetPointData().GetArray(1).GetTuple(cell)[0])
+
+  gene_values = [ [] for _ in range(num_cells) ]
+  for cell in range(num_cells):
+    cell_id = cell_ids[cell]
+    assert len(gene_values[cell_id]) == 0
+    gene_values[cell_id] = [ 0 ] * num_genes
     gene_count = 0
-    gene_values.append([])
     for g in range(2, data.GetPointData().GetNumberOfArrays()):
       bits = data.GetPointData().GetArray(g).GetTuple(cell)[0]
       bits = struct.unpack('Q', struct.pack('d', bits))[0]
       for bitposition in range(64):
         val = ((bits >> bitposition) & 1)
-        gene_values[cell].append(val)
+        gene_values[cell_id][gene_count] = val
         gene_count += 1
         if gene_count >= num_genes: break
 
-  reordered_gene_values = [ [] ] * num_cells
-  for cell in range(num_cells):
-    reordered_gene_values[cell] = gene_values[cell_ids.index(cell)]
-
-  return reordered_gene_values
+  return gene_values
 
 def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir):
   states = []
