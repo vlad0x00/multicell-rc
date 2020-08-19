@@ -5,6 +5,7 @@ import sys
 import math
 import shutil
 import subprocess
+import time
 
 from utils import utils
 
@@ -47,7 +48,7 @@ WINDOW_SIZE = args.window_size
 INPUT_SIGNAL_FILE = os.path.join(OUTPUT_DIR, "input_signal")
 INPUT_SIGNAL_LENGTH = SIMULATION_STEPS + 1
 FUNCTION = args.function
-VISUALIZE = args.visualize
+AUXILIARY_FILES = args.auxiliary
 NEW = not args.reuse
 THREADS = args.threads
 WARMUP_STEPS = args.warmup_steps
@@ -73,7 +74,7 @@ script_dir = os.path.dirname(os.path.realpath(__file__))
 if not os.path.exists(os.path.join(script_dir, MODEL_DIR, "libmodel.DP.SPAGENT.so")):
   subprocess.run([ "cd " + os.path.join(script_dir, MODEL_DIR) + "; make" ], shell=True)
 
-if not VISUALIZE:
+if not AUXILIARY_FILES:
   if os.path.isfile(DOT_FILE):
       filename, file_extension = os.path.splitext(DOT_FILE)
       os.remove(DOT_FILE)
@@ -82,24 +83,38 @@ if not VISUALIZE:
 
 if NEW:
   print("Generating initial gene network(s) state(s), functions, and input signal... ", end='', flush=True)
+  t1 = time.time()
   utils.generate_gene_functions(NUM_CELL_TYPES, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
   utils.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
   utils.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_CYTOKINES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
-  print("Done!", flush=True)
+  t2 = time.time()
+  print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS, THREADS, UNIVERSE_SIZE)
 
 print("Running Biocellion... ", end='', flush=True)
+t1 = time.time()
 os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE)
-print("Done!", flush=True)
+t2 = time.time()
+print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
-print("Training LASSO... ", end='', flush=True)
-train_accuracy, test_accuracy, coeff_used, coeff_max, cells_correct_input, input_signal_info = utils.train_lasso(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, VISUALIZE, THREADS, WARMUP_STEPS, TISSUE_DEPTH)
-print("Done!", flush=True)
-print("Training accuracy:", train_accuracy)
-print("Testing accuracy:", test_accuracy)
-print("Number of features used: {} / {}".format(coeff_used, coeff_max))
+print("Processing output... ", end='', flush=True)
+t1 = time.time()
+x, y, cells_correct_input, input_signal_info = utils.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, TISSUE_DEPTH)
+t2 = time.time()
+print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
+
 print("Cells with correct input signal: {} / {}".format(cells_correct_input, NUM_CELLS))
 for layer in range(TISSUE_DEPTH):
   correct_cells = input_signal_info[layer]["correct_cells"]
   total_cells = input_signal_info[layer]["total_cells"]
   print("Layer {}: {} / {} ({}%)".format(layer, correct_cells, total_cells, correct_cells / total_cells * 100.0))
+
+print("Training LASSO... ", end='', flush=True)
+t1 = time.time()
+train_accuracy, test_accuracy, coeff_used, coeffs = utils.train_lasso(x, y, NUM_CELLS, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, NUM_OUTPUT_GENES, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, THREADS)
+t2 = time.time()
+print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
+
+print("Training accuracy:", train_accuracy)
+print("Testing accuracy:", test_accuracy)
+print("Number of features used: {} / {}".format(coeff_used, coeffs))

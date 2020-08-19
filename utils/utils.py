@@ -65,7 +65,7 @@ parser.add_argument('-W', '--warmup-steps', type=zeroplus_int, default=10, help=
 parser.add_argument('-m', '--memory', type=zeroplus_int, default=0, help="Step delay between input signal and output layer prediction.")
 parser.add_argument('-w', '--window-size', type=abovezero_int, default=5, help="Window size of predicted functions.")
 parser.add_argument('-R', '--reuse', action='store_true', help="Use previously generated initial gene network states, functions, and input signal. Otherwise generate new.")
-parser.add_argument('-z', '--visualize', action='store_true', help="Generate a dot and png file of the gene network model and every state of the simulation for visualization and debugging.")
+parser.add_argument('-X', '--auxiliary', action='store_true', help="Generate auxiliary files (for debugging and/or visualization) -- dot and png files of the gene network model and a dump of all simulation states in text form.")
 parser.add_argument('-O', '--output', default="output", help="Path of simulation output directory")
 parser.add_argument('-j', '--threads', type=abovezero_int, default=2, help="Number of threads to use for the run.")
 
@@ -241,7 +241,7 @@ def get_gene_values(output_file, num_genes, num_cells):
 
   return gene_values
 
-def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir):
+def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, dump):
   states = []
   for step in range(timesteps + 1):
     states.append([])
@@ -249,13 +249,14 @@ def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, o
     for values in gene_values:
       states[-1] += values
 
-  with open(os.path.join(output_dir, STATES_FILE), 'w') as f:
-    for state in states:
-      for i, bit in enumerate(state):
-        if i > 0:
-          f.write(' ')
-        f.write(str(bit))
-      f.write('\n')
+  if dump:
+    with open(os.path.join(output_dir, STATES_FILE), 'w') as f:
+      for state in states:
+        for i, bit in enumerate(state):
+          if i > 0:
+            f.write(' ')
+          f.write(str(bit))
+        f.write('\n')
 
   return states
 
@@ -270,16 +271,11 @@ def get_cell_types(output_file):
         cell_type_map[cell] = cell_type
   return cell_type_map
 
-def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, window_size, delay, timesteps, function, visualize, threads, warmup_steps, tissue_depth):
-  import numpy as np
-  from sklearn.linear_model import Lasso, LassoCV
-  from sklearn.model_selection import train_test_split
-  from sklearn.utils import parallel_backend
-
+def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, tissue_depth):
   with open(input_signal_file) as f:
     input_signal = [ int(x) for x in f.readline().split() ]
 
-  states = get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir)
+  states = get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, auxiliary_files)
 
   cell_input_matches = []
   for _ in range(num_cells):
@@ -324,7 +320,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
       def __hash__(self):
         return self.name.__hash__()
 
-    num_genes = len(states[0])
+    num_total_genes = len(states[0])
     dot_available = shutil.which('dot') is not None
     for idx, state in enumerate(states):
       graph = nx.DiGraph()
@@ -340,17 +336,38 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
       if dot_available:
         with open(filename + ".png", 'w') as f:
-          if num_genes > 100:
+          if num_total_genes > 100:
             subprocess.run([ 'sfdp', '-x', '-Goverlap=scale', '-T', 'png', filename + ".dot" ], stdout=f)
           else:
             subprocess.run([ 'dot', '-T', 'png', filename + ".dot" ], stdout=f)
 
-  if visualize:
-    make_simulation_dots(states, output_dir)
-  else:
-    for filename in os.listdir(output_dir):
-      if filename.startswith("state") and filename.endswith('.dot'):
-        os.remove(os.path.join(output_dir, filename))
+  '''
+    Commented out as it's not particularly useful, given that states are printed in text as well
+  '''
+  #if auxiliary_files:
+  #  make_simulation_dots(states, output_dir)
+  #else:
+  #  for filename in os.listdir(output_dir):
+  #    if filename.startswith("state") and filename.endswith('.dot'):
+  #      os.remove(os.path.join(output_dir, filename))
+
+  cell_types_map = get_cell_types(biocellion_output_file)
+
+  output_cells = range(num_cells - 1, num_cells - num_output_cells - 1, -1)
+  output_states = []
+  for state in states:
+    output_states.append([])
+    for cell in output_cells:
+      cell_type = cell_types_map[cell]
+      if cell_type >= num_output_cell_types: continue
+      cell_state = state[(cell * num_genes):((cell + 1) * num_genes)]
+      assert len(cell_state) == num_genes
+      output_states[-1] += cell_state[-num_output_genes:]
+  for state in output_states:
+    assert len(state) == len(output_states[0])
+  if all([ cell_type >= num_output_cell_types for cell_type in [ cell_types_map[cell] for cell in output_cells ] ]):
+    print("\nNone of the output cells belong to the output cell type. Exiting...")
+    sys.exit(1)
 
   parity = []
   for i in range(window_size, len(input_signal) + 1):
@@ -376,24 +393,6 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
 
   functions = { 'parity' : parity, 'median' : median }
 
-  cell_types_map = get_cell_types(biocellion_output_file)
-
-  output_cells = range(num_cells - 1, num_cells - num_output_cells - 1, -1)
-  output_states = []
-  for state in states:
-    output_states.append([])
-    for cell in output_cells:
-      cell_type = cell_types_map[cell]
-      if cell_type >= num_output_cell_types: continue
-      cell_state = state[(cell * num_genes):((cell + 1) * num_genes)]
-      assert len(cell_state) == num_genes
-      output_states[-1] += cell_state[-num_output_genes:]
-  for state in output_states:
-    assert len(state) == len(output_states[0])
-  if all([ cell_type >= num_output_cell_types for cell_type in [ cell_types_map[cell] for cell in output_cells ] ]):
-    print("\nNone of the output cells belong to the output cell type. Exiting...")
-    sys.exit(1)
-
   x = output_states
   y = functions[function]
 
@@ -409,6 +408,14 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   for s in x:
     assert len(s) <= num_output_cells * num_output_genes
 
+  return x, y, cells_correct_input, input_signal_info
+
+def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_output_genes, biocellion_output_file, output_dir, threads):
+  import numpy as np
+  from sklearn.linear_model import Lasso, LassoCV
+  from sklearn.model_selection import train_test_split
+  from sklearn.utils import parallel_backend
+
   x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
   lasso = LassoCV(n_jobs=threads)
@@ -420,11 +427,12 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   train_score = lasso.score(x_train, y_train)
   test_score = lasso.score(x_test, y_test)
   coeff_used = np.sum(lasso.coef_ != 0)
-  coeff_max = len(output_states[0])
+  coeffs = len(x[0])
 
   train_accuracy = sum([ 1 if a == b else 0 for a, b in zip(train_predicted, y_train) ]) / len(train_predicted)
   test_accuracy = sum([ 1 if a == b else 0 for a, b in zip(test_predicted, y_test) ]) / len(test_predicted)
 
+  cell_types_map = get_cell_types(biocellion_output_file)
   cell_feature_count = {}
   cell_type_feature_count = {}
   for cell in range(num_cells - 1, num_cells - num_output_cells - 1, -1):
@@ -475,7 +483,7 @@ def train_lasso(input_signal_file, biocellion_output_file, output_dir, num_genes
   plt.yticks([math.ceil(y) for y in plt.yticks()[0]])
   plt.savefig(os.path.join(output_dir, "cell_type_feature_count.png"))
 
-  return train_accuracy, test_accuracy, coeff_used, coeff_max, cells_correct_input, input_signal_info
+  return train_accuracy, test_accuracy, coeff_used, coeffs
 
 def prettify(elem):
   """Return a pretty-printed XML string for the Element.
