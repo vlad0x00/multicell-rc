@@ -293,7 +293,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
     layer = cell // (x_layers * y_layers)
     if all(cell_matches):
       input_signal_info[layer]["correct_cells"] += 1
-    elif all(cell_constant):
+    elif not all(cell_constant):
       input_signal_info[layer]["partial_cells"] += 1
     input_signal_info[layer]["total_cells"] += 1
   assert input_signal_info[0]["correct_cells"] > 0
