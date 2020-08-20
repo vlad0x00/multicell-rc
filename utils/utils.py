@@ -282,7 +282,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
       cell_input_constant[cell][i] = (states[0][cell * num_genes] == genes[cell * num_genes])
   input_signal_info = {}
   for layer in range(tissue_depth):
-    input_signal_info[layer] = { "correct_cells" : 0, "partial_cells" : 0, "total_cells" : 0 }
+    input_signal_info[layer] = { "correct_cells" : 0, "bad_cells" : 0, "total_cells" : 0 }
 
   z_layers = tissue_depth
   y_layers = math.ceil(math.sqrt(num_cells / z_layers))
@@ -294,16 +294,16 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
     if all(cell_matches):
       input_signal_info[layer]["correct_cells"] += 1
     elif not all(cell_constant):
-      input_signal_info[layer]["partial_cells"] += 1
+      input_signal_info[layer]["bad_cells"] += 1
     input_signal_info[layer]["total_cells"] += 1
   assert input_signal_info[0]["correct_cells"] > 0
   cells_correct_input = 0
-  cells_partial_input = 0
+  cells_bad_input = 0
   for layer in range(tissue_depth):
     cells_correct_input += input_signal_info[layer]["correct_cells"]
-    cells_partial_input += input_signal_info[layer]["partial_cells"]
+    cells_bad_input += input_signal_info[layer]["bad_cells"]
   input_signal_info["correct_input"] = cells_correct_input
-  input_signal_info["partial_input"] = cells_partial_input
+  input_signal_info["bad_input"] = cells_bad_input
 
   states = states[(window_size - 1):]
   for state in states:
