@@ -110,7 +110,7 @@ print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
 correct_input = input_signal_info["correct_input"]
 bad_input = input_signal_info["bad_input"]
-print("Cells with input signal: {} / {} ({}%) correct, {} / {} ({}%) bad".format(correct_input, NUM_CELLS, correct_input / NUM_CELLS * 100.0, bad_input, NUM_CELLS, bad_input / NUM_CELLS * 100.0))
+print("Cell input signal: {} / {} ({}%) correct, {} / {} ({}%) bad".format(correct_input, NUM_CELLS, correct_input / NUM_CELLS * 100.0, bad_input, NUM_CELLS, bad_input / NUM_CELLS * 100.0))
 for layer in range(TISSUE_DEPTH):
   correct_cells = input_signal_info[layer]["correct_cells"]
   bad_cells = input_signal_info[layer]["bad_cells"]
