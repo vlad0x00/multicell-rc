@@ -99,15 +99,18 @@ print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
 print("Processing output... ", end='', flush=True)
 t1 = time.time()
-x, y, cells_correct_input, input_signal_info = utils.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, TISSUE_DEPTH)
+x, y, input_signal_info = utils.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, TISSUE_DEPTH)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
-print("Cells with correct input signal: {} / {}".format(cells_correct_input, NUM_CELLS))
+correct_input = input_signal_info["correct_input"]
+partial_input = input_signal_info["partial_input"]
+print("Cells with input signal: {} / {} ({}%) correct, {} / {} ({}%) partial".format(correct_input, NUM_CELLS, correct_input / NUM_CELLS * 100.0, partial_input, NUM_CELLS, partial_input / NUM_CELLS * 100.0))
 for layer in range(TISSUE_DEPTH):
   correct_cells = input_signal_info[layer]["correct_cells"]
+  partial_cells = input_signal_info[layer]["partial_cells"]
   total_cells = input_signal_info[layer]["total_cells"]
-  print("Layer {}: {} / {} ({}%)".format(layer, correct_cells, total_cells, correct_cells / total_cells * 100.0))
+  print("Layer {}: {} / {} ({}%) correct, {} / {} ({}%) partial".format(layer, correct_cells, total_cells, correct_cells / total_cells * 100.0, partial_cells, total_cells, partial_cells / total_cells * 100.0))
 
 print("Training LASSO... ", end='', flush=True)
 t1 = time.time()
