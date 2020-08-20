@@ -224,30 +224,25 @@ def get_gene_values(output_file, num_genes, num_cells):
   for cell in range(num_cells):
     cell_ids[cell] = int(data.GetPointData().GetArray(1).GetTuple(cell)[0])
 
-  gene_values = [ [] for _ in range(num_cells) ]
+  gene_values = [ 0 ] * (num_cells * num_genes)
   for cell in range(num_cells):
     cell_id = cell_ids[cell]
-    assert len(gene_values[cell_id]) == 0
-    gene_values[cell_id] = [ 0 ] * num_genes
     gene_count = 0
     for g in range(2, data.GetPointData().GetNumberOfArrays()):
       bits = data.GetPointData().GetArray(g).GetTuple(cell)[0]
       bits = struct.unpack('Q', struct.pack('d', bits))[0]
       for bitposition in range(64):
         val = ((bits >> bitposition) & 1)
-        gene_values[cell_id][gene_count] = val
+        gene_values[cell_id * num_genes + gene_count] = val
         gene_count += 1
         if gene_count >= num_genes: break
 
   return gene_values
 
 def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, dump):
-  states = []
+  states = [ [] for _ in range(timesteps + 1) ]
   for step in range(timesteps + 1):
-    states.append([])
-    gene_values = get_gene_values(os.path.join(output_dir, 'agent_0_0_0_' + str(step) + '.vtp'), num_genes, num_cells)
-    for values in gene_values:
-      states[-1] += values
+    states[step] = get_gene_values(os.path.join(output_dir, 'agent_0_0_0_' + str(step) + '.vtp'), num_genes, num_cells)
 
   if dump:
     with open(os.path.join(output_dir, STATES_FILE), 'w') as f:
