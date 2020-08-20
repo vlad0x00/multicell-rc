@@ -42,7 +42,6 @@ NUM_OUTPUT_GENES = math.ceil(args.genes * args.output_gene_fraction)
 NUM_OUTPUT_CELLS = math.ceil(NUM_CELLS * args.output_cell_fraction)
 NUM_OUTPUT_CELL_TYPES = math.ceil(NUM_CELL_TYPES * args.output_cell_type_fraction)
 SIMULATION_STEPS = args.steps
-UNIVERSE_SIZE = args.universe_size
 DELAY = args.memory
 WINDOW_SIZE = args.window_size
 INPUT_SIGNAL_FILE = os.path.join(OUTPUT_DIR, "input_signal")
@@ -52,6 +51,12 @@ AUXILIARY_FILES = args.auxiliary
 NEW = not args.reuse
 THREADS = args.threads
 WARMUP_STEPS = args.warmup_steps
+Z_LAYERS = TISSUE_DEPTH
+Y_LAYERS = math.ceil(math.sqrt(NUM_CELLS / Z_LAYERS))
+X_LAYERS  = math.ceil(NUM_CELLS / Z_LAYERS / Y_LAYERS)
+assert X_LAYERS * Y_LAYERS * Z_LAYERS >= NUM_CELLS
+UNIVERSE_LENGTH = TISSUE_DEPTH + 2
+UNIVERSE_WIDTH = max(X_LAYERS, Y_LAYERS) + 2
 
 assert SIMULATION_STEPS > WARMUP_STEPS
 assert CELL_RADIUS <= IF_GRID_SPACING
@@ -89,7 +94,7 @@ if NEW:
   utils.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_CYTOKINES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
   t2 = time.time()
   print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
-utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS, THREADS, UNIVERSE_SIZE)
+utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS, THREADS, UNIVERSE_LENGTH, UNIVERSE_WIDTH)
 
 print("Running Biocellion... ", end='', flush=True)
 t1 = time.time()

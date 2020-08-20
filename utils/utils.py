@@ -60,7 +60,6 @@ parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=1
 parser.add_argument('-r', '--cell-radius', type=abovezero_float, default=1.00, help="Cell radius.")
 parser.add_argument('-x', '--grid-spacing', type=abovezero_float, default=2.3, help="Simulation space voxel edge length.")
 parser.add_argument('-s', '--steps', type=abovezero_int, default=400, help="Number of simulation steps.")
-parser.add_argument('-U', '--universe-size', type=abovezero_int, default=12, help="Cube simulation universe edge length.")
 parser.add_argument('-W', '--warmup-steps', type=zeroplus_int, default=10, help="Number of initial simulation steps to exclude from training.")
 parser.add_argument('-m', '--memory', type=zeroplus_int, default=0, help="Step delay between input signal and output layer prediction.")
 parser.add_argument('-w', '--window-size', type=abovezero_int, default=5, help="Window size of predicted functions.")
@@ -493,23 +492,23 @@ def prettify(elem):
   reparsed = minidom.parseString(rough_string)
   return reparsed.toprettyxml(indent="  ")
 
-def make_params_xml(xml_path, output_dir, simulation_steps, additional_params, threads, universe_size):
+def make_params_xml(xml_path, output_dir, simulation_steps, additional_params, threads, universe_length, universe_width):
   xml_file = open(xml_path, 'w')
 
   # Biocellion required parameters
   bcell_num_baseline = simulation_steps
-  bcell_nx = str(universe_size)
-  bcell_ny = str(universe_size)
-  bcell_nz = str(universe_size)
-  bcell_partition_size = universe_size
+  bcell_nx = str(universe_width)
+  bcell_ny = str(universe_width)
+  bcell_nz = str(universe_length)
+  bcell_partition_size = max(universe_width, universe_length)
   bcell_path = output_dir
   bcell_interval = 1
   bcell_start_x = 0
   bcell_start_y = 0
   bcell_start_z = 0
-  bcell_size_x = universe_size
-  bcell_size_y = universe_size
-  bcell_size_z = universe_size
+  bcell_size_x = universe_width
+  bcell_size_y = universe_width
+  bcell_size_z = universe_length
 
   # Biocellion optional parameteres
   bcell_input_param = additional_params
@@ -521,9 +520,10 @@ def make_params_xml(xml_path, output_dir, simulation_steps, additional_params, t
   bcell_num_sockets_per_node = 1
   bcell_max_load_imbalance = 1.2
 
-  bcell_super_x = bcell_size_x
-  bcell_super_y = bcell_size_y
-  bcell_super_z = bcell_size_z
+  supersize = max(bcell_size_x, bcell_size_y, bcell_size_z)
+  bcell_super_x = supersize
+  bcell_super_y = supersize
+  bcell_super_z = supersize
 
   bcell_summary = 1
   bcell_load_balance = 0
