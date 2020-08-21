@@ -418,7 +418,7 @@ def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_ou
 
   x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
-  lasso = LassoCV(n_jobs=threads)
+  lasso = LassoCV(n_jobs=threads, selection='random', tol=0.05)
   lasso.fit(x_train, y_train)
 
   train_predicted = [ 1 if x > 0.5 else 0 for x in lasso.predict(x_train) ]
