@@ -8,7 +8,6 @@ import argparse
 import struct
 import math
 import matplotlib.pyplot as plt
-from multiprocessing import Pool
 
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element, SubElement, Comment
@@ -229,7 +228,7 @@ def split_list(alist, wanted_parts=1):
     return [ alist[i*length // wanted_parts: (i+1)*length // wanted_parts]
              for i in range(wanted_parts) ]
 
-def get_gene_values(output_file, num_genes, num_cells, threads):
+def get_gene_values(output_file, num_genes, num_cells):
   import numpy as np
   from vtk import vtkXMLPolyDataReader
   from vtk.util.numpy_support import vtk_to_numpy
@@ -245,24 +244,25 @@ def get_gene_values(output_file, num_genes, num_cells, threads):
   for cell in range(num_cells):
     cell_ids[cell] = int(data.GetPointData().GetArray(1).GetTuple(cell)[0])
 
-  gene_arrays = []
-  for g in range(2, data.GetPointData().GetNumberOfArrays()):
-    gene_arrays.append(vtk_to_numpy(data.GetPointData().GetArray(g)))
-
-  pool = Pool(threads)
-  split_cells = split_list(range(num_cells), threads)
-  args = [ [ num_cells, num_genes, split_cells[i], cell_ids, gene_arrays ] for i in range(threads) ]
-  gene_values_array = pool.starmap(extract_values, args)
-  gene_values = gene_values_array[0]
-  for i in range(1, len(gene_values_array)):
-    gene_values += gene_values_array[i]
+  gene_values = [ 0 ] * (num_cells * num_genes)
+  for cell in range(num_cells):
+    cell_id = cell_ids[cell]
+    gene_count = 0
+    for g in range(2, data.GetPointData().GetNumberOfArrays()):
+      bits = data.GetPointData().GetArray(g).GetTuple(cell)[0]
+      bits = struct.unpack('Q', struct.pack('d', bits))[0]
+      width = min(num_genes - gene_count, 64)
+      offset = cell_id * num_genes + gene_count
+      vals = [ int(n) for n in bin(bits)[2:].zfill(width) ]
+      gene_values[(offset):(offset + width)] = vals[0:width]
+      gene_count += width
 
   return gene_values
 
-def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, dump, threads):
+def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, dump):
   states = [ [] for _ in range(timesteps + 1) ]
   for step in range(timesteps + 1):
-    states[step] = get_gene_values(os.path.join(output_dir, 'agent_0_0_0_' + str(step) + '.vtp'), num_genes, num_cells, threads)
+    states[step] = get_gene_values(os.path.join(output_dir, 'agent_0_0_0_' + str(step) + '.vtp'), num_genes, num_cells)
 
   if dump:
     with open(os.path.join(output_dir, STATES_FILE), 'w') as f:
@@ -292,7 +292,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   with open(input_signal_file) as f:
     input_signal = [ int(x) for x in f.readline().split() ]
 
-  states = get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, auxiliary_files, threads)
+  states = get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, auxiliary_files)
 
   cell_input_matches = [ [] for _ in range(num_cells) ]
   cell_input_constant = [ [] for _ in range(num_cells) ]
@@ -379,14 +379,14 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   cell_types_map = get_cell_types(biocellion_output_file)
 
   output_cells = range(num_cells - 1, num_cells - num_output_cells - 1, -1)
-  output_states = [ np.empty(0, dtype=np.int8) for _ in range(len(states)) ]
+  output_states = [ [] for _ in range(len(states)) ]
   for i, state in enumerate(states):
     for cell in output_cells:
       cell_type = cell_types_map[cell]
       if cell_type >= num_output_cell_types: continue
       cell_state = state[(cell * num_genes):((cell + 1) * num_genes)]
       assert len(cell_state) == num_genes
-      output_states[i] = np.concatenate((output_states[i], cell_state[-num_output_genes:]))
+      output_states[i] += cell_state[-num_output_genes:]
   for state in output_states:
     assert len(state) == len(output_states[0])
   if all([ cell_type >= num_output_cell_types for cell_type in [ cell_types_map[cell] for cell in output_cells ] ]):
