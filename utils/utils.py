@@ -8,6 +8,7 @@ import argparse
 import struct
 import math
 import matplotlib.pyplot as plt
+from multiprocessing import Pool
 
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element, SubElement, Comment
@@ -207,10 +208,31 @@ def generate_gene_initial_states(num_genes, num_cells, num_cytokines, input_sign
       f.write(' '.join([str(x) for x in state]))
       f.write('\n')
 
-def get_gene_values(output_file, num_genes, num_cells):
+def extract_values(num_cells, num_genes, cells, cell_ids, gene_arrays):
+  import numpy as np
+  gene_values = np.zeros(num_cells * num_genes, dtype=np.int8)
+  for cell in cells:
+    cell_id = cell_ids[cell]
+    gene_count = 0
+    for array in gene_arrays:
+      bits = array[cell]
+      bits = struct.unpack('Q', struct.pack('d', bits))[0]
+      width = min(num_genes - gene_count, 64)
+      offset = cell_id * num_genes + gene_count
+      vals = [ int(n) for n in bin(bits)[2:].zfill(width) ]
+      gene_values[(offset):(offset + width)] = vals[0:width]
+      gene_count += width
+  return gene_values
+
+def split_list(alist, wanted_parts=1):
+    length = len(alist)
+    return [ alist[i*length // wanted_parts: (i+1)*length // wanted_parts]
+             for i in range(wanted_parts) ]
+
+def get_gene_values(output_file, num_genes, num_cells, threads):
   import numpy as np
   from vtk import vtkXMLPolyDataReader
-  from vtk.util import numpy_support as VN
+  from vtk.util.numpy_support import vtk_to_numpy
 
   reader = vtkXMLPolyDataReader()
   reader.SetFileName(output_file)
@@ -223,25 +245,24 @@ def get_gene_values(output_file, num_genes, num_cells):
   for cell in range(num_cells):
     cell_ids[cell] = int(data.GetPointData().GetArray(1).GetTuple(cell)[0])
 
-  gene_values = [ 0 ] * (num_cells * num_genes)
-  for cell in range(num_cells):
-    cell_id = cell_ids[cell]
-    gene_count = 0
-    for g in range(2, data.GetPointData().GetNumberOfArrays()):
-      bits = data.GetPointData().GetArray(g).GetTuple(cell)[0]
-      bits = struct.unpack('Q', struct.pack('d', bits))[0]
-      for bitposition in range(64):
-        val = ((bits >> bitposition) & 1)
-        gene_values[cell_id * num_genes + gene_count] = val
-        gene_count += 1
-        if gene_count >= num_genes: break
+  gene_arrays = []
+  for g in range(2, data.GetPointData().GetNumberOfArrays()):
+    gene_arrays.append(vtk_to_numpy(data.GetPointData().GetArray(g)))
+
+  pool = Pool(threads)
+  split_cells = split_list(range(num_cells), threads)
+  args = [ [ num_cells, num_genes, split_cells[i], cell_ids, gene_arrays ] for i in range(threads) ]
+  gene_values_array = pool.starmap(extract_values, args)
+  gene_values = gene_values_array[0]
+  for i in range(1, len(gene_values_array)):
+    gene_values += gene_values_array[i]
 
   return gene_values
 
-def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, dump):
+def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, dump, threads):
   states = [ [] for _ in range(timesteps + 1) ]
   for step in range(timesteps + 1):
-    states[step] = get_gene_values(os.path.join(output_dir, 'agent_0_0_0_' + str(step) + '.vtp'), num_genes, num_cells)
+    states[step] = get_gene_values(os.path.join(output_dir, 'agent_0_0_0_' + str(step) + '.vtp'), num_genes, num_cells, threads)
 
   if dump:
     with open(os.path.join(output_dir, STATES_FILE), 'w') as f:
@@ -266,10 +287,12 @@ def get_cell_types(output_file):
   return cell_type_map
 
 def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, tissue_depth):
+  import numpy as np
+
   with open(input_signal_file) as f:
     input_signal = [ int(x) for x in f.readline().split() ]
 
-  states = get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, auxiliary_files)
+  states = get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, auxiliary_files, threads)
 
   cell_input_matches = [ [] for _ in range(num_cells) ]
   cell_input_constant = [ [] for _ in range(num_cells) ]
@@ -356,14 +379,14 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   cell_types_map = get_cell_types(biocellion_output_file)
 
   output_cells = range(num_cells - 1, num_cells - num_output_cells - 1, -1)
-  output_states = [ [] for _ in range(len(states)) ]
+  output_states = [ np.empty(0, dtype=np.int8) for _ in range(len(states)) ]
   for i, state in enumerate(states):
     for cell in output_cells:
       cell_type = cell_types_map[cell]
       if cell_type >= num_output_cell_types: continue
       cell_state = state[(cell * num_genes):((cell + 1) * num_genes)]
       assert len(cell_state) == num_genes
-      output_states[i] += cell_state[-num_output_genes:]
+      output_states[i] = np.concatenate((output_states[i], cell_state[-num_output_genes:]))
   for state in output_states:
     assert len(state) == len(output_states[0])
   if all([ cell_type >= num_output_cell_types for cell_type in [ cell_types_map[cell] for cell in output_cells ] ]):
@@ -497,18 +520,18 @@ def make_params_xml(xml_path, output_dir, simulation_steps, additional_params, t
 
   # Biocellion required parameters
   bcell_num_baseline = simulation_steps
-  bcell_nx = str(universe_width)
-  bcell_ny = str(universe_width)
-  bcell_nz = str(universe_length)
-  bcell_partition_size = max(universe_width, universe_length)
+  bcell_nx = str(max(4, universe_width))
+  bcell_ny = str(max(4, universe_width))
+  bcell_nz = str(max(4, universe_length))
+  bcell_partition_size = max(4, universe_width, universe_length)
   bcell_path = output_dir
   bcell_interval = 1
   bcell_start_x = 0
   bcell_start_y = 0
   bcell_start_z = 0
-  bcell_size_x = universe_width
-  bcell_size_y = universe_width
-  bcell_size_z = universe_length
+  bcell_size_x = max(4, universe_width)
+  bcell_size_y = max(4, universe_width)
+  bcell_size_z = max(4, universe_length)
 
   # Biocellion optional parameteres
   bcell_input_param = additional_params

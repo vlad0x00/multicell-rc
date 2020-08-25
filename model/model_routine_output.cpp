@@ -40,7 +40,7 @@ void ModelRoutine::updateSpAgentOutput( const VIdx& vIdx, const SpAgent& spAgent
 
   for (S32 gene = 0; gene < gNumGenes; gene++) {
     const S32 genebits = gene / (sizeof(REAL) * 8);
-    const S32 genebitPos = gene % (sizeof(REAL) * 8);
+    const S32 genebitPos = std::min(gNumGenes, decltype(gNumGenes)(sizeof(REAL) * 8)) - 1 - gene % (sizeof(REAL) * 8);
     if (spAgent.state.getBoolVal(gene)) {
       *((U64*)(&(v_extraScalar[genebits]))) |= ((U64)(1) << genebitPos);
     }
