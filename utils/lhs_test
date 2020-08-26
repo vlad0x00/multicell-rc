@@ -57,10 +57,12 @@ def do_run(param_set):
     for i in range(iterations):
       print("Iteration:", i + 1, file=out)
       tempdir = out_prefix + "-#" + str(i)
-      output = subprocess.run([ executable, "-O", tempdir ] + param_set, capture_output=True, text=True)
+      args = [ executable, "-O", tempdir ] + [ token for param in [ p.split() for p in param_set ] for token in param ]
+      output = subprocess.run(args, capture_output=True, text=True)
       print(output.stdout, file=out)
       print(output.stderr, file=err)
       shutil.rmtree(tempdir)
 
+os.chdir(root_dir)
 with Pool(processes) as pool:
   pool.starmap(do_run, params)
