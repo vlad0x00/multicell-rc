@@ -18,12 +18,12 @@ executable = join(root_dir, "run")
 # Prefix, range, transformation (for lambda -> alpha)
 # Range type determines whether param is int or float
 params_properties = [
-  [ "--genes",                     [ 10, 500    ],                           ],
-  [ "--cells",                     [ 10, 5000   ],                           ],
-  [ "--cell-types",                [ 1, 1000    ],                           ],
-  [ "--output-gene-fraction",      [ 0.1, 1.0   ],                           ],
-  [ "--output-cell-type-fraction", [ 0.1, 1.0   ],                           ],
-  [ "--alpha",                     [ 2.5, 50.0  ], lambda l : 5.0 / (l ** 2) ],
+  [ "--genes",                     [ 50, 500    ],                           ],
+  [ "--cells",                     [ 50, 5000   ],                           ],
+  [ "--cell-types",                [ 100, 2000  ],                           ],
+  [ "--output-gene-fraction",      [ 0.25, 1.0  ],                           ],
+  [ "--output-cell-type-fraction", [ 0.25, 1.0  ],                           ],
+  [ "--alpha",                     [ 2.5, 40.0  ], lambda l : 5.0 / (l ** 2) ],
   [ "--cytokines",                 [ 1, 100     ],                           ],
   [ "--secretion-high",            [ 1.0, 200.0 ],                           ],
   [ "--cytokine-threshold",        [ 0.1, 10.0  ],                           ],
