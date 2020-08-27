@@ -31,17 +31,15 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
     VReal vOffset;  // Position offset is the vector distance from the center of the unit box.
     SpAgentState state;
 
-    S32 zLayers = gTissueDepth;
-    S32 yLayers = std::ceil(std::sqrt((REAL)(gNumCells) / zLayers));
-    S32 xLayers = std::ceil((REAL)(gNumCells) / (REAL)(zLayers) / yLayers);
-    CHECK(xLayers * yLayers * zLayers >= gNumCells);
+    const S32 tissueVolume = gXLayers * gYLayers * gZLayers;
+    CHECK(tissueVolume >= gNumCells);
 
     Vector<VIdx> coordsVIdx;
     Vector<VReal> coordsOffset;
 
-    for (S32 z = -zLayers / 2; z < zLayers - zLayers / 2; z += 1) {
-      for (S32 y = -yLayers / 2; y < yLayers - yLayers / 2; y += 1) {
-        for (S32 x = -xLayers / 2; x < xLayers - xLayers / 2; x += 1) {
+    for (S32 z = -gZLayers / 2; z < gZLayers - gZLayers / 2; z += 1) {
+      for (S32 y = -gYLayers / 2; y < gYLayers - gYLayers / 2; y += 1) {
+        for (S32 x = -gXLayers / 2; x < gXLayers - gXLayers / 2; x += 1) {
           vIdx[0] = x + regionSize[0] / 2;
           vIdx[1] = y + regionSize[1] / 2;
           vIdx[2] = z + regionSize[2] / 2;
@@ -54,8 +52,8 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
       }
     }
 
-    CHECK(coordsVIdx.size() == (U64)(xLayers * yLayers * zLayers));
-    CHECK(coordsOffset.size() == (U64)(xLayers * yLayers * zLayers));
+    CHECK(coordsVIdx.size() == (U64)(tissueVolume));
+    CHECK(coordsOffset.size() == (U64)(tissueVolume));
 
     CHECK(gNumCellTypes > 0);
     for (S32 cell = 0; cell < gNumCells; cell++) {

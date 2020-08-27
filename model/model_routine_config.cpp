@@ -46,7 +46,9 @@ REAL gCellRadius;
 REAL gIfGridSpacing;
 REAL gDirichletBoundary;
 REAL gInputThreshold;
-S32 gTissueDepth;
+S32 gZLayers;
+S32 gYLayers;
+S32 gXLayers;
 
 const S32 NUM_GENES_PARAM = 0;
 const S32 NUM_CELLS_PARAM = 1;
@@ -66,9 +68,11 @@ const S32 CELL_RADIUS_PARAM = 14;
 const S32 IF_GRID_SPACING_PARAM = 15;
 const S32 DIRICHLET_BOUNDARY_PARAM = 16;
 const S32 INPUT_THRESHOLD_PARAM = 17;
-const S32 TISSUE_DEPTH_PARAM = 18;
-const S32 ALPHA_INPUT_PARAM = 19;
-const S32 BETA_INPUT_PARAM = 20;
+const S32 ALPHA_INPUT_PARAM = 18;
+const S32 BETA_INPUT_PARAM = 19;
+const S32 Z_LAYERS_PARAM = 20;
+const S32 Y_LAYERS_PARAM = 21;
+const S32 X_LAYERS_PARAM = 22;
 
 static Vector<string> readXMLParameters() {
   Vector<string> params;
@@ -468,9 +472,11 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   const REAL ifGridSpacing = std::stod(params[IF_GRID_SPACING_PARAM]);
   const REAL dirichletBoundary = std::stod(params[DIRICHLET_BOUNDARY_PARAM]);
   const REAL inputThreshold = std::stod(params[INPUT_THRESHOLD_PARAM]);
-  const S32 tissueDepth = std::stoi(params[TISSUE_DEPTH_PARAM]);
   const REAL alphaInput = std::stod(params[ALPHA_INPUT_PARAM]);
   const REAL betaInput = std::stod(params[BETA_INPUT_PARAM]);
+  const S32 zLayers = std::stoi(params[Z_LAYERS_PARAM]);
+  const S32 yLayers = std::stoi(params[Y_LAYERS_PARAM]);
+  const S32 xLayers = std::stoi(params[X_LAYERS_PARAM]);
 
   Vector<S32> nv;
   Vector<S32> varfOffsets;
@@ -586,8 +592,14 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   format.inputThreshold = size;
   size += sizeof(inputThreshold);
 
-  format.tissueDepth = size;
-  size += sizeof(tissueDepth);
+  format.zLayers = size;
+  size += sizeof(zLayers);
+
+  format.yLayers = size;
+  size += sizeof(yLayers);
+
+  format.xLayers = size;
+  size += sizeof(xLayers);
 
   v_globalData.resize(size);
   memcpy(&(v_globalData[0]), &format, sizeof(format));
@@ -613,7 +625,9 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   memcpy(&(v_globalData[format.ifGridSpacing]), &ifGridSpacing, sizeof(ifGridSpacing));
   memcpy(&(v_globalData[format.dirichletBoundary]), &dirichletBoundary, sizeof(dirichletBoundary));
   memcpy(&(v_globalData[format.inputThreshold]), &inputThreshold, sizeof(inputThreshold));
-  memcpy(&(v_globalData[format.tissueDepth]), &tissueDepth, sizeof(tissueDepth));
+  memcpy(&(v_globalData[format.zLayers]), &zLayers, sizeof(zLayers));
+  memcpy(&(v_globalData[format.yLayers]), &yLayers, sizeof(yLayers));
+  memcpy(&(v_globalData[format.xLayers]), &xLayers, sizeof(xLayers));
 
   /* MODEL END */
 
@@ -648,7 +662,9 @@ void ModelRoutine::init( void ) {
   gIfGridSpacing = *((REAL*)(&(g[f.ifGridSpacing])));
   gDirichletBoundary = *((REAL*)(&(g[f.dirichletBoundary])));
   gInputThreshold = *((REAL*)(&(g[f.inputThreshold])));
-  gTissueDepth = *((S32*)(&(g[f.tissueDepth])));
+  gZLayers = *((S32*)(&(g[f.zLayers])));
+  gYLayers = *((S32*)(&(g[f.yLayers])));
+  gXLayers = *((S32*)(&(g[f.xLayers])));
 
   /* MODEL END */
 

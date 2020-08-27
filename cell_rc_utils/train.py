@@ -66,7 +66,7 @@ def get_cell_types(output_file):
         cell_type_map[cell] = cell_type
   return cell_type_map
 
-def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, tissue_depth):
+def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, z_layers, y_layers, x_layers):
   with open(input_signal_file) as f:
     input_signal = [ int(x) for x in f.readline().split() ]
 
@@ -81,13 +81,8 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
       cell_input_matches[cell][i] = (signal == genes[cell * num_genes])
       cell_input_constant[cell][i] = (states[0][cell * num_genes] == genes[cell * num_genes])
   input_signal_info = {}
-  for layer in range(tissue_depth):
+  for layer in range(z_layers):
     input_signal_info[layer] = { "correct_cells" : 0, "bad_cells" : 0, "total_cells" : 0 }
-
-  z_layers = tissue_depth
-  y_layers = math.ceil(math.sqrt(num_cells / z_layers))
-  x_layers = math.ceil(num_cells / z_layers / y_layers)
-  assert x_layers * y_layers * z_layers >= num_cells
 
   for cell, (cell_matches, cell_constant) in enumerate(zip(cell_input_matches, cell_input_constant)):
     layer = cell // (x_layers * y_layers)
@@ -99,7 +94,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   assert input_signal_info[0]["correct_cells"] > 0
   cells_correct_input = 0
   cells_bad_input = 0
-  for layer in range(tissue_depth):
+  for layer in range(z_layers):
     cells_correct_input += input_signal_info[layer]["correct_cells"]
     cells_bad_input += input_signal_info[layer]["bad_cells"]
   input_signal_info["correct_input"] = cells_correct_input
