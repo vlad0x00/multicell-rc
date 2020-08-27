@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+
+import numpy as np
+import pandas as pd
+from pyDOE import lhs
+
+num_samples = 1000
+args_file = 'args.csv'
+param_round_decimals = 6
+
+# Prefix, range, transformation (for lambda -> alpha)
+# Range type determines whether param is int or float
+params_properties = [
+  [ "--genes",                     [ 50, 500    ],                           ],
+  [ "--cells",                     [ 50, 5000   ],                           ],
+  [ "--cell-types",                [ 10, 500    ],                           ],
+  [ "--output-gene-fraction",      [ 0.25, 1.0  ],                           ],
+  [ "--output-cell-type-fraction", [ 0.25, 1.0  ],                           ],
+  [ "--alpha",                     [ 2.5, 40.0  ], lambda l : 5.0 / (l ** 2) ],
+  [ "--cytokines",                 [ 1, 100     ],                           ],
+  [ "--secretion-high",            [ 1.0, 200.0 ],                           ],
+  [ "--cytokine-threshold",        [ 0.1, 10.0  ],                           ],
+  [ "--grid-spacing",              [ 2.1, 5.0   ],                           ],
+]
+
+num_params = len(params_properties)
+
+lhd = lhs(num_params, samples=num_samples)
+
+args = pd.DataFrame()
+for param_properties in params_properties:
+  param_prefix = param_properties[0]
+  param_range = param_properties[1]
+  if type(param_range[0]) == int:
+    args[param_prefix] = np.zeros(num_samples, dtype=np.int64)
+  else:
+    args[param_prefix] = np.zeros(num_samples, dtype=np.float64)
+
+for sample_idx, sample in enumerate(lhd):
+  for param_idx, param_properties in enumerate(params_properties):
+    param_prefix = param_properties[0]
+    param_range = param_properties[1]
+    val = sample[param_idx] * (param_range[1] - param_range[0]) + param_range[0]
+    if len(param_properties) == 3: val = param_properties[2](val)
+    val = round(val, param_round_decimals)
+    if type(param_range[0]) == int: val = int(val)
+    args.loc[sample_idx, param_prefix] = val
+
+args.to_csv(args_file)

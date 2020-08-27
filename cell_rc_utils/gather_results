@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import math
 import os
-import utils
+from . import params
 sns.set(font_scale=1.1)
 
 total_files = 0
@@ -24,7 +24,7 @@ for dirpath, dirnames, filenames in os.walk('results/'):
         for line in f:
           if line.startswith('PARAMS:'):
             tokens = line.split()[1:]
-            args = utils.parse_args(tokens)
+            args = params.parse_args(tokens)
             params_found = True
           if line.startswith('Testing accuracy:'):
             data['Cells'].append(args.cells)

@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+
+import os
+import shutil
+import subprocess
+import csv
+from multiprocessing import Pool
+from os.path import realpath, dirname, join, isfile
+
+iterations = 5
+processes = 60
+this_dir = dirname(realpath(__file__))
+root_dir = dirname(this_dir)
+executable = join(root_dir, "run")
+
+if not isfile(join(root_dir, "model/libmodel.DP.SPAGENT.so")):
+  subprocess.run([ "cd " + join(root_dir, "model") + "; make" ], shell=True)
+
+results_dir = join(this_dir, "results")
+shutil.rmtree(results_dir, ignore_errors=True)
+os.mkdir(results_dir)
+
+def do_run(arg_set):
+  out_prefix = "output-" + "_".join([ arg.replace(" ", "_").replace("--", "") for arg in arg_set ])
+  with open(join(results_dir, out_prefix + "-stdout"), "w") as out, open(join(results_dir, out_prefix + "-stderr"), "w") as err:
+    print("Args:", arg_set, file=out)
+    for i in range(iterations):
+      print("Iteration:", i + 1, file=out)
+      tempdir = out_prefix + "-#" + str(i)
+      args = [ executable, "-O", tempdir ] + arg_set
+      subprocess.run(args, stdout=out, stderr=err, text=True)
+      shutil.rmtree(tempdir, ignore_errors=True)
+
+args = []
+with open(join(this_dir, "args.csv"), 'r') as f:
+  csv_reader = csv.reader(f, delimiter=',')
+  for i, row in enumerate(csv_reader):
+    if i == 0:
+      columns = row
+    else:
+      arg_set = []
+      for j, column in enumerate(columns):
+        if j == 0: continue
+        arg_set.append(column)
+        arg_set.append(row[j])
+      args.append((arg_set,))
+
+os.chdir(root_dir)
+with Pool(processes) as pool:
+  pool.starmap(do_run, args)

@@ -2,7 +2,8 @@
 output*
 model/*.o
 model/*.so
-utils/results
-utils/results.csv
-utils/plot.png
-utils/Rplots.pdf
+cell_rc_utils/results
+cell_rc_utils/results.csv
+cell_rc_utils/args.csv
+cell_rc_utils/plot.png
+cell_rc_utils/Rplots.pdf

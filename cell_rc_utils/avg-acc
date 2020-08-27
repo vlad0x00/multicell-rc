@@ -1,18 +1,18 @@
 #!/bin/bash
 
-ITERATIONS=30
+ITERATIONS=5
 
 cd "$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd ..
 
-params=""
-echo "Params: $params"
+args=""
+echo "args: $args"
 
 rm -f err
 accuracies=()
 for i in $(seq $ITERATIONS); do
   printf "\rIteration: $i / $ITERATIONS"
-  output=$(./run $params 2>> err)
+  output=$(./run $args 2>> err)
   accuracies+=($(echo "$output" | grep "Testing accuracy" | awk '{ print $3 }'))
 done
 echo

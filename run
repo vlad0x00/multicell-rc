@@ -7,9 +7,9 @@ import shutil
 import subprocess
 import time
 
-from utils import utils
+from cell_rc_utils import params
 
-args = utils.parse_args()
+args = params.parse_args()
 
 MODEL_DIR = "model/"
 BIOCELLION_DIR = "biocellion/"
@@ -86,15 +86,18 @@ if not AUXILIARY_FILES:
       os.remove(filename + ".png")
   DOT_FILE = None
 
+from cell_rc_utils import gen
+from cell_rc_utils import train
+
 if NEW:
   print("Generating initial gene network(s) state(s), functions, and input signal... ", end='', flush=True)
   t1 = time.time()
-  utils.generate_gene_functions(NUM_CELL_TYPES, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
-  utils.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
-  utils.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_CYTOKINES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
+  gen.generate_gene_functions(NUM_CELL_TYPES, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
+  gen.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
+  gen.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_CYTOKINES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
   t2 = time.time()
   print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
-utils.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS, THREADS, UNIVERSE_LENGTH, UNIVERSE_WIDTH)
+gen.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS, THREADS, UNIVERSE_LENGTH, UNIVERSE_WIDTH)
 
 print("Running Biocellion... ", end='', flush=True)
 t1 = time.time()
@@ -104,7 +107,7 @@ print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
 print("Processing output... ", end='', flush=True)
 t1 = time.time()
-x, y, input_signal_info = utils.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, TISSUE_DEPTH)
+x, y, input_signal_info = train.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, TISSUE_DEPTH)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
@@ -119,7 +122,7 @@ for layer in range(TISSUE_DEPTH):
 
 print("Training LASSO... ", end='', flush=True)
 t1 = time.time()
-train_accuracy, test_accuracy, coeff_used, coeffs = utils.train_lasso(x, y, NUM_CELLS, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, NUM_OUTPUT_GENES, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, THREADS)
+train_accuracy, test_accuracy, coeff_used, coeffs = train.train_lasso(x, y, NUM_CELLS, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, NUM_OUTPUT_GENES, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, THREADS)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
