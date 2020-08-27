@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import math
 import os
+import ast
 from . import params
 sns.set(font_scale=1.1)
 
@@ -22,17 +23,18 @@ for dirpath, dirnames, filenames in os.walk('results/'):
         args_found = False
         accuracy_found = False
         for line in f:
-          if line.startswith('Args:'):
-            tokens = line.split()[1:]
-            args = params.parse_args(tokens)
+          if line.startswith('Args: '):
+            argstring = ast.literal_eval(line.replace('Args: ', ''))
+            args = params.parse_args(argstring)
             args_found = True
           if line.startswith('Testing accuracy:'):
             for arg in vars(args):
+              argname = arg.replace('_', ' ').capitalize()
               argval = getattr(args, arg)
-              if arg in data:
-                data[arg].append(argval)
+              if argname in data:
+                data[argname].append(argval)
               else:
-                data[arg] = [ argval ]
+                data[argname] = [ argval ]
             data['Accuracy'].append(float(line.split()[2]))            
             accuracy_found = True
 
