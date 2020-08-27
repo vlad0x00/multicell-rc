@@ -34,8 +34,10 @@ S32* gVarf;
 S32* gTt;
 S32* gGeneInitialStates;
 S32* gInputSignal;
-REAL gAlpha;
-REAL gBeta;
+REAL gAlphaInput;
+REAL gBetaInput;
+REAL gAlphaCytokines;
+REAL gBetaCytokines;
 S32 gNumCytokines;
 REAL gSecretionLow;
 REAL gSecretionHigh;
@@ -54,8 +56,8 @@ const S32 VARF_FILE_PARAM = 4;
 const S32 TT_FILE_PARAM = 5;
 const S32 GENE_INITIAL_STATES_FILE_PARAM = 6;
 const S32 INPUT_SIGNAL_FILE_PARAM = 7;
-const S32 ALPHA_PARAM = 8;
-const S32 BETA_PARAM = 9;
+const S32 ALPHA_CYTOKINES_PARAM = 8;
+const S32 BETA_CYTOKINES_PARAM = 9;
 const S32 NUM_CYTOKINES_PARAM = 10;
 const S32 SECRETION_LOW_PARAM = 11;
 const S32 SECRETION_HIGH_PARAM = 12;
@@ -65,6 +67,8 @@ const S32 IF_GRID_SPACING_PARAM = 15;
 const S32 DIRICHLET_BOUNDARY_PARAM = 16;
 const S32 INPUT_THRESHOLD_PARAM = 17;
 const S32 TISSUE_DEPTH_PARAM = 18;
+const S32 ALPHA_INPUT_PARAM = 19;
+const S32 BETA_INPUT_PARAM = 20;
 
 static Vector<string> readXMLParameters() {
   Vector<string> params;
@@ -454,8 +458,8 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   auto ttFile = std::ifstream(params[TT_FILE_PARAM]);
   auto geneInitialStatesFile = std::ifstream(params[GENE_INITIAL_STATES_FILE_PARAM]);
   auto inputSignalFile = std::ifstream(params[INPUT_SIGNAL_FILE_PARAM]);
-  const REAL alpha = std::stod(params[ALPHA_PARAM]);
-  const REAL beta = std::stod(params[BETA_PARAM]);
+  const REAL alphaCytokines = std::stod(params[ALPHA_CYTOKINES_PARAM]);
+  const REAL betaCytokines = std::stod(params[BETA_CYTOKINES_PARAM]);
   const S32 numCytokines = std::stoi(params[NUM_CYTOKINES_PARAM]);
   const REAL secretionLow = std::stod(params[SECRETION_LOW_PARAM]);
   const REAL secretionHigh = std::stod(params[SECRETION_HIGH_PARAM]);
@@ -465,6 +469,8 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   const REAL dirichletBoundary = std::stod(params[DIRICHLET_BOUNDARY_PARAM]);
   const REAL inputThreshold = std::stod(params[INPUT_THRESHOLD_PARAM]);
   const S32 tissueDepth = std::stoi(params[TISSUE_DEPTH_PARAM]);
+  const REAL alphaInput = std::stod(params[ALPHA_INPUT_PARAM]);
+  const REAL betaInput = std::stod(params[BETA_INPUT_PARAM]);
 
   Vector<S32> nv;
   Vector<S32> varfOffsets;
@@ -544,11 +550,17 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   format.inputSignal = size;
   size += inputSignal.size() * sizeof(inputSignal[0]);
 
-  format.alpha = size;
-  size += sizeof(alpha);
+  format.alphaInput = size;
+  size += sizeof(alphaInput);
 
-  format.beta = size;
-  size += sizeof(beta);
+  format.betaInput = size;
+  size += sizeof(betaInput);
+
+  format.alphaCytokines = size;
+  size += sizeof(alphaCytokines);
+
+  format.betaCytokines = size;
+  size += sizeof(betaCytokines);
 
   format.numCytokines = size;
   size += sizeof(numCytokines);
@@ -589,8 +601,10 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   memcpy(&(v_globalData[format.tt]), &(tt[0]), tt.size() * sizeof(tt[0]));
   memcpy(&(v_globalData[format.geneInitialStates]), &(geneInitialStates[0]), geneInitialStates.size() * sizeof(geneInitialStates[0]));
   memcpy(&(v_globalData[format.inputSignal]), &(inputSignal[0]), inputSignal.size() * sizeof(inputSignal[0]));
-  memcpy(&(v_globalData[format.alpha]), &alpha, sizeof(alpha));
-  memcpy(&(v_globalData[format.beta]), &beta, sizeof(beta));
+  memcpy(&(v_globalData[format.alphaInput]), &alphaInput, sizeof(alphaInput));
+  memcpy(&(v_globalData[format.betaInput]), &betaInput, sizeof(betaInput));
+  memcpy(&(v_globalData[format.alphaCytokines]), &alphaCytokines, sizeof(alphaCytokines));
+  memcpy(&(v_globalData[format.betaCytokines]), &betaCytokines, sizeof(betaCytokines));
   memcpy(&(v_globalData[format.numCytokines]), &numCytokines, sizeof(numCytokines));
   memcpy(&(v_globalData[format.secretionLow]), &secretionLow, sizeof(secretionLow));
   memcpy(&(v_globalData[format.secretionHigh]), &secretionHigh, sizeof(secretionHigh));
@@ -622,8 +636,10 @@ void ModelRoutine::init( void ) {
   gTt = (S32*)(&(g[f.tt]));
   gGeneInitialStates = (S32*)(&(g[f.geneInitialStates]));
   gInputSignal = (S32*)(&(g[f.inputSignal]));
-  gAlpha = *((REAL*)(&(g[f.alpha])));
-  gBeta = *((REAL*)(&(g[f.beta])));
+  gAlphaInput = *((REAL*)(&(g[f.alphaInput])));
+  gBetaInput = *((REAL*)(&(g[f.betaInput])));
+  gAlphaCytokines = *((REAL*)(&(g[f.alphaCytokines])));
+  gBetaCytokines = *((REAL*)(&(g[f.betaCytokines])));
   gNumCytokines = *((S32*)(&(g[f.numCytokines])));
   gSecretionLow = *((REAL*)(&(g[f.secretionLow])));
   gSecretionHigh = *((REAL*)(&(g[f.secretionHigh])));

@@ -16,7 +16,7 @@ params_properties = [
   [ "--cell-types",                [ 10, 500    ],                           ],
   [ "--output-gene-fraction",      [ 0.25, 1.0  ],                           ],
   [ "--output-cell-type-fraction", [ 0.25, 1.0  ],                           ],
-  [ "--alpha",                     [ 2.5, 40.0  ], lambda l : 5.0 / (l ** 2) ],
+  [ "--alpha-cytokines",           [ 2.5, 40.0  ], lambda l : 5.0 / (l ** 2) ],
   [ "--cytokines",                 [ 1, 100     ],                           ],
   [ "--secretion-high",            [ 1.0, 200.0 ],                           ],
   [ "--cytokine-threshold",        [ 0.1, 10.0  ],                           ],
