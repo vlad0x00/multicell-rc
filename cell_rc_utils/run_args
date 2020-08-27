@@ -23,9 +23,9 @@ os.mkdir(results_dir)
 def do_run(arg_set):
   out_prefix = "output-" + "_".join([ arg.replace(" ", "_").replace("--", "") for arg in arg_set ])
   with open(join(results_dir, out_prefix + "-stdout"), "w") as out, open(join(results_dir, out_prefix + "-stderr"), "w") as err:
-    print("Args:", arg_set, file=out)
+    print("Args:", arg_set, file=out, flush=True)
     for i in range(iterations):
-      print("Iteration:", i + 1, file=out)
+      print("Iteration:", i + 1, file=out, flush=True)
       tempdir = out_prefix + "-#" + str(i)
       args = [ executable, "-O", tempdir ] + arg_set
       subprocess.run(args, stdout=out, stderr=err, text=True)

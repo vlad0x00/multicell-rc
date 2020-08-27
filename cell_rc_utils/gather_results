@@ -13,34 +13,30 @@ sns.set(font_scale=1.1)
 total_files = 0
 valid_files = 0
 
-data = { 'Cells' : [], 'Cell types' : [], 'Cytokines' : [], 'Lambda' : [], 'Threshold' : [], 'Secretion' : [], 'Cell radius' : [], 'If grid spacing' : [], 'Window' : [], 'Accuracy': [], 'Memory' : [] }
+data = { 'Accuracy' : [] }
 for dirpath, dirnames, filenames in os.walk('results/'):
   for filename in filenames:
-    if os.path.basename(filename) == 'stdout':
+    if os.path.basename(filename).endswith('stdout'):
       total_files += 1
       with open(os.path.join(dirpath, filename), 'r') as f:
-        params_found = False
+        args_found = False
         accuracy_found = False
         for line in f:
-          if line.startswith('PARAMS:'):
+          if line.startswith('Args:'):
             tokens = line.split()[1:]
             args = params.parse_args(tokens)
-            params_found = True
+            args_found = True
           if line.startswith('Testing accuracy:'):
-            data['Cells'].append(args.cells)
-            data['Cell types'].append(args.cell_types)
-            data['Cytokines'].append(str(args.cytokines) + " cytokines")
-            data['Lambda'].append("Lambda = " + str(round(math.sqrt(5.0 / args.alpha))) + ", Alpha = " + str(args.alpha))
-            data['Threshold'].append(args.cytokine_threshold)
-            data['Secretion'].append(args.secretion_high)
-            data['Cell radius'].append(args.cell_radius)
-            data['If grid spacing'].append(args.grid_spacing)
-            data['Window'].append(args.window_size)
-            data['Memory'].append(args.memory)
-            data['Accuracy'].append(float(line.split()[2]))
+            for arg in vars(args):
+              argval = getattr(args, arg)
+              if arg in data:
+                data[arg].append(argval)
+              else:
+                data[arg] = [ argval ]
+            data['Accuracy'].append(float(line.split()[2]))            
             accuracy_found = True
 
-        if params_found and accuracy_found: valid_files += 1
+        if args_found and accuracy_found: valid_files += 1
 
 print("Valid / total files: {} / {} ({}%)".format(valid_files, total_files, valid_files / total_files * 100))
 
