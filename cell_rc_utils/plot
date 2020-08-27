@@ -30,29 +30,9 @@ mean_cl_quantile <- function(x, q = c(0.45, 0.55), na.rm = TRUE){
   return(dat)
 }
 
-results %>% ggplot(aes(x=Threshold, y=Accuracy, color=Secretion)) +
+results %>% ggplot(aes(x=`Cell types`, y=Accuracy, color=Secretion)) +
   stat_summary(geom = "line", fun = mean, size = 0.7) +
   theme_bw() +
   theme(axis.title.y = element_text(angle = 0)) +
   facet_wrap(~`If grid spacing` + Lambda + Cytokines)
 ggsave('plot.png', width = 20, height = 15)
-
-# results %>% ggplot(aes(x=`Cell types`, y=Accuracy, color=Cytokines)) +
-#   stat_summary(geom = "line", fun = mean, size = 0.7) +
-#   theme_bw() +
-#   theme(axis.title.y = element_text(angle = 0)) +
-#   facet_wrap(~Cells)
-# ggsave('plot.png', width = 11, height = 7)
-
-# results %>% ggplot(aes(x=Memory, y=Accuracy)) +
-#   stat_summary(geom = "line", fun = mean, size = 0.7) +
-#   theme_bw() +
-#   theme(axis.title.y = element_text(angle = 0))
-# ggsave('plot.png', width = 20, height = 15)
-
-# results %>% ggplot(aes(x=Threshold, y=Accuracy, color=Secretion)) +
-#   stat_summary(geom = "line", fun = mean, size = 0.7) +
-#   theme_bw() +
-#   theme(axis.title.y = element_text(angle = 0)) +
-#   facet_wrap(~Lambda)
-# ggsave('plot.png', width = 20, height = 15)
