@@ -7,9 +7,9 @@ import shutil
 import subprocess
 import time
 
-from cell_rc_utils import params
+from cell_rc_utils import cell_rc_params
 
-args = params.parse_args()
+args = cell_rc_params.parse_args()
 
 MODEL_DIR = "model/"
 BIOCELLION_DIR = "biocellion/"
@@ -25,7 +25,7 @@ DOT_FILE = os.path.join(OUTPUT_DIR, "gene_networks.dot")
 NUM_GENES = 1 + args.cytokines * 2 + args.genes
 NUM_CELLS = args.cells
 NUM_CELL_TYPES = args.cell_types
-TISSUE_DEPTH = min(NUM_CELLS, args.tissue_depth)
+TISSUE_DEPTH = min(NUM_CELLS, args.tissue_depth if args.tissue_depth > 0 else math.ceil(NUM_CELLS ** (1. / 3.)))
 CONNECTIVITY = args.degree
 ALPHA_INPUT = args.alpha_input
 BETA_INPUT = args.beta_input
@@ -88,18 +88,20 @@ if not AUXILIARY_FILES:
       os.remove(filename + ".png")
   DOT_FILE = None
 
-from cell_rc_utils import gen
-from cell_rc_utils import train
+from cell_rc_utils import cell_rc_gen
+from cell_rc_utils import cell_rc_train
+
+print("Tissue shape: {} x {} x {}".format(X_LAYERS, Y_LAYERS, Z_LAYERS))
 
 if NEW:
   print("Generating initial gene network(s) state(s), functions, and input signal... ", end='', flush=True)
   t1 = time.time()
-  gen.generate_gene_functions(NUM_CELL_TYPES, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
-  gen.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
-  gen.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_CYTOKINES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
+  cell_rc_gen.generate_gene_functions(NUM_CELL_TYPES, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
+  cell_rc_gen.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
+  cell_rc_gen.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_CYTOKINES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
   t2 = time.time()
   print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
-gen.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS, THREADS, UNIVERSE_LENGTH, UNIVERSE_WIDTH)
+cell_rc_gen.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS, THREADS, UNIVERSE_LENGTH, UNIVERSE_WIDTH)
 
 print("Running Biocellion... ", end='', flush=True)
 t1 = time.time()
@@ -109,13 +111,14 @@ print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
 print("Processing output... ", end='', flush=True)
 t1 = time.time()
-x, y, input_signal_info = train.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, Z_LAYERS, Y_LAYERS, X_LAYERS)
+x, y, input_signal_info = cell_rc_train.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, Z_LAYERS, Y_LAYERS, X_LAYERS)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
 correct_input = input_signal_info["correct_input"]
 bad_input = input_signal_info["bad_input"]
 print("Cell input signal: {} / {} ({}%) correct, {} / {} ({}%) bad".format(correct_input, NUM_CELLS, correct_input / NUM_CELLS * 100.0, bad_input, NUM_CELLS, bad_input / NUM_CELLS * 100.0))
+if correct_input == 0: print("WARNING: no cell has received input signal fully or at all.", file=sys.stderr)
 for layer in range(Z_LAYERS):
   correct_cells = input_signal_info[layer]["correct_cells"]
   bad_cells = input_signal_info[layer]["bad_cells"]
@@ -124,7 +127,7 @@ for layer in range(Z_LAYERS):
 
 print("Training LASSO... ", end='', flush=True)
 t1 = time.time()
-train_accuracy, test_accuracy, coeff_used, coeffs = train.train_lasso(x, y, NUM_CELLS, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, NUM_OUTPUT_GENES, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, THREADS)
+train_accuracy, test_accuracy, coeff_used, coeffs = cell_rc_train.train_lasso(x, y, NUM_CELLS, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, NUM_OUTPUT_GENES, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, THREADS)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 

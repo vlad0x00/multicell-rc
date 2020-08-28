@@ -9,18 +9,11 @@ library(gridExtra)
 results <- read.csv('results.csv', stringsAsFactors = FALSE)
 rownames(results) <- results[, 1]
 results <- results[, -1]
-colnames(results)[2] <- 'Cell types'
-colnames(results)[7] <- 'Cell radius'
-colnames(results)[8] <- 'If grid spacing'
-results$Secretion <- factor(results$Secretion)
-
-if_grid_spacing <- paste(results$`If grid spacing`, 'cell spacing')
-if_grid_spacing_levels <- paste(unique(sort(results$`If grid spacing`)), 'cell spacing')
+results$Secretion.high <- factor(results$Secretion.high)
+results$Cytokines <- factor(results$Cytokines)
 
 cells <- paste(results$Cells, 'cells')
 cells_levels <- paste(unique(sort(results$Cells)), 'cells')
-
-results$`If grid spacing` <- factor(if_grid_spacing, levels = if_grid_spacing_levels)
 results$Cells <- factor(cells, levels = cells_levels)
 
 mean_cl_quantile <- function(x, q = c(0.45, 0.55), na.rm = TRUE){
@@ -30,9 +23,9 @@ mean_cl_quantile <- function(x, q = c(0.45, 0.55), na.rm = TRUE){
   return(dat)
 }
 
-results %>% ggplot(aes(x=`Cell types`, y=Accuracy, color=Secretion)) +
+results %>% ggplot(aes(x=Cell.types, y=Accuracy, color=Cytokines)) +
   stat_summary(geom = "line", fun = mean, size = 0.7) +
   theme_bw() +
   theme(axis.title.y = element_text(angle = 0)) +
-  facet_wrap(~`If grid spacing` + Lambda + Cytokines)
+  facet_wrap(~Cells)
 ggsave('plot.png', width = 20, height = 15)

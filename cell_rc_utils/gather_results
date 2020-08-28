@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import math
 import os
-import params
+import cell_rc_params
 sns.set(font_scale=1.1)
 
 total_files = 0
@@ -23,7 +23,7 @@ for dirpath, dirnames, filenames in os.walk('results/'):
         accuracy_found = False
         for line in f:
           if line.startswith('Args: '):
-            args = params.parse_args(line.replace('Args: ', '').split())
+            args = cell_rc_params.parse_args(line.replace('Args: ', '').split())
             args_found = True
           if line.startswith('Testing accuracy:'):
             for arg in vars(args):

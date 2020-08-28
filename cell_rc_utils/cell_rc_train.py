@@ -91,7 +91,6 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
     elif not all(cell_constant):
       input_signal_info[layer]["bad_cells"] += 1
     input_signal_info[layer]["total_cells"] += 1
-  assert input_signal_info[0]["correct_cells"] > 0
   cells_correct_input = 0
   cells_bad_input = 0
   for layer in range(z_layers):
