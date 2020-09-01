@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import csv
+import uuid
 from multiprocessing import Pool
 from os.path import realpath, dirname, join, isfile
 
@@ -21,7 +22,7 @@ shutil.rmtree(results_dir, ignore_errors=True)
 os.mkdir(results_dir)
 
 def do_run(arg_set):
-  out_prefix = "output-" + "_".join([ arg.replace(" ", "_").replace("--", "") for arg in arg_set ])
+  out_prefix = "output-" + str(uuid.uuid4())
   with open(join(results_dir, out_prefix + "-stdout"), "w") as out, open(join(results_dir, out_prefix + "-stderr"), "w") as err:
     print("Args:", ' '.join(arg_set), file=out, flush=True)
     for i in range(iterations):
