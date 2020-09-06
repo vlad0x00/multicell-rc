@@ -16,16 +16,9 @@ cells <- paste(results$Cells, 'cells')
 cells_levels <- paste(unique(sort(results$Cells)), 'cells')
 results$Cells <- factor(cells, levels = cells_levels)
 
-mean_cl_quantile <- function(x, q = c(0.45, 0.55), na.rm = TRUE){
-  dat <- data.frame(y = mean(x, na.rm = na.rm),
-                    ymin = quantile(x, probs = q[1], na.rm = na.rm),
-                    ymax = quantile(x, probs = q[2], na.rm = na.rm))
-  return(dat)
-}
-
 results %>% ggplot(aes(x=Cell.types, y=Accuracy, color=Cytokines)) +
-  stat_summary(geom = "line", fun = mean, size = 0.7) +
+  stat_summary(geom = "point", fun = mean) +
   theme_bw() +
   theme(axis.title.y = element_text(angle = 0)) +
-  facet_wrap(~Cells)
+  facet_wrap(~Memory)
 ggsave('plot.png', width = 20, height = 15)
