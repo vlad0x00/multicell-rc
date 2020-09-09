@@ -179,7 +179,6 @@ void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junction
       for (U32 j = 0; j < (U32)nv; j++) {
         CHECK(varf[j] >= 0 && varf[j] < gNumGenes);
         const auto var_val = state.getBoolVal(varf[j]);
-        CHECK(var_val != -1);
         if (var_val) {
           ttEntry |= (1 << j);
         }
