@@ -4,14 +4,14 @@ import numpy as np
 import pandas as pd
 from pyDOE import lhs
 
-num_samples = 1000
+num_samples = 20000
 args_file = 'args.csv'
 param_round_decimals = 6
 
 # Prefix, range, transformation (for lambda -> alpha)
 # Range type determines whether param is int or float
 params_properties = [
-  [ "--cells",                     [ 50, 5000   ],                           ],
+  [ "--cells",                     [ 50, 1000   ],                           ],
   [ "--cell-types",                [ 1, 20      ],                           ],
   [ "--output-gene-fraction",      [ 0.1, 1.0   ],                           ],
   [ "--output-cell-fraction",      [ 0.1, 1.0   ],                           ],
@@ -21,7 +21,7 @@ params_properties = [
   [ "--cytokines",                 [ 1, 20      ],                           ],
   [ "--cytokine-threshold",        [ 0.05, 3.0  ],                           ],
   [ "--input-threshold",           [ 0.1, 1.5   ],                           ],
-  [ "--memory",                    [ 0, 20      ],                           ],
+  [ "--memory",                    [ 0, 10      ],                           ],
 ]
 
 num_params = len(params_properties)
