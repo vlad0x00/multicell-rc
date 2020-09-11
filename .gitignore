@@ -7,3 +7,4 @@ cell_rc_utils/results.csv
 cell_rc_utils/args.csv
 cell_rc_utils/plot.png
 cell_rc_utils/Rplots.pdf
+cell_rc_utils/*_prcc.png
