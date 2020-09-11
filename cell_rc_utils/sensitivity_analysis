@@ -87,6 +87,10 @@ for i, param in enumerate(variable_columns):
   sensitivity_results.loc[i] = [ param, prcc[i, 0], pvals[i, 0] ]
   datapoints = pd.DataFrame({ "x" : partial_vals[i, 0, 0, :], "y" : partial_vals[i, 0, 1, :] })
   plt.figure()
-  sns.scatterplot(data=datapoints, x="x", y="y", size=0.2).get_legend().remove()
+  ax = sns.scatterplot(data=datapoints, x="x", y="y", size=0.2)
+  ax.get_legend().remove()
+  ax.set_xlabel(param)
+  ax.set_ylabel("Accuracy")
+  plt.tight_layout()
   plt.savefig(param + "_prcc.png")
 print(sensitivity_results)
