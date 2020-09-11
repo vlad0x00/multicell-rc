@@ -65,6 +65,13 @@ def partial_corr(C):
 
 results = pd.read_csv('results.csv', sep=',')
 
+accuracy_lt_06 = 0
+accuracy_count = 0
+for acc in results['Accuracy']:
+  if acc < 0.6: accuracy_lt_06 += 1
+  accuracy_count += 1
+print("Results with <60% accuracy: {}%".format(accuracy_lt_06 / accuracy_count * 100.0))
+
 variable_columns = []
 for i, column in enumerate(results.columns):
   if i == 0: continue
@@ -79,16 +86,22 @@ ranked_results_of_interest = stats.rankdata(results_of_interest.T.values, axis=1
 
 prcc, pvals, partial_vals = partial_corr(ranked_results_of_interest)
 
-sensitivity_results = pd.DataFrame(columns=[ "Param", "Correlation", "P-value"])
+sensitivity_results = pd.DataFrame(columns=[ "Param", "Correlation", "P-value", "Range" ])
+
 for i, param in enumerate(variable_columns):
   if i == 0:
     assert param == 'Accuracy'
     continue
-  sensitivity_results.loc[i] = [ param, prcc[i, 0], pvals[i, 0] ]
+  minval = min(results[param])
+  maxval = max(results[param])
+  if type(minval) == float: minval = round(minval, 2)
+  if type(maxval) == float: maxval = round(maxval, 2)
+  sensitivity_results.loc[i] = [ param, prcc[i, 0], pvals[i, 0], "[{}, {}]".format(minval, maxval) ]
+
   datapoints = pd.DataFrame({ "x" : partial_vals[i, 0, 0, :], "y" : partial_vals[i, 0, 1, :] })
   plt.figure()
-  ax = sns.scatterplot(data=datapoints, x="x", y="y", size=0.2)
-  ax.get_legend().remove()
+  ax = sns.scatterplot(data=datapoints, x="x", y="y", alpha=0.2)
+  #ax.get_legend().remove()
   ax.set_xlabel(param)
   ax.set_ylabel("Accuracy")
   plt.tight_layout()
