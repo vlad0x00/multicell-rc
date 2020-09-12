@@ -1,6 +1,6 @@
 # Multicellular Reservoir Computer
 
-A simulation of a reservoir computer comprised by a tissue of cells.
+A simulation of a reservoir computer comprised of cells in a tissue.
 
 By default, cells are arranged in an approximate cube:
 
