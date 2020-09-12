@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+  The main simulation driver script.
+"""
+
 import os
 import sys
 import math
@@ -7,10 +11,12 @@ import shutil
 import subprocess
 import time
 
-from cell_rc_utils import cell_rc_params
+from multicell_rc_utils import multicell_rc_params
 
-args = cell_rc_params.parse_args()
+# Parse CLI arguments
+args = multicell_rc_params.parse_args()
 
+# Setup simulation parameters based on CLI arguments (most map 1-to-1, but some have a couple of changes)
 MODEL_DIR = "model/"
 BIOCELLION_DIR = "biocellion/"
 OUTPUT_DIR = args.output
@@ -63,6 +69,11 @@ UNIVERSE_WIDTH = max(X_LAYERS, Y_LAYERS) + 2
 assert SIMULATION_STEPS > WARMUP_STEPS
 assert CELL_RADIUS <= IF_GRID_SPACING
 
+'''
+  These must be setup before importing numpy in order to work.
+  Scipy LassoCV does not always respect the njobs (threads) parameter,
+  hence the need for the environment variables.
+'''
 os.environ['OPENBLAS_NUM_THREADS'] = str(args.threads)
 os.environ['OMP_NUM_THREADS'] = str(args.threads)
 os.environ['MKL_NUM_THREADS'] = str(args.threads)
@@ -70,17 +81,22 @@ os.environ['BLIS_NUM_THREADS'] = str(args.threads)
 os.environ['NUMEXPR_NUM_THREADS'] = str(args.threads)
 os.environ['VECLIB_MAXIMUM_THREADS'] = str(args.threads)
 
+# Remove the output dir of a previous run, if any, and create a new one
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
 os.makedirs(OUTPUT_DIR)
 
+# Arguments passed to Biocellion directly
 ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " " + str(Z_LAYERS) + " " + str(Y_LAYERS) + " " + str(X_LAYERS)
 
+# Include Biocellion .so files before running
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 
+# Build the Biocellion model if it hasn't been built. 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 if not os.path.exists(os.path.join(script_dir, MODEL_DIR, "libmodel.DP.SPAGENT.so")):
   subprocess.run([ "cd " + os.path.join(script_dir, MODEL_DIR) + "; make" ], shell=True)
 
+# Remove generated auxilliary files from previous simulation, if any
 if not AUXILIARY_FILES:
   if os.path.isfile(DOT_FILE):
       filename, file_extension = os.path.splitext(DOT_FILE)
@@ -88,33 +104,39 @@ if not AUXILIARY_FILES:
       os.remove(filename + ".png")
   DOT_FILE = None
 
-from cell_rc_utils import cell_rc_gen
-from cell_rc_utils import cell_rc_train
+# These have to be imported after the export of the environment vars, as they import numpy
+from multicell_rc_utils import multicell_rc_gen
+from multicell_rc_utils import multicell_rc_train
 
 print("Tissue shape: {} x {} x {}".format(X_LAYERS, Y_LAYERS, Z_LAYERS))
 
+# Should new input signal, boolean networks, and initial states be generated?
 if NEW:
   print("Generating initial gene network(s) state(s), functions, and input signal... ", end='', flush=True)
   t1 = time.time()
-  cell_rc_gen.generate_gene_functions(NUM_CELL_TYPES, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
-  cell_rc_gen.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
-  cell_rc_gen.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_CYTOKINES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
+  multicell_rc_gen.generate_gene_functions(NUM_CELL_TYPES, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
+  multicell_rc_gen.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
+  multicell_rc_gen.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_CYTOKINES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
   t2 = time.time()
   print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
-cell_rc_gen.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS, THREADS, UNIVERSE_LENGTH, UNIVERSE_WIDTH)
+# Generate the Biocellion XML
+multicell_rc_gen.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS, THREADS, UNIVERSE_LENGTH, UNIVERSE_WIDTH)
 
+# Run and time the Biocellion executable
 print("Running Biocellion... ", end='', flush=True)
 t1 = time.time()
 os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
+# Load gene states from files of all simulation steps
 print("Processing output... ", end='', flush=True)
 t1 = time.time()
-x, y, input_signal_info = cell_rc_train.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, Z_LAYERS, Y_LAYERS, X_LAYERS)
+x, y, input_signal_info = multicell_rc_train.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, Z_LAYERS, Y_LAYERS, X_LAYERS)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
+# Print the number of cells that have received the input signal, fully or partially
 correct_input = input_signal_info["correct_input"]
 bad_input = input_signal_info["bad_input"]
 print("Cell input signal: {} / {} ({}%) correct, {} / {} ({}%) bad".format(correct_input, NUM_CELLS, correct_input / NUM_CELLS * 100.0, bad_input, NUM_CELLS, bad_input / NUM_CELLS * 100.0))
@@ -125,12 +147,14 @@ for layer in range(Z_LAYERS):
   total_cells = input_signal_info[layer]["total_cells"]
   print("Layer {}: {} / {} ({}%) correct, {} / {} ({}%) bad".format(layer, correct_cells, total_cells, correct_cells / total_cells * 100.0, bad_cells, total_cells, bad_cells / total_cells * 100.0))
 
+# Train Lasso on gene states
 print("Training LASSO... ", end='', flush=True)
 t1 = time.time()
-train_accuracy, test_accuracy, coeff_used, coeffs = cell_rc_train.train_lasso(x, y, NUM_CELLS, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, NUM_OUTPUT_GENES, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, THREADS)
+train_accuracy, test_accuracy, coeff_used, coeffs = multicell_rc_train.train_lasso(x, y, NUM_CELLS, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, NUM_OUTPUT_GENES, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, THREADS)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
+# Print the statistics
 print("Training accuracy:", train_accuracy)
 print("Testing accuracy:", test_accuracy)
 print("Number of features used: {} / {}".format(coeff_used, coeffs))

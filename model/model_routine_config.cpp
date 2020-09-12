@@ -50,6 +50,7 @@ S32 gZLayers;
 S32 gYLayers;
 S32 gXLayers;
 
+// Parameters provided to Biocellion and their indices in the input string array
 const S32 NUM_GENES_PARAM = 0;
 const S32 NUM_CELLS_PARAM = 1;
 const S32 NUM_CELL_TYPES_PARAM = 2;
@@ -74,7 +75,8 @@ const S32 Z_LAYERS_PARAM = 20;
 const S32 Y_LAYERS_PARAM = 21;
 const S32 X_LAYERS_PARAM = 22;
 
-static Vector<string> readXMLParameters() {
+// Returns a vector of strings of passed arguments
+static Vector<std::string> readXMLParameters() {
   Vector<string> params;
 
   std::string paramsString = Info::getModelParam();
@@ -110,7 +112,7 @@ void ModelRoutine::updateOptModelRoutineCallInfo( OptModelRoutineCallInfo& callI
   /* MODEL START */
 
   callInfo.numComputeMechIntrctIters = 0;
-  callInfo.numUpdateIfGridVarPreStateAndGridStepIters = 1;
+  callInfo.numUpdateIfGridVarPreStateAndGridStepIters = 1; // Single ifGridUpdate call
   callInfo.numUpdateIfGridVarPostStateAndGridStepIters = 0;
 
   /* MODEL END */
@@ -186,7 +188,7 @@ void ModelRoutine::updateSpAgentInfo( Vector<SpAgentInfo>& v_spAgentInfo ) {/* s
     info.dMax = ifGridSpacing;
     info.numBoolVars = numGenes;
     info.numStateModelReals = 0;
-    info.numStateModelInts = 1;
+    info.numStateModelInts = 1; // For cell id
     info.v_mechIntrctModelRealInfo.clear();
     info.v_mechIntrctModelIntInfo.clear();
     info.v_odeNetInfo.clear();
@@ -220,6 +222,7 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
   PDEInfo pdeInfo;
   GridPhiInfo gridPhiInfo;
 
+  // Input signal
   pdeInfo.pdeIdx = 0;
   pdeInfo.pdeType = PDE_TYPE_REACTION_DIFFUSION_STEADY_STATE_LINEAR;
   pdeInfo.numLevels = NUM_AMR_LEVELS;
@@ -268,6 +271,7 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
   pdeInfo.v_gridPhiInfo.push_back(gridPhiInfo);
   v_phiPDEInfo.push_back(pdeInfo);
 
+  // Initialize cytokine PDEs
   for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
     pdeInfo.pdeIdx = 1 + cytokine;
     pdeInfo.pdeType = PDE_TYPE_REACTION_DIFFUSION_STEADY_STATE_LINEAR;
@@ -329,6 +333,7 @@ void ModelRoutine::updateIfGridModelVarInfo( Vector<IfGridModelVarInfo>& v_ifGri
   const auto params = readXMLParameters();
   const S32 numCytokines = std::stoi(params[NUM_CYTOKINES_PARAM]);
 
+  // Initialize RHS for input and cytokines
   v_ifGridModelRealInfo.clear();
   IfGridModelVarInfo info;
 
@@ -342,6 +347,7 @@ void ModelRoutine::updateIfGridModelVarInfo( Vector<IfGridModelVarInfo>& v_ifGri
     v_ifGridModelRealInfo.push_back(info);
   }
 
+  // Voxels have the occupied volume property in order to calculate kappa
   info.name = "occupied_volume";
   info.syncMethod = VAR_SYNC_METHOD_OVERWRITE;
   v_ifGridModelRealInfo.push_back(info);
@@ -391,10 +397,13 @@ void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
   /* FileOutputInfo class holds the information related to file output of simulation results. */
   fileOutputInfo.particleOutput = true;
   fileOutputInfo.v_particleExtraOutputScalarVarName.clear();
+  // Gene values are outputted every timestep and are packed into bits of a float64
+  // (Biocellion doesn't seem to support custom int outputs)
   for (S32 i = 0; i < std::ceil(double(numGenes) / (sizeof(REAL) * 8)); i++) {
     fileOutputInfo.v_particleExtraOutputScalarVarName.push_back("genebits_" + std::to_string(i));
   }
   fileOutputInfo.v_particleExtraOutputVectorVarName.clear();
+  // Don't output phi for every step
   fileOutputInfo.v_gridPhiOutput.assign(1 + numCytokines, false);
   fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(1 + numCytokines, false);
 
@@ -453,6 +462,7 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
 void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   /* MODEL START */
 
+  // Read all the arguments passed to Biocellion
   const auto params = readXMLParameters();
   const S32 numGenes = std::stoi(params[NUM_GENES_PARAM]);
   const S32 numCells = std::stoi(params[NUM_CELLS_PARAM]);
@@ -523,6 +533,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
     inputSignal.push_back(i);
   }
 
+  // Setup offsets within global data
   GlobalDataFormat format;
   S64 size = sizeof(format);
 
@@ -601,6 +612,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   format.xLayers = size;
   size += sizeof(xLayers);
 
+  // Copy passed arguments into global data so it can be accessed in other processes
   v_globalData.resize(size);
   memcpy(&(v_globalData[0]), &format, sizeof(format));
   memcpy(&(v_globalData[format.numGenes]), &numGenes, sizeof(numGenes));
@@ -637,6 +649,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
 void ModelRoutine::init( void ) {
   /* MODEL START */
 
+  // Load arguments from global data into global variables for efficient access
   const auto& g = Info::getGlobalDataRef();
   const GlobalDataFormat f = *((GlobalDataFormat*)(&(g[0])));
 

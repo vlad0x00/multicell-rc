@@ -31,13 +31,16 @@ void ModelRoutine::updateSpAgentOutput( const VIdx& vIdx, const SpAgent& spAgent
   CHECK(v_extraScalar.size() == size_t(numGenebits));
   CHECK(v_extraVector.size() == 0);
 
+  // Cell id, required as cell order in the output files is stochastic and needs to be restored for Lasso
   color = spAgent.state.getModelInt(0);
 
+  // Initialize output floats with 0
   CHECK(sizeof(REAL) == sizeof(U64));
   for (S32 genebits = 0; genebits < numGenebits; genebits++) {
     *((U64*)(&(v_extraScalar[genebits]))) = 0;
   }
 
+  // Pack gene values into float64s
   for (S32 gene = 0; gene < gNumGenes; gene++) {
     const S32 genebits = gene / (sizeof(REAL) * 8);
     const S32 genebitPos = std::min(gNumGenes, decltype(gNumGenes)(sizeof(REAL) * 8)) - 1 - gene % (sizeof(REAL) * 8);

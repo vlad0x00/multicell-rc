@@ -34,9 +34,9 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
     const S32 tissueVolume = gXLayers * gYLayers * gZLayers;
     CHECK(tissueVolume >= gNumCells);
 
+    // Setup a grid of cell locations
     Vector<VIdx> coordsVIdx;
     Vector<VReal> coordsOffset;
-
     for (S32 z = -gZLayers / 2; z < gZLayers - gZLayers / 2; z += 1) {
       for (S32 y = -gYLayers / 2; y < gYLayers - gYLayers / 2; y += 1) {
         for (S32 x = -gXLayers / 2; x < gXLayers - gXLayers / 2; x += 1) {
@@ -55,6 +55,7 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
     CHECK(coordsVIdx.size() == (U64)(tissueVolume));
     CHECK(coordsOffset.size() == (U64)(tissueVolume));
 
+    // Place all the cells and assign them type
     CHECK(gNumCellTypes > 0);
     for (S32 cell = 0; cell < gNumCells; cell++) {
       S32 cellType = gNumCellTypes * Util::getModelRand(MODEL_RNG_UNIFORM);
@@ -69,9 +70,11 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
       state.setType(cellType);
       state.setRadius(gCellRadius);
 
+      // Setup the initial state
       for (S32 gene = 0; gene < gNumGenes; gene++) {
         state.setBoolVal(gene, getGeneInitialStates(cell)[gene]);
       }
+      // Set the id the of the cell
       state.setModelInt(0, cell);
 
       /* Initialize return vectors {v_spAgentState, v_spAgentVIdx, v_spAgentOffset} by using .push_back() */
@@ -133,6 +136,7 @@ void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junction
 
   const auto cellType = state.getType();
 
+  // Determine input signal and cytokine levels in the cell's surroundings
   REAL aaaRatio[3][3][3];
   REAL* avgPhi = nullptr;
   avgPhi = new REAL[1 + gNumCytokines];
@@ -140,7 +144,9 @@ void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junction
   for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
     avgPhi[1 + cytokine] = 0.0;
   }
+  // Calculate the cell overlap with neighbouring voxels
   Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, vOffset, state.getRadius(), aaaRatio);
+  // Iterate the surrounding voxels and sum up phi (input/cytokine levels)
   for(S32 i = -1 ; i <= 1; i++) {
     for(S32 j = -1 ; j <= 1; j++) {
       for(S32 k = -1 ; k <= 1; k++) {
@@ -152,11 +158,14 @@ void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junction
     }
   }
 
+  // Updated gene values
   Vector<BOOL> newBools;
 
+  // Push new input signal gene value and update it immediately so that internal genes can see the change
   newBools.push_back((avgPhi[0] > gInputThreshold) ? 1 : 0);
   state.setBoolVal(0, newBools.back());
 
+  // Push new cytokine input gene values and update them immediately for internal genes
   for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
     if (avgPhi[1 + cytokine] > gCytokineThreshold) {
       newBools.push_back(1);
@@ -167,6 +176,7 @@ void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junction
     state.setBoolVal(newBools.size() - 1, newBools.back());
   }
 
+  // Update cytokine output and internal genes
   for (S32 gene = 1 + gNumCytokines; gene < gNumGenes; gene++) {
     const auto nv = getNv(cellType)[gene];
     CHECK(nv >= 0);

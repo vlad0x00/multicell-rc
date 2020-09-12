@@ -132,6 +132,7 @@ void ModelRoutine::updateIfSubgridKappa( const S32 pdeIdx, const VIdx& vIdx, con
 void ModelRoutine::updateIfSubgridAlpha( const S32 elemIdx, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridAlpha/* decay (-) */ ) {
   /* MODEL START */
 
+  // Input signal and cytokines have different alpha
   if (elemIdx == 0) {
     gridAlpha = -gAlphaInput;
   } else {
@@ -146,6 +147,7 @@ void ModelRoutine::updateIfSubgridAlpha( const S32 elemIdx, const VIdx& vIdx, co
 void ModelRoutine::updateIfSubgridBetaInIfRegion( const S32 elemIdx, const S32 dim, const VIdx& vIdx0, const VIdx& subgridVOffset0, const UBAgentData& ubAgentData0, const UBEnv& ubEnv0, const VIdx& vIdx1, const VIdx& subgridVOffset1, const UBAgentData& ubAgentData1, const UBEnv& ubEnv1, REAL& gridBeta ) {
   /* MODEL START */
 
+  // Input signal and cytokines have different beta
   if (elemIdx == 0) {
     gridBeta = gBetaInput;
   } else {
@@ -160,6 +162,7 @@ void ModelRoutine::updateIfSubgridBetaInIfRegion( const S32 elemIdx, const S32 d
 void ModelRoutine::updateIfSubgridBetaPDEBufferBdry( const S32 elemIdx, const S32 dim, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridBeta ) {
   /* MODEL START */
 
+  // Input signal and cytokines have different beta
   if (elemIdx == 0) {
     gridBeta = gBetaInput;
   } else {
@@ -174,6 +177,7 @@ void ModelRoutine::updateIfSubgridBetaPDEBufferBdry( const S32 elemIdx, const S3
 void ModelRoutine::updateIfSubgridBetaDomainBdry( const S32 elemIdx, const S32 dim, const VIdx& vIdx, const VIdx& subgridVOffset, const UBAgentData& ubAgentData, const UBEnv& ubEnv, REAL& gridBeta ) {
   /* MODEL START */
 
+  // Input signal and cytokines have different beta
   if (elemIdx == 0) {
     gridBeta = gBetaInput;
   } else {

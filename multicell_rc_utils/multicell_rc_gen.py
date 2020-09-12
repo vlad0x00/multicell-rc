@@ -4,6 +4,7 @@ import random
 import shutil
 import subprocess
 import numpy as np
+import networkx as nx
 
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element, SubElement, Comment
@@ -21,15 +22,18 @@ class Node:
     return self.name.__hash__()
 
 def make_network_dot(num_genes, varf, dot_file):
-  import networkx as nx
-
+  """
+    Generate the gene network .dot file for visualization.
+  """
   graph = nx.DiGraph()
 
+  # Generate the graph nodes
   for cell_type, variable_matrix in enumerate(varf):
     for gene, _ in enumerate(variable_matrix):
       node = Node(str(cell_type) + "_" + str(gene))
       graph.add_node(node)
 
+  # Generate the graph edges
   for cell_type, variable_matrix in enumerate(varf):
     for gene, variables in enumerate(variable_matrix):
       node = Node(str(cell_type) + "_" + str(gene))
@@ -37,31 +41,46 @@ def make_network_dot(num_genes, varf, dot_file):
         var_node = Node(str(cell_type) + "_" + str(v))
         graph.add_edge(var_node, node)
 
+  # Save the .dot file
   pydot_graph = nx.drawing.nx_pydot.to_pydot(graph)
   pydot_graph.set_strict(False)
   pydot_graph.set_name("gene_networks")
   pydot_graph.write(dot_file, prog='dot')
 
+  # If the `dot` program exists, generate the graph image
   if shutil.which('dot') is not None:
     filename, file_extension = os.path.splitext(dot_file)
     with open(filename + ".png", 'w') as f:
-      if num_genes > 100:
+      if num_genes > 100: # Large graphs are generated faster with sfdp
         subprocess.run([ 'sfdp', '-x', '-Goverlap=scale', '-T', 'png', dot_file ], stdout=f)
       else:
         subprocess.run([ 'dot', '-T', 'png', dot_file ], stdout=f)
 
 def generate_gene_functions(num_cell_types, num_genes, connectivity, input_connections, num_cytokines, nv_file, varf_file, tt_file, dot_file):
+  """
+    Generate the truth tables for genes for each cell type
+  """
   assert input_connections < num_genes
 
+  """
+    Each of the three lists is first indexed by cell type and then by gene.
+
+    nv : The number of input gene variables for each gene function
+    varf : The list of input genes variables for each gene function
+    tt : The truth tables for each gene function
+  """
   nv = []
   varf = []
   tt = []
 
   for cell_type in range(num_cell_types):
+    # Initialize nv-s for current cell type
     nv.append(np.zeros(num_genes, dtype=np.int32))
 
+    # Ensure the number of edges corresponds to the average input degree of nodes
     total_edges = (num_genes - 1) * connectivity - 2 * num_cytokines
 
+    # Number of possible edges excluding the input gene
     possible_edges_no_input = (num_genes - 1) ** 2 - 2 * num_cytokines * (num_genes - 1) + num_cytokines ** 2
     edges_no_input = [ (0, 0) ] * possible_edges_no_input
     idx = 0
@@ -73,6 +92,7 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
         idx += 1
     assert idx == possible_edges_no_input
 
+    # Number of possible edges from the input gene
     possible_edges_input = num_genes - 1 - num_cytokines
     edges_input = [ (0, 0) ] * possible_edges_input
     idx = 0
@@ -81,17 +101,22 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
       idx += 1
     assert idx == possible_edges_input
 
+    # Shuffle the possible edges for a randomized network
     random.shuffle(edges_no_input)
     random.shuffle(edges_input)
 
+    # And take a number of them
     edges = edges_no_input[:(total_edges - input_connections)]
     edges += edges_input[:input_connections]
 
+    # Update nv
     for edge in edges:
       nv[-1][edge[1]] += 1
 
+    # Ensure the average in-degree condition is satisfied
     assert (connectivity - 0.01) < (sum(nv[-1]) / (len(nv[-1]) - num_cytokines - 1)) < (connectivity + 0.01)
 
+    # Update gene variables
     varf.append([])
     for gene, n in enumerate(nv[-1]):
       varf[-1].append([])
@@ -104,6 +129,7 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
             break
         edges.pop(idx)
 
+    # Update truth tables
     tt.append([])
     for gene, n in enumerate(nv[-1]):
       if n > 0:
@@ -111,33 +137,44 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
       else:
         tt[-1].append([])
 
+  # Save nv
   with open(nv_file, 'w') as f:
     for cell_type_nv in nv:
       f.write(' '.join([str(x) for x in cell_type_nv]))
       f.write('\n')
 
+  # Save varf
   with open(varf_file, 'w') as f:
     for cell_type_varf in varf:
       for gene_varf in cell_type_varf:
         f.write(' '.join([str(x) for x in gene_varf]))
         f.write('\n')
 
+  # Save nv
   with open(tt_file, 'w') as f:
     for cell_type_tt in tt:
       for gene_tt in cell_type_tt:
         f.write(' '.join([str(x) for x in gene_tt]))
         f.write('\n')
 
+  # If dot_file is not None, then a .dot file should be saved
   if dot_file != None:
     make_network_dot(num_genes, varf, dot_file)
 
 def generate_input_signal(signal_len, signal_file):
+  """
+    Generate a random binary signal.
+  """
   arr = np.random.randint(2, size=signal_len)
   arr[0] = 0 # Initial substance level is 0, otherwise grid phi initialization is non-trivial
   with open(signal_file, 'w') as f:
     f.write(' '.join([str(x) for x in arr]))
 
 def generate_gene_initial_states(num_genes, num_cells, num_cytokines, input_signal_file, state_file):
+  """
+    Generate random initial states for genes for all cells
+  """
+  # Input signal gene should be initialized with the same value as the signal
   with open(input_signal_file, 'r') as f:
     input_signal = [ int(x) for x in f.readline().split() ]
   with open(state_file, 'w') as f:
@@ -150,7 +187,8 @@ def generate_gene_initial_states(num_genes, num_cells, num_cytokines, input_sign
       f.write('\n')
 
 def prettify(elem):
-  """Return a pretty-printed XML string for the Element.
+  """
+    Return a pretty-printed XML string for the Element.
   """
   rough_string = ET.tostring(elem, 'utf-8')
   reparsed = minidom.parseString(rough_string)

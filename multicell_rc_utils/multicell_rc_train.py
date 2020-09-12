@@ -13,6 +13,10 @@ from vtk.util.numpy_support import vtk_to_numpy
 STATES_FILE = 'states'
 
 def get_gene_values(output_file, num_genes, num_cells):
+  """
+    Extracts gene values for all cells from a simulation step file and returns them as a list.
+    First num_genes values belong to cell 0, second num_genes to cell 1, etc.
+  """
   reader = vtkXMLPolyDataReader()
   reader.SetFileName(output_file)
   reader.Update()
@@ -40,10 +44,15 @@ def get_gene_values(output_file, num_genes, num_cells):
   return gene_values
 
 def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, dump):
+  """
+    Get gene values for all simulation steps as a list of lists.
+  """
+
   states = [ [] for _ in range(timesteps + 1) ]
   for step in range(timesteps + 1):
     states[step] = get_gene_values(os.path.join(output_dir, 'agent_0_0_0_' + str(step) + '.vtp'), num_genes, num_cells)
 
+  # Dump the states to a file
   if dump:
     with open(os.path.join(output_dir, STATES_FILE), 'w') as f:
       for state in states:
@@ -56,6 +65,10 @@ def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, o
   return states
 
 def get_cell_types(output_file):
+  """
+    Returns a dictionary that maps cell id to cell type.
+    Takes Biocellion output as the input file.
+  """
   cell_type_map = {}
   with open(output_file, 'r') as f:
     for line in f:
@@ -67,6 +80,11 @@ def get_cell_types(output_file):
   return cell_type_map
 
 def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, z_layers, y_layers, x_layers):
+  """
+    Builds the x and y lists for Lasso training. x consists of gene values from output cells and
+    y is the ground truth for the given function and input signal.
+    Also returns information about cell input signal reception.
+  """
   with open(input_signal_file) as f:
     input_signal = [ int(x) for x in f.readline().split() ]
 
@@ -161,6 +179,9 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   return x, y, input_signal_info
 
 def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_output_genes, biocellion_output_file, output_dir, threads):
+  """
+    Train Lasso on the provided x and y lists and plots a histogram of features used from each cell and cell type.
+  """
   from sklearn.linear_model import Lasso, LassoCV
   from sklearn.model_selection import train_test_split
   from sklearn.utils import parallel_backend

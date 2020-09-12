@@ -18,13 +18,14 @@ NOTICE:  These data were produced by Battelle Memorial Institute (BATTELLE) unde
 /* MODEL START */
 
 /* A Uniform Random Number Generator. One should not use c++ function, rand(), as it is not thread-safe
- Instead, users should use Biocellion's built-in RNG */
-typedef enum _model_rng_type_e {
+   Instead, users should use Biocellion's built-in RNG */
+typedef enum _RngType {
   MODEL_RNG_UNIFORM,
   MODEL_RNG_GAUSSIAN,
   NUM_MODEL_RNGS
-} model_rng_type_e;
+} RngType;
 
+// Enable periodic output of molecules' min, avg, and max within the simulation universe
 const BOOL ENABLE_SUMMARY = false;
 
 /* A baseline time step is the largest time step used in Biocellion
@@ -32,12 +33,16 @@ const BOOL ENABLE_SUMMARY = false;
 const REAL BASELINE_TIME_STEP_DURATION = 1.0;
 const S32 NUM_STATE_AND_GRID_TIME_STEPS_PER_BASELINE = 1;
 
+// Used for setting up sub-boxes of the overlap ratio function
 const S32 SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL = 2;
 const S32 NUM_AMR_LEVELS = 1;
 const REAL GRID_PHI_NORM_THRESHOLD = 1e-10;
 
+/* Fraction of universe faces neighbouring input signal face that also produce signal.
+   Used in order to simulate a flat wave coming to the tissue. */
 const REAL SIDE_BOUNDARY_INPUT_WALL_FRACTION = 0.25;
 
+// Global variables passed to Biocellion in the run script and available to all processes.
 extern S32 gNumGenes;
 extern S32 gNumCells;
 extern S32 gNumCellTypes;
@@ -64,6 +69,7 @@ extern S32 gZLayers;
 extern S32 gYLayers;
 extern S32 gXLayers;
 
+// Format of the global data array. Each number is the offset from the beginning.
 typedef struct {
   S64 numGenes;
   S64 numCells;

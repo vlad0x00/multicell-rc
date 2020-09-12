@@ -1,25 +1,34 @@
+"""
+  List of simulation params.
+"""
+
 import argparse
 
+# [ 0, inf ] integer params
 def zeroplus_int(s):
   i = int(s)
   if i < 0: raise argparse.ArgumentTypeError(s + " is invalid, please input an integer >=0.")
   return i
 
+# [ 1, inf ] integer params
 def abovezero_int(s):
   i = int(s)
   if i <= 0: raise argparse.ArgumentTypeError(s + " is invalid, please input an integer >0.")
   return i
 
+# [ 0.0, inf  ] float params
 def zeroplus_float(s):
   f = float(s)
   if f < 0: raise argparse.ArgumentTypeError(s + " is invalid, please input a float >=0.")
   return f
 
+# ( 0.0, inf  ] float params
 def abovezero_float(s):
   f = float(s)
   if f <= 0: raise argparse.ArgumentTypeError(s + " is invalid, please input a float >0.")
   return f
 
+# [ 0.0, 1.0 ] float params
 def fraction_type(s):
   f = float(s)
   if f < 0 or f > 1: raise argparse.ArgumentTypeError(s + " is invalid, please input a number >=0 and <=1.")
@@ -27,16 +36,16 @@ def fraction_type(s):
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-g', '--genes', type=abovezero_int, default=50, help="Number of (internal) genes per cell.")
-parser.add_argument('-c', '--cells', type=abovezero_int, default=1000, help="Number of cells in the simulation.")
+parser.add_argument('-c', '--cells', type=abovezero_int, default=972, help="Number of cells in the simulation.")
 parser.add_argument('-p', '--cell-types', type=abovezero_int, default=10, help="Number of cell types in the simulation.")
-parser.add_argument('-E', '--tissue-depth', type=zeroplus_int, default=0, help="Depth of tissue, in square cell layers, from the input substance source to the output cell layer. If zero, cells are arranged in a cube.")
+parser.add_argument('-E', '--tissue-depth', type=zeroplus_int, default=3, help="Depth of tissue, in square cell layers, from the input substance source to the output cell layer. If zero, cells are arranged in a cube.")
 parser.add_argument('-G', '--output-gene-fraction', type=fraction_type, default=0.5, help="Fraction of (internal) genes used for output.")
 parser.add_argument('-C', '--output-cell-fraction', type=fraction_type, default=0.33333333, help="Fraction of cells used for output.")
 parser.add_argument('-P', '--output-cell-type-fraction', type=fraction_type, default=0.5, help="Fraction of cell types used for output.")
 parser.add_argument('-k', '--degree', type=abovezero_int, default=2, help="Average node in-degree of gene network(s).")
 parser.add_argument('-l', '--input-fraction', type=fraction_type, default=0.5, help="Fraction of nodes connected to the input signal.")
 parser.add_argument('-D', '--dirichlet-boundary', type=abovezero_float, default=4.0, help="Value of dirichlet boundary when input signal is on. The value is 0 when the signal is off.")
-parser.add_argument('-T', '--input-threshold', type=abovezero_float, default=0.5, help="Threshold for the molecular concentration of input signal for cells to consider it on.")
+parser.add_argument('-T', '--input-threshold', type=abovezero_float, default=0.9, help="Threshold for the molecular concentration of input signal for cells to consider it on.")
 parser.add_argument('-A', '--alpha-input', type=zeroplus_float, default=0.25, help="Molecular decay rate of input signal.")
 parser.add_argument('-B', '--beta-input', type=zeroplus_float, default=5.0, help="Grid diffusion coefficient of input signal.")
 parser.add_argument('-f', '--function', choices=[ 'median', 'parity' ], default="parity", help="Function to learn")
@@ -57,6 +66,7 @@ parser.add_argument('-X', '--auxiliary', action='store_true', help="Generate aux
 parser.add_argument('-O', '--output', default="output", help="Path of simulation output directory")
 parser.add_argument('-j', '--threads', type=abovezero_int, default=2, help="Number of threads to use for the run.")
 
+# Parse the arguments
 def parse_args(args=None):
   global parser
   return parser.parse_args(args)

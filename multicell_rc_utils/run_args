@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+  Loads the args.csv file and run parallel simulations on them.
+"""
+
 import os
 import shutil
 import subprocess
@@ -14,13 +18,16 @@ this_dir = dirname(realpath(__file__))
 root_dir = dirname(this_dir)
 executable = join(root_dir, "run")
 
+# Build the Biocellion model if it hasn't been built.
 if not isfile(join(root_dir, "model/libmodel.DP.SPAGENT.so")):
   subprocess.run([ "cd " + join(root_dir, "model") + "; make" ], shell=True)
 
+# Remove the results dir of any previous runs.
 results_dir = join(this_dir, "results")
 shutil.rmtree(results_dir, ignore_errors=True)
 os.mkdir(results_dir)
 
+# This function is ran within a single process and performs all the simulation iterations for an argument set
 def do_run(arg_set):
   out_prefix = "output-" + str(uuid.uuid4())
   with open(join(results_dir, out_prefix + "-stdout"), "w") as out, open(join(results_dir, out_prefix + "-stderr"), "w") as err:
@@ -32,6 +39,7 @@ def do_run(arg_set):
       subprocess.run(args, stdout=out, stderr=err, text=True)
       shutil.rmtree(tempdir, ignore_errors=True)
 
+# Loads the args
 args = []
 with open(join(this_dir, "args.csv"), 'r') as f:
   csv_reader = csv.reader(f, delimiter=',')
@@ -46,6 +54,7 @@ with open(join(this_dir, "args.csv"), 'r') as f:
         arg_set.append(row[j])
       args.append((arg_set,))
 
+# Run them processes!
 os.chdir(root_dir)
 with Pool(processes) as pool:
   pool.starmap(do_run, args)
