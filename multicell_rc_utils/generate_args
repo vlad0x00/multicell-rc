@@ -17,18 +17,20 @@ param_round_decimals = 6
 # Prefix, range, transformation (for lambda -> alpha)
 # Range type determines whether param is int or float
 params_properties = [
-  [ "--genes",                     [ 10, 100    ],                           ],
+  [ "--genes",                     [ 100, 100   ],                           ],
   [ "--cells",                     [ 100, 1000  ],                           ],
   [ "--cell-types",                [ 1, 20      ],                           ],
-  [ "--output-gene-fraction",      [ 0.1, 1.0   ],                           ],
+  [ "--tissue-depth",              [ 0, 0       ],                           ],
+  [ "--output-gene-fraction",      [ 0.5, 0.5   ],                           ],
   [ "--output-cell-fraction",      [ 0.1, 1.0   ],                           ],
   [ "--output-cell-type-fraction", [ 0.1, 1.0   ],                           ],
-  [ "--input-fraction",            [ 0.1, 1.0   ],                           ],
+  [ "--input-fraction",            [ 0.5, 0.5   ],                           ],
+  [ "--input-threshold",           [ 0.1, 1.5   ],                           ],
   [ "--alpha-cytokines",           [ 2.5, 30.0  ], lambda l : 5.0 / (l ** 2) ],
   [ "--cytokines",                 [ 1, 20      ],                           ],
   [ "--cytokine-threshold",        [ 0.05, 3.0  ],                           ],
-  [ "--input-threshold",           [ 0.1, 1.5   ],                           ],
   [ "--memory",                    [ 0, 9       ],                           ],
+  [ "--window",                    [ 3, 3       ],                           ],
 ]
 
 num_params = len(params_properties)
