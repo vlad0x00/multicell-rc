@@ -35,7 +35,7 @@ def fraction_type(s):
   return f
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('-g', '--genes', type=abovezero_int, default=100, help="Number of (internal) genes per cell.")
+parser.add_argument('-g', '--genes', type=abovezero_int, default=50, help="Number of (internal) genes per cell.")
 parser.add_argument('-c', '--cells', type=abovezero_int, default=972, help="Number of cells in the simulation.")
 parser.add_argument('-p', '--cell-types', type=abovezero_int, default=10, help="Number of cell types in the simulation.")
 parser.add_argument('-E', '--tissue-depth', type=zeroplus_int, default=3, help="Depth of tissue, in square cell layers, from the input substance source to the output cell layer. If zero, cells are arranged in a cube.")
