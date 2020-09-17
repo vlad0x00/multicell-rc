@@ -51,7 +51,7 @@ parser.add_argument('-B', '--beta-input', type=zeroplus_float, default=5.0, help
 parser.add_argument('-f', '--function', choices=[ 'median', 'parity' ], default="parity", help="Function to learn")
 parser.add_argument('-a', '--alpha-cytokines', type=zeroplus_float, default=0.25, help="Molecular decay rate of cytokines.")
 parser.add_argument('-b', '--beta-cytokines', type=zeroplus_float, default=5.0, help="Grid diffusion coefficient of cytokines.")
-parser.add_argument('-y', '--cytokines', type=zeroplus_int, default=8, help="Number of cytokines in the simulation.")
+parser.add_argument('-y', '--cytokines', type=zeroplus_int, default=10, help="Number of cytokines in the simulation.")
 parser.add_argument('-L', '--secretion-low', type=zeroplus_float, default=0.0, help="Cytokine secretion when the gene is off.")
 parser.add_argument('-H', '--secretion-high', type=zeroplus_float, default=10.0, help="Cytokine secretion when the gene is on.")
 parser.add_argument('-t', '--cytokine-threshold', type=zeroplus_float, default=0.5, help="Cytokine threshold to turn a gene on.")
