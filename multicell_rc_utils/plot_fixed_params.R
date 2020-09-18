@@ -16,9 +16,9 @@ cells <- paste(results$Cells, 'cells')
 cells_levels <- paste(unique(sort(results$Cells)), 'cells')
 results$Cells <- factor(cells, levels = cells_levels)
 
-results %>% ggplot(aes(x=Cell.types, y=Accuracy, color=Cytokines)) +
-  stat_summary(geom = "line", fun = mean) +
+results %>% ggplot(aes(x=Accuracy)) +
+  geom_histogram(binwidth=0.025) +
   theme_bw() +
   theme(axis.title.y = element_text(angle = 0)) +
-  facet_wrap(~Memory)
+  facet_wrap(~ Function + Window.size)
 ggsave('plot.png', width = 20, height = 15)
