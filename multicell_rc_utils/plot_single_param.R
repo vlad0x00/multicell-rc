@@ -17,7 +17,7 @@ results$Cells <- floor(results$Cells / 10)
 #cells_levels <- paste(unique(sort(results$Cells)), 'cells')
 #results$Cells <- factor(cells, levels = cells_levels)
 
-results %>% ggplot(aes(x=Cells, y=Accuracy, group=1)) +
+results %>% ggplot(aes(x=Cytokines, y=Accuracy, group=1)) +
   stat_summary(geom="ribbon", fun.data=mean_cl_normal,fun.args=list(conf.int=0.95), fill="lightblue", alpha=0.5) +
   stat_summary(geom="line", fun=mean, linetype="dashed") +
   stat_summary(geom="point", fun=mean, color="red") +
