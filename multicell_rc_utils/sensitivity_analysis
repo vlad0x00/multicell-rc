@@ -6,11 +6,13 @@
 
 import csv
 import sys
+import os
 import numpy as np
 import pandas as pd
 from scipy import stats, linalg
 import matplotlib.pyplot as plt
 import seaborn as sns
+import subprocess
 
 def partial_corr(C):
   """
@@ -95,6 +97,8 @@ prcc, pvals, partial_vals = partial_corr(ranked_results_of_interest)
 
 sensitivity_results = pd.DataFrame(columns=[ "Param", "Correlation", "P-value", "Range" ])
 
+from pandas.plotting import table 
+
 # Make a table of results and plot the partially corrected variables
 for i, param in enumerate(variable_columns):
   if i == 0:
@@ -115,3 +119,9 @@ for i, param in enumerate(variable_columns):
   plt.tight_layout()
   plt.savefig(param + "_prcc.png")
 print(sensitivity_results)
+
+sensitivity_results.to_html('sensitivity_analysis.html')
+subprocess.run(['wkhtmltopdf', '--page-height', '100', '--page-width', '150', '-T', '0', '-B', '0', '-L', '0', '-R', '0', 'sensitivity_analysis.html', 'sensitivity_analysis.pdf'])
+subprocess.run(['magick', 'convert', '-colorspace', 'RGB', '-density', '300', 'sensitivity_analysis.pdf', '-quality', '100', '-transparent', 'white', '-crop', '1600x1000+0+0', '-trim', '+repage', '-background', 'white', '-flatten', 'sensitivity_analysis.png'])
+os.remove('sensitivity_analysis.html')
+os.remove('sensitivity_analysis.pdf')
