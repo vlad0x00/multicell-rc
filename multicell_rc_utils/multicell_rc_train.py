@@ -6,6 +6,7 @@ import struct
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import random
 
 from vtk import vtkXMLPolyDataReader
 from vtk.util.numpy_support import vtk_to_numpy
@@ -79,7 +80,7 @@ def get_cell_types(output_file):
         cell_type_map[cell] = cell_type
   return cell_type_map
 
-def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, z_layers, y_layers, x_layers):
+def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, output_cells_random, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, z_layers, y_layers, x_layers):
   """
     Builds the x and y lists for Lasso training. x consists of gene values from output cells and
     y is the ground truth for the given function and input signal.
@@ -123,7 +124,11 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
 
   cell_types_map = get_cell_types(biocellion_output_file)
 
-  output_cells = range(num_cells - 1, num_cells - num_output_cells - 1, -1)
+  if output_cells_random:
+    output_cells = random.sample(range(num_cells), num_output_cells)
+  else:
+    output_cells = range(num_cells - 1, num_cells - num_output_cells - 1, -1)
+
   output_states = [ [] for _ in range(len(states)) ]
   for i, state in enumerate(states):
     for cell in output_cells:

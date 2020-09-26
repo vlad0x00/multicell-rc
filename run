@@ -49,6 +49,7 @@ IF_GRID_SPACING = args.grid_spacing
 NUM_OUTPUT_GENES = math.ceil(args.genes * args.output_gene_fraction)
 NUM_OUTPUT_CELLS = math.ceil(NUM_CELLS * args.output_cell_fraction)
 NUM_OUTPUT_CELL_TYPES = math.ceil(NUM_CELL_TYPES * args.output_cell_type_fraction)
+OUTPUT_CELLS_RANDOM = args.output_cells_random
 SIMULATION_STEPS = args.steps
 DELAY = args.memory
 WINDOW_SIZE = args.window_size
@@ -132,7 +133,7 @@ print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 # Load gene states from files of all simulation steps
 print("Processing output... ", end='', flush=True)
 t1 = time.time()
-x, y, input_signal_info = multicell_rc_train.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, Z_LAYERS, Y_LAYERS, X_LAYERS)
+x, y, input_signal_info = multicell_rc_train.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, OUTPUT_CELLS_RANDOM, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, Z_LAYERS, Y_LAYERS, X_LAYERS)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
