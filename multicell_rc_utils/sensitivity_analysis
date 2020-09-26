@@ -121,6 +121,9 @@ for i, param in enumerate(variable_columns):
 print(sensitivity_results)
 
 sensitivity_results.to_html('sensitivity_analysis.html')
+with open('sensitivity_analysis.html', 'a') as f:
+  print("<br/>", file=f)
+  print("Results with <60% accuracy: {}%".format(accuracy_lt_06 / accuracy_count * 100.0), file=f)
 subprocess.run(['wkhtmltopdf', '--page-height', '100', '--page-width', '150', '-T', '0', '-B', '0', '-L', '0', '-R', '0', 'sensitivity_analysis.html', 'sensitivity_analysis.pdf'])
 subprocess.run(['magick', 'convert', '-colorspace', 'RGB', '-density', '300', 'sensitivity_analysis.pdf', '-quality', '100', '-transparent', 'white', '-crop', '1600x1000+0+0', '-trim', '+repage', '-background', 'white', '-flatten', 'sensitivity_analysis.png'])
 os.remove('sensitivity_analysis.html')

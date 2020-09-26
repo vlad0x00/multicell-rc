@@ -5,6 +5,7 @@ library(reshape2)
 library(dplyr)
 library(grid)
 library(gridExtra)
+library(stringr)
 
 results <- read.csv('results.csv', stringsAsFactors = FALSE)
 rownames(results) <- results[, 1]
@@ -20,7 +21,13 @@ results$Cells <- floor(results$Cells / 10) * 10
 #cells_levels <- paste(unique(sort(results$Cells)), 'cells')
 #results$Cells <- factor(cells, levels = cells_levels)
 
-results %>% ggplot(aes(x=Cell.types, y=Accuracy, group=1)) +
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 1) {
+  cat("Missing param to plot.")
+  q()
+}
+
+results %>% ggplot(aes_string(x=args[1], y="Accuracy", group=1)) +
   #stat_summary(geom="ribbon", fun.data=mean_cl_normal,fun.args=list(conf.int=0.95), fill="lightblue", alpha=0.5) +
   stat_summary(geom="line", fun=mean, linetype="dashed") +
   stat_summary(geom="point", fun=mean, color="red") +

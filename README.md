@@ -44,5 +44,4 @@ In the `cell_rc_utils` directory, run the scripts in the following order:
 
 - `generate_args` to generate arguments for a number of simulations using Latin Hypercube Sampling.
 - `run_args` to run simulations in parallel.
-- `gather_results` to combine all the results into a single `results.csv` file.
 - `sensitivity_analysis` to perform the analysis.
