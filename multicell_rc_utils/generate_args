@@ -25,6 +25,7 @@ params_properties = [
   [ "--output-gene-fraction",      [ 0.1, 1.0     ],                                                 ],
   [ "--output-cell-fraction",      [ 0.1, 1.0     ],                                                 ],
   [ "--output-cell-type-fraction", [ 0.1, 1.0     ],                                                 ],
+  [ "--output-cells-random",       [ 0, 1         ], lambda x : ''                                   ],
   [ "--input-fraction",            [ 0.1, 1.0     ],                                                 ],
   [ "--input-threshold",           [ 0.001, 0.999 ], lambda x : expon(loc=0, scale=1).ppf(x) ** 1.75 ],
   [ "--alpha-cytokines",           [ 2.5, 30.0    ], lambda x : 5.0 / (x ** 2)                       ],
@@ -97,8 +98,8 @@ for param_properties in params_properties:
     assert minval == transformed_param_range[0]
     assert maxval == transformed_param_range[1]
   elif param_type == float:
-    assert abs(minval - transformed_param_range[0]) < 0.01
-    assert abs(maxval - transformed_param_range[1]) < 0.01
+    assert abs(minval - transformed_param_range[0]) < 0.05
+    assert abs(maxval - transformed_param_range[1]) < 0.05
 
 # Save into CSV
 args.to_csv(args_file)

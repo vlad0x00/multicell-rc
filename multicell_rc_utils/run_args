@@ -59,7 +59,8 @@ with open(join(this_dir, "args.csv"), 'r') as f:
       for j, column in enumerate(columns):
         if j == 0: continue
         arg_set.append(column)
-        arg_set.append(row[j])
+        if row[j].strip() != '':
+          arg_set.append(row[j])
       args.append((arg_set,))
 
 # Run them processes!
@@ -77,7 +78,7 @@ valid_files = 0
 data = { 'Accuracy' : [] }
 
 # Iterate the results dir for output files
-for dirpath, dirnames, filenames in os.walk('results/'):
+for dirpath, dirnames, filenames in os.walk(join(this_dir, 'results')):
   for filename in filenames:
     if os.path.basename(filename).endswith('stdout'):
       total_files += 1
@@ -109,4 +110,4 @@ print("Valid / total files: {} / {} ({}%)".format(valid_files, total_files, vali
 
 # Save to CSV
 data = pd.DataFrame(data)
-data.to_csv('results.csv')
+data.to_csv(join(this_dir, 'results.csv'))
