@@ -37,12 +37,12 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
     // Setup a grid of cell locations
     Vector<VIdx> coordsVIdx;
     Vector<VReal> coordsOffset;
-    for (S32 z = -gZLayers / 2; z < gZLayers - gZLayers / 2; z += 1) {
+    for (S32 z = 0; z < gZLayers; z += 1) {
       for (S32 y = -gYLayers / 2; y < gYLayers - gYLayers / 2; y += 1) {
         for (S32 x = -gXLayers / 2; x < gXLayers - gXLayers / 2; x += 1) {
           vIdx[0] = x + regionSize[0] / 2;
           vIdx[1] = y + regionSize[1] / 2;
-          vIdx[2] = z + regionSize[2] / 2;
+          vIdx[2] = z + SIGNAL_SOURCE_DISTANCE;
           vOffset[0] = 0;
           vOffset[1] = 0;
           vOffset[2] = 0;

@@ -46,7 +46,7 @@ parser.add_argument('-o', '--output-cells-random', action='store_true', help="Us
 parser.add_argument('-k', '--degree', type=abovezero_int, default=2, help="Average node in-degree of gene network(s).")
 parser.add_argument('-l', '--input-fraction', type=fraction_type, default=0.5, help="Fraction of nodes connected to the input signal.")
 parser.add_argument('-D', '--dirichlet-boundary', type=abovezero_float, default=4.0, help="Value of dirichlet boundary when input signal is on. The value is 0 when the signal is off.")
-parser.add_argument('-T', '--input-threshold', type=abovezero_float, default=0.9, help="Threshold for the molecular concentration of input signal for cells to consider it on.")
+parser.add_argument('-T', '--input-threshold', type=abovezero_float, default=0.4, help="Threshold for the molecular concentration of input signal for cells to consider it on.")
 parser.add_argument('-A', '--alpha-input', type=zeroplus_float, default=0.25, help="Molecular decay rate of input signal.")
 parser.add_argument('-B', '--beta-input', type=zeroplus_float, default=5.0, help="Grid diffusion coefficient of input signal.")
 parser.add_argument('-f', '--function', choices=[ 'median', 'parity' ], default="parity", help="Function to learn")
