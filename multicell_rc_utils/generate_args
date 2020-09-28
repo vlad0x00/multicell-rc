@@ -50,6 +50,7 @@ for param_properties in params_properties:
   types = {
     int : np.int64,
     float : np.float64,
+    np.float64 : np.float64,
     str : np.str
   }
   args[param_prefix] = np.zeros(num_samples, dtype=types[param_type])
