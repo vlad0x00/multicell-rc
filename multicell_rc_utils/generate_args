@@ -9,31 +9,32 @@ import math
 import numpy as np
 import pandas as pd
 from pyDOE import lhs
+from scipy.stats import expon
 
-num_samples = 5000
+num_samples = 10000
 args_file = 'args.csv'
 param_round_decimals = 6
 
 # Prefix, range, transformation (for lambda -> alpha)
 # Range type (or after transformation, if present) determines whether param is int or float
 params_properties = [
-  [ "--genes",                     [ 10,  100   ],                                             ],
-  [ "--cells",                     [ 100, 1000  ],                                             ],
-  [ "--cell-types",                [ 1, 20      ],                                             ],
-  [ "--tissue-depth",              [ 0, 0       ],                                             ],
-  [ "--output-gene-fraction",      [ 0.1, 1.0   ],                                             ],
-  [ "--output-cell-fraction",      [ 0.1, 1.0   ],                                             ],
-  [ "--output-cell-type-fraction", [ 0.1, 1.0   ],                                             ],
-  [ "--input-fraction",            [ 0.1, 1.0   ],                                             ],
-  [ "--input-threshold",           [ 0.1, 1.5   ],                                             ],
-  [ "--alpha-cytokines",           [ 2.5, 30.0  ], lambda l : 5.0 / (l ** 2)                   ],
-  [ "--cytokines",                 [ 1, 20      ],                                             ],
-  [ "--cytokine-threshold",        [ 0.05, 3.0  ],                                             ],
-  [ "--memory",                    [ 0, 9       ],                                             ],
-# [ "--window",                    [ 3, 3       ],                                             ],
-  [ "--window",                    [ 0, 2       ], lambda w : 3 + 2 * w                        ],
-  [ "--function",                  [ 0, 1       ], lambda f : 'median' if f == 0 else 'parity' ],
-  [ "--threads",                   [ 2, 2       ],                                             ],
+  [ "--genes",                     [ 10,  100     ],                                                 ],
+  [ "--cells",                     [ 100, 1000    ],                                                 ],
+  [ "--cell-types",                [ 1, 20        ],                                                 ],
+  [ "--tissue-depth",              [ 0, 0         ],                                                 ],
+  [ "--output-gene-fraction",      [ 0.1, 1.0     ],                                                 ],
+  [ "--output-cell-fraction",      [ 0.1, 1.0     ],                                                 ],
+  [ "--output-cell-type-fraction", [ 0.1, 1.0     ],                                                 ],
+  [ "--input-fraction",            [ 0.1, 1.0     ],                                                 ],
+  [ "--input-threshold",           [ 0.001, 0.999 ], lambda x : expon(loc=0, scale=1).ppf(x) ** 1.75 ],
+  [ "--alpha-cytokines",           [ 2.5, 30.0    ], lambda x : 5.0 / (x ** 2)                       ],
+  [ "--cytokines",                 [ 1, 20        ],                                                 ],
+  [ "--cytokine-threshold",        [ 0.05, 3.0    ],                                                 ],
+  [ "--memory",                    [ 0, 9         ],                                                 ],
+  [ "--window",                    [ 3, 3         ],                                                 ],
+#  [ "--window",                    [ 0, 2         ], lambda w : 3 + 2 * w                            ],
+#  [ "--function",                  [ 0, 1         ], lambda f : 'median' if f == 0 else 'parity'     ],
+  [ "--threads",                   [ 2, 2       ],                                                   ],
 ]
 
 num_params = len(params_properties)
