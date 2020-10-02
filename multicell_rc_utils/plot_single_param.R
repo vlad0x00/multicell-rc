@@ -33,5 +33,6 @@ results %>% ggplot(aes_string(x=args[1], y="Accuracy", group=1)) +
   stat_summary(geom="point", fun=mean, color="red") +
   geom_smooth(formula=y ~ x, method=stats::loess) +
   theme_bw() +
+  #facet_wrap(~Window.size) +
   theme(text = element_text(size = 26), axis.title.y = element_text(angle = 0))
 ggsave('plot.png', width = 20, height = 15)
