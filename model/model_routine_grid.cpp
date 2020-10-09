@@ -95,8 +95,10 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
     }
   }
 
+  static const REAL IF_VOLUME = gIfGridSpacing * gIfGridSpacing * gIfGridSpacing;
+
   for(S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-    rhs[cytokine] /= (gIfGridSpacing * gIfGridSpacing * gIfGridSpacing);
+    rhs[cytokine] /= IF_VOLUME;
     nbrUBEnv.setModelReal(0, 0, 0, 1 + cytokine, rhs[cytokine]);
   }
 
@@ -104,7 +106,6 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
     delete[] rhs;
   }
 
-  static const REAL IF_VOLUME = gIfGridSpacing * gIfGridSpacing * gIfGridSpacing;
   CHECK(occupiedVolume >= 0);
   CHECK((IF_VOLUME - occupiedVolume) / IF_VOLUME > -0.01);
   nbrUBEnv.setModelReal(0, 0, 0, 1 + gNumCytokines, occupiedVolume);
