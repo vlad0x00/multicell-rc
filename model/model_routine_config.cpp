@@ -254,13 +254,13 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
   gridPhiInfo.elemIdx = 0;
   gridPhiInfo.name = "input_substance";
   gridPhiInfo.syncMethod = VAR_SYNC_METHOD_DELTA;
-  gridPhiInfo.aa_bcType[0][0] = BC_TYPE_DIRICHLET_MODEL;
+  gridPhiInfo.aa_bcType[0][0] = BC_TYPE_NEUMANN_CONST;
   gridPhiInfo.aa_bcVal[0][0] = 0.0;
-  gridPhiInfo.aa_bcType[0][1] = BC_TYPE_DIRICHLET_MODEL;
+  gridPhiInfo.aa_bcType[0][1] = BC_TYPE_NEUMANN_CONST;
   gridPhiInfo.aa_bcVal[0][1] = 0.0;
-  gridPhiInfo.aa_bcType[1][0] = BC_TYPE_DIRICHLET_MODEL;
+  gridPhiInfo.aa_bcType[1][0] = BC_TYPE_NEUMANN_CONST;
   gridPhiInfo.aa_bcVal[1][0] = 0.0;
-  gridPhiInfo.aa_bcType[1][1] = BC_TYPE_DIRICHLET_MODEL;
+  gridPhiInfo.aa_bcType[1][1] = BC_TYPE_NEUMANN_CONST;
   gridPhiInfo.aa_bcVal[1][1] = 0.0;
   gridPhiInfo.aa_bcType[2][0] = BC_TYPE_DIRICHLET_MODEL;
   gridPhiInfo.aa_bcVal[2][0] = 0.0;

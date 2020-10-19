@@ -39,10 +39,7 @@ const S32 NUM_AMR_LEVELS = 1;
 const REAL GRID_PHI_NORM_THRESHOLD = 1e-10;
 
 // Distance between the signal producing wall and tissue
-const S32 SIGNAL_SOURCE_DISTANCE = 2;
-/* Number of voxels on the side walls that also produce signal in order to simulate
-   a flat wave coming to the tissue. */
-const REAL SIDE_BOUNDARY_SIGNAL_WALL_SIZE = 2;
+const S32 SIGNAL_SOURCE_DISTANCE = 1;
 
 // Global variables passed to Biocellion in the run script and available to all processes.
 extern S32 gNumGenes;
