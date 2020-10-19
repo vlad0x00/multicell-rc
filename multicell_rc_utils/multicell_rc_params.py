@@ -62,6 +62,7 @@ parser.add_argument('-s', '--steps', type=abovezero_int, default=1000, help="Num
 parser.add_argument('-W', '--warmup-steps', type=zeroplus_int, default=100, help="Number of initial simulation steps to exclude from training.")
 parser.add_argument('-m', '--memory', type=zeroplus_int, default=2, help="Step delay between input signal and output layer prediction.")
 parser.add_argument('-w', '--window-size', type=abovezero_int, default=3, help="Window size of predicted functions.")
+parser.add_argument('-K', '--kappa', action='store_true', help="Enable kappa in Biocellion. Kappa reduces available space for molecules by the space occupied by cells.")
 parser.add_argument('-R', '--reuse', action='store_true', help="Use previously generated initial gene network states, functions, and input signal. Otherwise generate new.")
 parser.add_argument('-X', '--auxiliary', action='store_true', help="Generate auxiliary files (for debugging and/or visualization) -- dot and png files of the gene network model and a dump of all simulation states in text form.")
 parser.add_argument('-O', '--output', default="output", help="Path of simulation output directory")

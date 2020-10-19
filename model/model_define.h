@@ -70,6 +70,7 @@ extern REAL gInputThreshold;
 extern S32 gZLayers;
 extern S32 gYLayers;
 extern S32 gXLayers;
+extern BOOL gKappa;
 
 // Format of the global data array. Each number is the offset from the beginning.
 typedef struct {
@@ -98,6 +99,7 @@ typedef struct {
 	S64 zLayers;
 	S64 yLayers;
 	S64 xLayers;
+	S64 kappa;
 } GlobalDataFormat;
 
 static inline S32* getNv(S32 cellType) {

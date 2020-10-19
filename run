@@ -53,6 +53,7 @@ OUTPUT_CELLS_RANDOM = args.output_cells_random
 SIMULATION_STEPS = args.steps
 DELAY = args.memory
 WINDOW_SIZE = args.window_size
+KAPPA = args.kappa
 INPUT_SIGNAL_FILE = os.path.join(OUTPUT_DIR, "input_signal")
 INPUT_SIGNAL_LENGTH = SIMULATION_STEPS + 1
 FUNCTION = args.function
@@ -87,7 +88,7 @@ shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
 os.makedirs(OUTPUT_DIR)
 
 # Arguments passed to Biocellion directly
-ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " " + str(Z_LAYERS) + " " + str(Y_LAYERS) + " " + str(X_LAYERS)
+ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " " + str(Z_LAYERS) + " " + str(Y_LAYERS) + " " + str(X_LAYERS) + " " + str(KAPPA)
 
 # Include Biocellion .so files before running
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR

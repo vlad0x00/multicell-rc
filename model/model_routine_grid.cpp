@@ -122,8 +122,12 @@ void ModelRoutine::updateIfSubgridKappa( const S32 pdeIdx, const VIdx& vIdx, con
   CHECK(subgridVOffset[1] == 0);
   CHECK(subgridVOffset[2] == 0);
 
-  static const REAL IF_VOLUME = gIfGridSpacing * gIfGridSpacing * gIfGridSpacing;
-  gridKappa = 1.0 - ubEnv.getModelReal(1 + gNumCytokines) / IF_VOLUME;
+  if (gKappa) {
+    static const REAL IF_VOLUME = gIfGridSpacing * gIfGridSpacing * gIfGridSpacing;
+    gridKappa = 1.0 - ubEnv.getModelReal(1 + gNumCytokines) / IF_VOLUME;
+  } else {
+    gridKappa = 1.0;
+  }
 
   /* MODEL END */
 
