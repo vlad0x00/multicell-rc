@@ -54,6 +54,8 @@ SIMULATION_STEPS = args.steps
 DELAY = args.memory
 WINDOW_SIZE = args.window_size
 KAPPA = args.kappa
+SUMMARY = args.summary
+SOURCE_DIST = args.source_dist
 INPUT_SIGNAL_FILE = os.path.join(OUTPUT_DIR, "input_signal")
 INPUT_SIGNAL_LENGTH = SIMULATION_STEPS + 1
 FUNCTION = args.function
@@ -67,6 +69,11 @@ X_LAYERS  = math.ceil(NUM_CELLS / Z_LAYERS / Y_LAYERS)
 assert X_LAYERS * Y_LAYERS * Z_LAYERS >= NUM_CELLS
 UNIVERSE_LENGTH = 1 + TISSUE_DEPTH + 1
 UNIVERSE_WIDTH = 1 + max(X_LAYERS, Y_LAYERS) + 1
+CYTOKINE_NORMALIZATION_NUM_GENES = 3
+CYTOKINE_NORMALIZATION_UNIVERSE_SIZE = 16
+CYTOKINE_NORMALIZATION_SIMULATION_STEPS = 1
+CYTOKINE_NORMALIZATION_INPUT_SIGNAL_LENGTH = CYTOKINE_NORMALIZATION_SIMULATION_STEPS + 1
+CYTOKINE_NORMALIZATION = -1.0 # To be calculated
 
 assert SIMULATION_STEPS > WARMUP_STEPS
 assert CELL_RADIUS <= IF_GRID_SPACING
@@ -83,12 +90,8 @@ os.environ['BLIS_NUM_THREADS'] = str(args.threads)
 os.environ['NUMEXPR_NUM_THREADS'] = str(args.threads)
 os.environ['VECLIB_MAXIMUM_THREADS'] = str(args.threads)
 
-# Remove the output dir of a previous run, if any, and create a new one
-shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
-os.makedirs(OUTPUT_DIR)
-
 # Arguments passed to Biocellion directly
-ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " " + str(Z_LAYERS) + " " + str(Y_LAYERS) + " " + str(X_LAYERS) + " " + str(KAPPA)
+ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " " + str(Z_LAYERS) + " " + str(Y_LAYERS) + " " + str(X_LAYERS) + " " + str(KAPPA) + " " + str(SUMMARY) + " " + str(SOURCE_DIST)
 
 # Include Biocellion .so files before running
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
@@ -110,7 +113,35 @@ if not AUXILIARY_FILES:
 from multicell_rc_utils import multicell_rc_gen
 from multicell_rc_utils import multicell_rc_train
 
+# Run Biocellion to numerically normalize secretion level
+print("Calculating cytokine level normalization... ", end='', flush=True)
+t1 = time.time()
+
+CYTOKINE_NORMALIZATION_ADDITIONAL_PARAMS = str(CYTOKINE_NORMALIZATION_NUM_GENES) + " 1 1 " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " 1 " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " 1 1 1 " + str(KAPPA) + " " + str(True) + " " + str(CYTOKINE_NORMALIZATION_UNIVERSE_SIZE // 2)
+
+# Remove the output dir of a previous run, if any, and create a new one
+shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
+os.makedirs(OUTPUT_DIR)
+
+multicell_rc_gen.generate_cytokine_normalization_files(CYTOKINE_NORMALIZATION_NUM_GENES, NV_FILE, VARF_FILE, TT_FILE, INPUT_SIGNAL_FILE, CYTOKINE_NORMALIZATION_INPUT_SIGNAL_LENGTH, GENE_INITIAL_STATES_FILE)
+multicell_rc_gen.make_params_xml(PARAMS_FILE, OUTPUT_DIR, CYTOKINE_NORMALIZATION_SIMULATION_STEPS, CYTOKINE_NORMALIZATION_ADDITIONAL_PARAMS, THREADS, CYTOKINE_NORMALIZATION_UNIVERSE_SIZE, CYTOKINE_NORMALIZATION_UNIVERSE_SIZE)
+
+os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE)
+t2 = time.time()
+print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
+with open(BIOCELLION_OUTPUT_FILE, 'r') as f:
+  counter = 0
+  for line in f:
+    if 'cytokine0_max' in line:
+      counter += 1
+      if counter == 2: CYTOKINE_NORMALIZATION = float(line.split(':')[1])
+assert CYTOKINE_NORMALIZATION > 0.0
+
 print("Tissue shape: {} x {} x {}".format(X_LAYERS, Y_LAYERS, Z_LAYERS))
+
+# Remove the output dir of a previous run, if any, and create a new one
+shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
+os.makedirs(OUTPUT_DIR)
 
 # Should new input signal, boolean networks, and initial states be generated?
 if NEW:

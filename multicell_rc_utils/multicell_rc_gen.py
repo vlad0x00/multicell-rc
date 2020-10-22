@@ -56,6 +56,42 @@ def make_network_dot(num_genes, varf, dot_file):
       else:
         subprocess.run([ 'dot', '-T', 'png', dot_file ], stdout=f)
 
+def generate_cytokine_normalization_files(num_genes, nv_file, varf_file, tt_file, signal_file, signal_len, state_file):
+  nv = [ np.zeros(num_genes, dtype=np.int64) ]
+  varf = [ [ [ 0 ] for _ in range(num_genes) ] ]
+  tt = [ [ [ 0 ] for _ in range(num_genes) ] ]
+
+  # Save nv
+  with open(nv_file, 'w') as f:
+    for cell_type_nv in nv:
+      f.write(' '.join([str(x) for x in cell_type_nv]))
+      f.write('\n')
+
+  # Save varf
+  with open(varf_file, 'w') as f:
+    for cell_type_varf in varf:
+      for gene_varf in cell_type_varf:
+        f.write(' '.join([str(x) for x in gene_varf]))
+        f.write('\n')
+
+  # Save nv
+  with open(tt_file, 'w') as f:
+    for cell_type_tt in tt:
+      for gene_tt in cell_type_tt:
+        f.write(' '.join([str(x) for x in gene_tt]))
+        f.write('\n')
+
+  # Save input signal signal.
+  arr = np.zeros(signal_len, dtype=np.int64)
+  with open(signal_file, 'w') as f:
+    f.write(' '.join([str(x) for x in arr]))
+
+  # Save initial states
+  with open(state_file, 'w') as f:
+    state = np.zeros(num_genes, dtype=np.int64)
+    f.write(' '.join([str(x) for x in state]))
+    f.write('\n')
+
 def generate_gene_functions(num_cell_types, num_genes, connectivity, input_connections, num_cytokines, nv_file, varf_file, tt_file, dot_file):
   """
     Generate the truth tables for genes for each cell type

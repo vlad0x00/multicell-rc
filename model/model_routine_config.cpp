@@ -50,6 +50,9 @@ S32 gZLayers;
 S32 gYLayers;
 S32 gXLayers;
 BOOL gKappa;
+BOOL gEnableSummary;
+S32 gSourceDist;
+REAL gCytokineNormalization;
 
 // Parameters provided to Biocellion and their indices in the input string array
 const S32 NUM_GENES_PARAM = 0;
@@ -76,6 +79,9 @@ const S32 Z_LAYERS_PARAM = 20;
 const S32 Y_LAYERS_PARAM = 21;
 const S32 X_LAYERS_PARAM = 22;
 const S32 KAPPA_PARAM = 23;
+const S32 ENABLE_SUMMARY_PARAM = 24;
+const S32 SOURCE_DIST_PARAM = 25;
+const S32 CYTOKINE_NORMALIZATION_PARAM = 26;
 
 // Returns a vector of strings of passed arguments
 static Vector<std::string> readXMLParameters() {
@@ -432,7 +438,7 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
   v_summaryOutputIntInfo.clear();
   v_summaryOutputRealInfo.clear();
 
-  if (ENABLE_SUMMARY) {
+  if (params[ENABLE_SUMMARY_PARAM] == "True") {
     info.name = "input_signal_min";
     info.type = SUMMARY_TYPE_MIN;
     v_summaryOutputRealInfo.push_back(info);
@@ -489,7 +495,10 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   const S32 zLayers = std::stoi(params[Z_LAYERS_PARAM]);
   const S32 yLayers = std::stoi(params[Y_LAYERS_PARAM]);
   const S32 xLayers = std::stoi(params[X_LAYERS_PARAM]);
-  const BOOL kappa = (params[KAPPA_PARAM] == "True" ? true : false);
+  const BOOL kappa = (params[KAPPA_PARAM] == "True");
+  const BOOL enableSummary = (params[ENABLE_SUMMARY_PARAM] == "True");
+  const S32 sourceDist = std::stoi(params[SOURCE_DIST_PARAM]);
+  const REAL cytokineNormalization = std::stod(params[CYTOKINE_NORMALIZATION_PARAM]);
 
   Vector<S32> nv;
   Vector<S32> varfOffsets;
@@ -618,6 +627,15 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   format.kappa = size;
   size += sizeof(kappa);
 
+  format.enableSummary = size;
+  size += sizeof(enableSummary);
+
+  format.sourceDist = size;
+  size += sizeof(sourceDist);
+
+  format.cytokineNormalization = size;
+  size += sizeof(cytokineNormalization);
+
   // Copy passed arguments into global data so it can be accessed in other processes
   v_globalData.resize(size);
   memcpy(&(v_globalData[0]), &format, sizeof(format));
@@ -647,6 +665,9 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   memcpy(&(v_globalData[format.yLayers]), &yLayers, sizeof(yLayers));
   memcpy(&(v_globalData[format.xLayers]), &xLayers, sizeof(xLayers));
   memcpy(&(v_globalData[format.kappa]), &kappa, sizeof(kappa));
+  memcpy(&(v_globalData[format.enableSummary]), &enableSummary, sizeof(enableSummary));
+  memcpy(&(v_globalData[format.sourceDist]), &sourceDist, sizeof(sourceDist));
+  memcpy(&(v_globalData[format.cytokineNormalization]), &cytokineNormalization, sizeof(cytokineNormalization));
 
   /* MODEL END */
 
@@ -686,6 +707,9 @@ void ModelRoutine::init( void ) {
   gYLayers = *((S32*)(&(g[f.yLayers])));
   gXLayers = *((S32*)(&(g[f.xLayers])));
   gKappa = *((BOOL*)(&(g[f.kappa])));
+  gEnableSummary = *((BOOL*)(&(g[f.enableSummary])));
+  gSourceDist = *((S32*)(&(g[f.sourceDist])));
+  gCytokineNormalization = *((REAL*)(&(g[f.cytokineNormalization])));
 
   /* MODEL END */
 

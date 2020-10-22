@@ -42,7 +42,7 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
         for (S32 x = -gXLayers / 2; x < gXLayers - gXLayers / 2; x += 1) {
           vIdx[0] = x + regionSize[0] / 2;
           vIdx[1] = y + regionSize[1] / 2;
-          vIdx[2] = z + SIGNAL_SOURCE_DISTANCE;
+          vIdx[2] = z + gSourceDist;
           vOffset[0] = 0;
           vOffset[1] = 0;
           vOffset[2] = 0;
@@ -167,7 +167,7 @@ void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junction
 
   // Push new cytokine input gene values and update them immediately for internal genes
   for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-    if (avgPhi[1 + cytokine] > gCytokineThreshold) {
+    if (avgPhi[1 + cytokine] / gCytokineNormalization > gCytokineThreshold) {
       newBools.push_back(1);
     } else {
       newBools.push_back(0);

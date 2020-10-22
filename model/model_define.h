@@ -25,9 +25,6 @@ typedef enum _RngType {
   NUM_MODEL_RNGS
 } RngType;
 
-// Enable periodic output of molecules' min, avg, and max within the simulation universe
-const BOOL ENABLE_SUMMARY = false;
-
 /* A baseline time step is the largest time step used in Biocellion
  Users can split a baseline time step into one or more state-and-grid time steps */
 const REAL BASELINE_TIME_STEP_DURATION = 1.0;
@@ -37,9 +34,6 @@ const S32 NUM_STATE_AND_GRID_TIME_STEPS_PER_BASELINE = 1;
 const S32 SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL = 2;
 const S32 NUM_AMR_LEVELS = 1;
 const REAL GRID_PHI_NORM_THRESHOLD = 1e-10;
-
-// Distance between the signal producing wall and tissue
-const S32 SIGNAL_SOURCE_DISTANCE = 1;
 
 // Global variables passed to Biocellion in the run script and available to all processes.
 extern S32 gNumGenes;
@@ -68,6 +62,9 @@ extern S32 gZLayers;
 extern S32 gYLayers;
 extern S32 gXLayers;
 extern BOOL gKappa;
+extern BOOL gEnableSummary;
+extern S32 gSourceDist;
+extern REAL gCytokineNormalization;
 
 // Format of the global data array. Each number is the offset from the beginning.
 typedef struct {
@@ -97,6 +94,9 @@ typedef struct {
 	S64 yLayers;
 	S64 xLayers;
 	S64 kappa;
+	S64 enableSummary;
+	S64 sourceDist;
+	S64 cytokineNormalization;
 } GlobalDataFormat;
 
 static inline S32* getNv(S32 cellType) {
