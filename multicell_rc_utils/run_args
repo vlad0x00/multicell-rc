@@ -119,6 +119,12 @@ for dirpath, dirnames, filenames in os.walk(join(this_dir, 'results')):
         # Keep track of how many simulations were successful
         if args_found and accuracy_found and input_cells_found: valid_files += 1
 
+# These are unnecessary, as the fraction of cells that have received input signal has been added
+data.pop('Dirichlet boundary', None)
+data.pop('Input threshold', None)
+data.pop('Alpha input', None)
+data.pop('Beta input', None)
+
 print("Done!")
 print("Valid / total files: {} / {} ({}%)".format(valid_files, total_files, valid_files / total_files * 100))
 
