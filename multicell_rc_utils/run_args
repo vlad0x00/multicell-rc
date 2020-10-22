@@ -75,7 +75,7 @@ total_files = 0
 valid_files = 0
 
 # Save all data into the dictionary
-data = { 'Accuracy' : [], 'Input receiver cells fraction' : [] }
+data = { 'Accuracy' : [], 'Input receiver cells fraction' : [], 'Lambda cytokines' : [] }
 
 # Iterate the results dir for output files
 for dirpath, dirnames, filenames in os.walk(join(this_dir, 'results')):
@@ -111,6 +111,9 @@ for dirpath, dirnames, filenames in os.walk(join(this_dir, 'results')):
             assert 0.0 <= input_cells <= 1.0
             data['Input receiver cells fraction'].append(input_cells)
 
+            lambda_cytokines = math.sqrt(data['Beta cytokines'] / data['Alpha cytokines'])
+            data['Lambda cytokines'].append(lambda_cytokines)
+
             accuracy = float(line.split()[2])
             assert 0.0 <= accuracy <= 1.0
             data['Accuracy'].append(accuracy)
@@ -124,6 +127,10 @@ data.pop('Dirichlet boundary', None)
 data.pop('Input threshold', None)
 data.pop('Alpha input', None)
 data.pop('Beta input', None)
+
+# These are also unnecessary, as lambda can substitute for both
+data.pop('Alpha cytokines', None)
+data.pop('Beta cytokines', None)
 
 print("Done!")
 print("Valid / total files: {} / {} ({}%)".format(valid_files, total_files, valid_files / total_files * 100))
