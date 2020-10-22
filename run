@@ -90,9 +90,6 @@ os.environ['BLIS_NUM_THREADS'] = str(args.threads)
 os.environ['NUMEXPR_NUM_THREADS'] = str(args.threads)
 os.environ['VECLIB_MAXIMUM_THREADS'] = str(args.threads)
 
-# Arguments passed to Biocellion directly
-ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " " + str(Z_LAYERS) + " " + str(Y_LAYERS) + " " + str(X_LAYERS) + " " + str(KAPPA) + " " + str(SUMMARY) + " " + str(SOURCE_DIST)
-
 # Include Biocellion .so files before running
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 
@@ -117,7 +114,7 @@ from multicell_rc_utils import multicell_rc_train
 print("Calculating cytokine level normalization... ", end='', flush=True)
 t1 = time.time()
 
-CYTOKINE_NORMALIZATION_ADDITIONAL_PARAMS = str(CYTOKINE_NORMALIZATION_NUM_GENES) + " 1 1 " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " 1 " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " 1 1 1 " + str(KAPPA) + " " + str(True) + " " + str(CYTOKINE_NORMALIZATION_UNIVERSE_SIZE // 2)
+CYTOKINE_NORMALIZATION_ADDITIONAL_PARAMS = str(CYTOKINE_NORMALIZATION_NUM_GENES) + " 1 1 " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " 1 " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " 1 1 1 " + str(KAPPA) + " " + str(True) + " " + str(CYTOKINE_NORMALIZATION_UNIVERSE_SIZE // 2) + " 1.0"
 
 # Remove the output dir of a previous run, if any, and create a new one
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
@@ -138,6 +135,9 @@ with open(BIOCELLION_OUTPUT_FILE, 'r') as f:
 assert CYTOKINE_NORMALIZATION > 0.0
 
 print("Tissue shape: {} x {} x {}".format(X_LAYERS, Y_LAYERS, Z_LAYERS))
+
+# Arguments passed to Biocellion directly
+ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " " + str(Z_LAYERS) + " " + str(Y_LAYERS) + " " + str(X_LAYERS) + " " + str(KAPPA) + " " + str(SUMMARY) + " " + str(SOURCE_DIST) + " " + str(CYTOKINE_NORMALIZATION)
 
 # Remove the output dir of a previous run, if any, and create a new one
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
