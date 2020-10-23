@@ -65,7 +65,7 @@ parser.add_argument('-s', '--source-dist', type=abovezero_int, default=1, help="
 parser.add_argument('-R', '--reuse', action='store_true', help="Use previously generated initial gene network states, functions, and input signal. Otherwise generate new.")
 parser.add_argument('-X', '--auxiliary', action='store_true', help="Generate auxiliary files (for debugging and/or visualization) -- dot and png files of the gene network model and a dump of all simulation states in text form.")
 parser.add_argument('-O', '--output', default="output", help="Path of simulation output directory")
-parser.add_argument('-j', '--threads', type=abovezero_int, default=2, help="Number of threads to use for the run.")
+parser.add_argument('-j', '--threads', type=abovezero_int, default=4, help="Number of threads to use for the run.")
 
 # Parse the arguments
 def parse_args(args=None):
