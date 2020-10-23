@@ -242,9 +242,9 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
   pdeInfo.mgSolveInfo.numBottom = 3;
   pdeInfo.mgSolveInfo.vCycle = true;
   pdeInfo.mgSolveInfo.maxIters = 30;
-  pdeInfo.mgSolveInfo.epsilon = 1e-8;
-  pdeInfo.mgSolveInfo.hang = 1e-6;
-  pdeInfo.mgSolveInfo.normThreshold = 1e-10;
+  pdeInfo.mgSolveInfo.epsilon = 1e-20;
+  pdeInfo.mgSolveInfo.hang = 1e-20;
+  pdeInfo.mgSolveInfo.normThreshold = 1e-20;
 
   pdeInfo.advectionInfo.courantNumber = 0.5; /* dummy */
 
@@ -270,7 +270,7 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
   gridPhiInfo.aa_bcVal[1][1] = 0.0;
   gridPhiInfo.aa_bcType[2][0] = BC_TYPE_DIRICHLET_MODEL;
   gridPhiInfo.aa_bcVal[2][0] = 0.0;
-  gridPhiInfo.aa_bcType[2][1] = BC_TYPE_DIRICHLET_MODEL;
+  gridPhiInfo.aa_bcType[2][1] = BC_TYPE_NEUMANN_CONST;
   gridPhiInfo.aa_bcVal[2][1] = 0.0;
   gridPhiInfo.errorThresholdVal = GRID_PHI_NORM_THRESHOLD * -1.0;
   gridPhiInfo.warningThresholdVal = GRID_PHI_NORM_THRESHOLD * -1.0;

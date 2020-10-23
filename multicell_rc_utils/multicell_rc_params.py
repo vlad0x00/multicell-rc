@@ -45,7 +45,7 @@ parser.add_argument('-P', '--output-cell-type-fraction', type=fraction_type, def
 parser.add_argument('-o', '--output-cells-random', action='store_true', help="Use random cells from anywhere in the tissue for LASSO training instead of only from the end.")
 parser.add_argument('-k', '--degree', type=abovezero_int, default=2, help="Average node in-degree of gene network(s).")
 parser.add_argument('-l', '--input-fraction', type=fraction_type, default=0.5, help="Fraction of nodes connected to the input signal.")
-parser.add_argument('-D', '--dirichlet-boundary', type=abovezero_float, default=10000.0, help="Value of dirichlet boundary when input signal is on. The value is 0 when the signal is off.")
+parser.add_argument('-D', '--dirichlet-boundary', type=abovezero_float, default=100000.0, help="Value of dirichlet boundary when input signal is on. The value is 0 when the signal is off.")
 parser.add_argument('-T', '--input-threshold', type=abovezero_float, default=1.5, help="Threshold for the molecular concentration of input signal for cells to consider it on.")
 parser.add_argument('-A', '--alpha-input', type=zeroplus_float, default=0.2, help="Molecular decay rate of input signal.")
 parser.add_argument('-B', '--beta-input', type=zeroplus_float, default=5.0, help="Grid diffusion coefficient of input signal.")
