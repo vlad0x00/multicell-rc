@@ -15,7 +15,7 @@ results$Cytokines <- factor(results$Cytokines)
 cells <- paste(results$Cells, 'cells')
 cells_levels <- paste(unique(sort(results$Cells)), 'cells')
 results$Cells <- factor(cells, levels = cells_levels)
-window_levels <- nlevels(factor(results$Window))
+window_levels <- nlevels(factor(results$Window.size))
 
 results %>% ggplot(aes(x=Accuracy)) +
   geom_histogram(binwidth=0.025) +

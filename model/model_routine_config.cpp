@@ -53,6 +53,7 @@ BOOL gKappa;
 BOOL gEnableSummary;
 S32 gSourceDist;
 REAL gCytokineNormalization;
+BOOL gNumericalAnalysis;
 
 // Parameters provided to Biocellion and their indices in the input string array
 const S32 NUM_GENES_PARAM = 0;
@@ -82,6 +83,7 @@ const S32 KAPPA_PARAM = 23;
 const S32 ENABLE_SUMMARY_PARAM = 24;
 const S32 SOURCE_DIST_PARAM = 25;
 const S32 CYTOKINE_NORMALIZATION_PARAM = 26;
+const S32 NUMERICAL_ANALYSIS_PARAM = 27;
 
 // Returns a vector of strings of passed arguments
 static Vector<std::string> readXMLParameters() {
@@ -499,6 +501,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   const BOOL enableSummary = (params[ENABLE_SUMMARY_PARAM] == "True");
   const S32 sourceDist = std::stoi(params[SOURCE_DIST_PARAM]);
   const REAL cytokineNormalization = std::stod(params[CYTOKINE_NORMALIZATION_PARAM]);
+  const BOOL numericalAnalysis = (params[NUMERICAL_ANALYSIS_PARAM] == "True");
 
   Vector<S32> nv;
   Vector<S32> varfOffsets;
@@ -636,6 +639,9 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   format.cytokineNormalization = size;
   size += sizeof(cytokineNormalization);
 
+  format.numericalAnalysis = size;
+  size += sizeof(numericalAnalysis);
+
   // Copy passed arguments into global data so it can be accessed in other processes
   v_globalData.resize(size);
   memcpy(&(v_globalData[0]), &format, sizeof(format));
@@ -668,6 +674,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   memcpy(&(v_globalData[format.enableSummary]), &enableSummary, sizeof(enableSummary));
   memcpy(&(v_globalData[format.sourceDist]), &sourceDist, sizeof(sourceDist));
   memcpy(&(v_globalData[format.cytokineNormalization]), &cytokineNormalization, sizeof(cytokineNormalization));
+  memcpy(&(v_globalData[format.numericalAnalysis]), &numericalAnalysis, sizeof(numericalAnalysis));
 
   /* MODEL END */
 
@@ -710,6 +717,7 @@ void ModelRoutine::init( void ) {
   gEnableSummary = *((BOOL*)(&(g[f.enableSummary])));
   gSourceDist = *((S32*)(&(g[f.sourceDist])));
   gCytokineNormalization = *((REAL*)(&(g[f.cytokineNormalization])));
+  gNumericalAnalysis = *((BOOL*)(&(g[f.numericalAnalysis])));
 
   /* MODEL END */
 

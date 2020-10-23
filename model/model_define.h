@@ -65,6 +65,7 @@ extern BOOL gKappa;
 extern BOOL gEnableSummary;
 extern S32 gSourceDist;
 extern REAL gCytokineNormalization;
+extern BOOL gNumericalAnalysis;
 
 // Format of the global data array. Each number is the offset from the beginning.
 typedef struct {
@@ -97,6 +98,7 @@ typedef struct {
 	S64 enableSummary;
 	S64 sourceDist;
 	S64 cytokineNormalization;
+	S64 numericalAnalysis;
 } GlobalDataFormat;
 
 static inline S32* getNv(S32 cellType) {

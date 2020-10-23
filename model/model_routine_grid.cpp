@@ -14,6 +14,8 @@ NOTICE:  These data were produced by Battelle Memorial Institute (BATTELLE) unde
 
 #include "model_define.h"
 
+#include <sstream>
+
 using namespace std;
 
 void ModelRoutine::initIfGridVar( const VIdx& vIdx, const UBAgentData& ubAgentData, UBEnv& ubEnv ) {
@@ -109,6 +111,12 @@ void ModelRoutine::updateIfGridVar( const BOOL pre, const S32 iter, const VIdx& 
   CHECK(occupiedVolume >= 0);
   CHECK((IF_VOLUME - occupiedVolume) / IF_VOLUME > -0.01);
   nbrUBEnv.setModelReal(0, 0, 0, 1 + gNumCytokines, occupiedVolume);
+
+  if (gNumericalAnalysis && Info::getCurBaselineTimeStep() > 0) {
+    std::ostringstream input_val;
+    input_val << nbrUBEnv.getPhi(0, 0, 0, 0);
+    std::cout << ("Input signal val (" + std::to_string(vIdx[0]) + "," + std::to_string(vIdx[1]) + "," + std::to_string(vIdx[2]) + ") = " + input_val.str() + "\n") << std::flush;
+  }
 
   /* MODEL END */
 

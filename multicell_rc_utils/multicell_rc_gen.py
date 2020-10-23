@@ -81,8 +81,8 @@ def generate_cytokine_normalization_files(num_genes, nv_file, varf_file, tt_file
         f.write(' '.join([str(x) for x in gene_tt]))
         f.write('\n')
 
-  # Save input signal signal.
-  arr = np.zeros(signal_len, dtype=np.int64)
+  # Save input signal.
+  arr = np.ones(signal_len, dtype=np.int64)
   with open(signal_file, 'w') as f:
     f.write(' '.join([str(x) for x in arr]))
 

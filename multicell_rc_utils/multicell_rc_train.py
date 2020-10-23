@@ -80,7 +80,7 @@ def get_cell_types(output_file):
         cell_type_map[cell] = cell_type
   return cell_type_map
 
-def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, output_cells_random, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, z_layers, y_layers, x_layers):
+def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, output_cells_random, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, z_layers, y_layers, x_layers, input_signal_depth):
   """
     Builds the x and y lists for Lasso training. x consists of gene values from output cells and
     y is the ground truth for the given function and input signal.
@@ -117,6 +117,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
     cells_bad_input += input_signal_info[layer]["bad_cells"]
   input_signal_info["correct_input"] = cells_correct_input
   input_signal_info["bad_input"] = cells_bad_input
+  assert round(input_signal_info["correct_input"] / (num_cells / z_layers)) == input_signal_depth
 
   states = states[(window_size - 1):]
   for state in states:

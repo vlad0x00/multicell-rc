@@ -61,7 +61,7 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
       S32 cellType = gNumCellTypes * Util::getModelRand(MODEL_RNG_UNIFORM);
       if (cellType == gNumCellTypes) { cellType--; }
       CHECK(cellType >= 0 && cellType < gNumCellTypes);
-      std::cout << "Cell: " << cell << ", Type: " << cellType << std::endl;
+      std::cout << ("Cell: " + std::to_string(cell) + ", Type: " + std::to_string(cellType) + "\n") << std::flush;
 
       vIdx = coordsVIdx[cell];
       vOffset = coordsOffset[cell];
