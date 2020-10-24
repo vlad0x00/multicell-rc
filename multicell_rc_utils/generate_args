@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 """
-  Generate a file with arguments for a number of simulations using
-  Latin Hypercube sampling.
+  Generate a file with arguments for a number of simulations, either using combinations of specified arguments or using Latin Hypercube sampling for sensitivity analysis.
 """
 
 import math
@@ -10,8 +9,14 @@ import numpy as np
 import pandas as pd
 from pyDOE import lhs
 from scipy.stats import expon
+import argparse
 
-num_samples = 10000
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('-a', '--analysis', choices=[ 'fixed_params', 'sensitivity_analysis', '3-layer' ], default=10_000, help="What to generate arguments for.")
+cli_args = parser.parse_args()
+parser.add_argument('-s', '--num-samples', type=int, default=10_000, help="Number of samples for LHS.")
+cli_args = parser.parse_args()
+
 args_file = 'args.csv'
 param_round_decimals = 6
 
@@ -35,7 +40,6 @@ params_properties = [
   [ "--window-size",               [ 3, 3         ],                                                 ],
 #  [ "--window-size",               [ 0, 2         ], lambda w : 3 + 2 * w                            ],
 #  [ "--function",                  [ 0, 1         ], lambda f : 'median' if f == 0 else 'parity'     ],
-  [ "--threads",                   [ 2, 2       ],                                                   ],
 ]
 
 num_params = len(params_properties)

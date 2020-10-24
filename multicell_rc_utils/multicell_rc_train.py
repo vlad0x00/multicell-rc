@@ -117,7 +117,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
     cells_bad_input += input_signal_info[layer]["bad_cells"]
   input_signal_info["correct_input"] = cells_correct_input
   input_signal_info["bad_input"] = cells_bad_input
-  assert round(input_signal_info["correct_input"] / (num_cells / z_layers)) == input_signal_depth
+  assert round(input_signal_info["correct_input"] / (num_cells / z_layers)) == min(input_signal_depth, z_layers)
 
   states = states[(window_size - 1):]
   for state in states:
