@@ -110,7 +110,7 @@ for dirpath, dirnames, filenames in os.walk(join(this_dir, 'results')):
             lambda_cytokines = math.sqrt(data['Beta cytokines'][-1] / data['Alpha cytokines'][-1])
             data['Lambda cytokines'].append(lambda_cytokines)
 
-            if data['Tissue depth'] == 0:
+            if data['Tissue depth'][-1] == 0:
               argname = 'Cubic tissue length'
               argval = math.floor(data['Cells'] ** (1.0 / 3.0))
               if argname in data:
