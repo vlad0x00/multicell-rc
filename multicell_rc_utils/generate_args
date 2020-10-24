@@ -18,7 +18,7 @@ param_round_decimals = 6
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('analysis', choices=[ 'sensitivity_analysis', 'parameter_combinations' ] , help="What to generate arguments for.")
-parser.add_argument('-s', '--num-samples', type=int, default=20_000, help="Number of samples for sensitivity analysis.")
+parser.add_argument('-s', '--num-samples', type=int, default=10_000, help="Number of samples for sensitivity analysis.")
 parser.add_argument('-p', '--param', action='append', help="Parameter to generate combinations for.")
 parser.add_argument('-r', '--value', action='append', help="Range of values of the parameter to generate combinations for. Formats include [min,max,step], with step being optinal and 1 by default and {val1,val2,val3} for specific values.")
 cli_args = parser.parse_args()
@@ -31,7 +31,7 @@ if cli_args.analysis == 'sensitivity_analysis':
   # Range type (or after transformation, if present) determines whether param is int or float
   params_properties = [
     [ "--genes",                     [ 10,  500     ],                                                 ],
-    [ "--cells",                     [ 100, 5000    ],                                                 ],
+    [ "--cells",                     [ 1, 15        ], lambda x : x ** 3                               ],
     [ "--cell-types",                [ 1, 20        ],                                                 ],
     [ "--tissue-depth",              [ 0, 0         ],                                                 ],
     [ "--output-gene-fraction",      [ 0.1, 1.0     ],                                                 ],
@@ -42,8 +42,8 @@ if cli_args.analysis == 'sensitivity_analysis':
     [ "--input-signal-depth",        [ 0, 17        ],                                                 ],
     [ "--alpha-cytokines",           [ 2.5, 30.0    ], lambda x : 5.0 / (x ** 2)                       ],
     [ "--cytokines",                 [ 1, 20        ],                                                 ],
-    [ "--cytokine-threshold",        [ 1.0, 20.0    ],                                                 ],
-    [ "--delay",                     [ 0, 16        ],                                                 ],
+    [ "--cytokine-threshold",        [ 1.0, 100.0   ],                                                 ],
+    [ "--delay",                     [ 0, 0         ],                                                 ],
   #  [ "--window-size",               [ 3, 3         ],                                                 ],
   #  [ "--function",                  [ 0, 1         ], lambda f : 'median' if f == 0 else 'parity'     ],
   ]
@@ -157,17 +157,20 @@ else:
       sys.exit(1)
     arg_vals[param] = arg
 
-  for i in range(len(cli_args.param)):
-    param = cli_args.param[i]
-    prev_arg = arg_vals[param]
-    current_arg = copy.deepcopy(arg_vals[param])
-    for j in range(len(cli_args.param)):
-      other_param = cli_args.param[j]
-      if param == other_param: continue
-      for k in range(len(arg_vals[other_param])):
-        current_arg += prev_arg
-      prev_arg = current_arg
-    args[param] = current_arg
+  combinations = 1
+  cumulative_combinations = []
+  for i, param in enumerate(cli_args.param):
+    cumulative_combinations.append(combinations)
+    combinations *= len(arg_vals[param])
+
+  args[param] = []
+  for i, param in enumerate(cli_args.param):
+    prev_combinations = cumulative_combinations[i]
+    next_combinations = combinations // cumulative_combinations[i] // len(arg_vals[param])
+    stretched = []
+    for val in arg_vals[param]:
+      stretched += [ val ] * next_combinations
+    args[param] = stretched * prev_combinations
 
 # Save into CSV
 args.to_csv(args_file)
