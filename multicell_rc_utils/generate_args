@@ -10,100 +10,164 @@ import pandas as pd
 from pyDOE import lhs
 from scipy.stats import expon
 import argparse
-
-parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('-a', '--analysis', choices=[ 'fixed_params', 'sensitivity_analysis', '3-layer' ], default=10_000, help="What to generate arguments for.")
-cli_args = parser.parse_args()
-parser.add_argument('-s', '--num-samples', type=int, default=10_000, help="Number of samples for LHS.")
-cli_args = parser.parse_args()
+import sys
+import copy
 
 args_file = 'args.csv'
 param_round_decimals = 6
 
-# Prefix, range, transformation (for lambda -> alpha)
-# Range type (or after transformation, if present) determines whether param is int or float
-params_properties = [
-  [ "--genes",                     [ 10,  100     ],                                                 ],
-  [ "--cells",                     [ 100, 5000    ],                                                 ],
-  [ "--cell-types",                [ 1, 20        ],                                                 ],
-  [ "--tissue-depth",              [ 0, 0         ],                                                 ],
-  [ "--output-gene-fraction",      [ 0.1, 1.0     ],                                                 ],
-  [ "--output-cell-fraction",      [ 0.1, 1.0     ],                                                 ],
-  [ "--output-cell-type-fraction", [ 0.1, 1.0     ],                                                 ],
-  [ "--output-cells-random",       [ 0, 0         ], lambda x : ''                                   ],
-  [ "--input-fraction",            [ 0.1, 1.0     ],                                                 ],
-  [ "--input-signal-depth",        [ 0, 17        ],                                                 ],
-  [ "--alpha-cytokines",           [ 2.5, 30.0    ], lambda x : 5.0 / (x ** 2)                       ],
-  [ "--cytokines",                 [ 1, 20        ],                                                 ],
-  [ "--cytokine-threshold",        [ 1.0, 20.0    ],                                                 ],
-  [ "--delay",                     [ 0, 16        ],                                                 ],
-  [ "--window-size",               [ 3, 3         ],                                                 ],
-#  [ "--window-size",               [ 0, 2         ], lambda w : 3 + 2 * w                            ],
-#  [ "--function",                  [ 0, 1         ], lambda f : 'median' if f == 0 else 'parity'     ],
-]
-
-num_params = len(params_properties)
-
-lhd = lhs(num_params, samples=num_samples)
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('analysis', choices=[ 'sensitivity_analysis', 'parameter_combinations' ] , help="What to generate arguments for.")
+parser.add_argument('-s', '--num-samples', type=int, default=20_000, help="Number of samples for sensitivity analysis.")
+parser.add_argument('-p', '--param', action='append', help="Parameter to generate combinations for.")
+parser.add_argument('-r', '--value', action='append', help="Range of values of the parameter to generate combinations for. Formats include [min,max,step], with step being optinal and 1 by default and {val1,val2,val3} for specific values.")
+cli_args = parser.parse_args()
 
 # Initialize the data frame
 args = pd.DataFrame()
-for param_properties in params_properties:
-  param_prefix = param_properties[0]
-  param_range = param_properties[1]
-  param_type = type(param_range[0]) if len(param_properties) == 2 else type(param_properties[2](param_range[0]))
-  types = {
-    int : np.int64,
-    float : np.float64,
-    np.float64 : np.float64,
-    str : np.str
-  }
-  args[param_prefix] = np.zeros(num_samples, dtype=types[param_type])
 
-# Enumerate all samples and parameters and generate arguments
-for sample_idx, sample in enumerate(lhd):
-  for param_idx, param_properties in enumerate(params_properties):
+if cli_args.analysis == 'sensitivity_analysis':
+  # Prefix, range, transformation (for lambda -> alpha)
+  # Range type (or after transformation, if present) determines whether param is int or float
+  params_properties = [
+    [ "--genes",                     [ 10,  500     ],                                                 ],
+    [ "--cells",                     [ 100, 5000    ],                                                 ],
+    [ "--cell-types",                [ 1, 20        ],                                                 ],
+    [ "--tissue-depth",              [ 0, 0         ],                                                 ],
+    [ "--output-gene-fraction",      [ 0.1, 1.0     ],                                                 ],
+    [ "--output-cell-fraction",      [ 0.1, 1.0     ],                                                 ],
+    [ "--output-cell-type-fraction", [ 0.1, 1.0     ],                                                 ],
+    [ "--output-cells-random",       [ 0, 0         ], lambda x : ''                                   ],
+    [ "--input-fraction",            [ 0.1, 1.0     ],                                                 ],
+    [ "--input-signal-depth",        [ 0, 17        ],                                                 ],
+    [ "--alpha-cytokines",           [ 2.5, 30.0    ], lambda x : 5.0 / (x ** 2)                       ],
+    [ "--cytokines",                 [ 1, 20        ],                                                 ],
+    [ "--cytokine-threshold",        [ 1.0, 20.0    ],                                                 ],
+    [ "--delay",                     [ 0, 16        ],                                                 ],
+  #  [ "--window-size",               [ 3, 3         ],                                                 ],
+  #  [ "--function",                  [ 0, 1         ], lambda f : 'median' if f == 0 else 'parity'     ],
+  ]
+
+  num_params = len(params_properties)
+
+  lhd = lhs(num_params, samples=cli_args.num_samples)
+
+  for param_properties in params_properties:
     param_prefix = param_properties[0]
     param_range = param_properties[1]
     param_type = type(param_range[0]) if len(param_properties) == 2 else type(param_properties[2](param_range[0]))
-    if type(param_range[0]) == int:
-      range_length = param_range[1] - param_range[0] + 1 # Ensure the integer range is inclusive
+    types = {
+      int : np.int64,
+      float : np.float64,
+      np.float64 : np.float64,
+      str : np.str
+    }
+    args[param_prefix] = np.zeros(cli_args.num_samples, dtype=types[param_type])
+
+  # Enumerate all samples and parameters and generate arguments
+  for sample_idx, sample in enumerate(lhd):
+    for param_idx, param_properties in enumerate(params_properties):
+      param_prefix = param_properties[0]
+      param_range = param_properties[1]
+      param_type = type(param_range[0]) if len(param_properties) == 2 else type(param_properties[2](param_range[0]))
+      if type(param_range[0]) == int:
+        range_length = param_range[1] - param_range[0] + 1 # Ensure the integer range is inclusive
+      else:
+        range_length = param_range[1] - param_range[0]
+      sampled_val = sample[param_idx] * range_length + param_range[0]
+      if type(param_range[0]) == int: sampled_val = int(sampled_val)
+      if len(param_properties) == 2:
+        val = sampled_val
+      else:
+        val = param_properties[2](sampled_val) # Do parameter transformation is available (e.g. lambda -> alpha)
+      if param_type == int:
+        val = int(val)
+      elif param_type == float:
+        val = round(val, param_round_decimals)
+      args.loc[sample_idx, param_prefix] = val
+
+  # Ensure generated arguments cover the provided ranges
+  for param_properties in params_properties:
+    param_prefix = param_properties[0]
+    param_range = param_properties[1]
+    param_type = type(param_range[0]) if len(param_properties) == 2 else type(param_properties[2](param_range[0]))
+
+    minval = min(args[param_prefix])
+    maxval = max(args[param_prefix])
+
+    if len(param_properties) == 3:
+      transformed_param_range = (param_properties[2](param_range[0]), param_properties[2](param_range[1]))
+      if transformed_param_range[0] > transformed_param_range[1]:
+        transformed_param_range = (transformed_param_range[1], transformed_param_range[0])
     else:
-      range_length = param_range[1] - param_range[0]
-    sampled_val = sample[param_idx] * range_length + param_range[0]
-    if type(param_range[0]) == int: sampled_val = int(sampled_val)
-    if len(param_properties) == 2:
-      val = sampled_val
-    else:
-      val = param_properties[2](sampled_val) # Do parameter transformation is available (e.g. lambda -> alpha)
+      transformed_param_range = param_range
+
     if param_type == int:
-      val = int(val)
+      assert minval == transformed_param_range[0]
+      assert maxval == transformed_param_range[1]
     elif param_type == float:
-      val = round(val, param_round_decimals)
-    args.loc[sample_idx, param_prefix] = val
+      assert abs(minval - transformed_param_range[0]) < 0.05
+      assert abs(maxval - transformed_param_range[1]) < 0.05
+else:
+  if cli_args.param == None or cli_args.value == None or len(cli_args.param) != len(cli_args.value):
+    print("Each parameter needs a value. Params provided: {}, values provided: {}".format(0 if cli_args.param == None else len(cli_args.param), 0 if cli_args.value == None else len(cli_args.value)))
+    sys.exit(1)
+  
+  def is_float(value):
+    try:
+      float(value)
+      return True
+    except:
+      return False
 
-# Ensure generated arguments cover the provided ranges
-for param_properties in params_properties:
-  param_prefix = param_properties[0]
-  param_range = param_properties[1]
-  param_type = type(param_range[0]) if len(param_properties) == 2 else type(param_properties[2](param_range[0]))
+  def is_int(value):
+    try:
+      int(value)
+      return True
+    except:
+      return False
 
-  minval = min(args[param_prefix])
-  maxval = max(args[param_prefix])
+  arg_vals = {}
+  for i in range(len(cli_args.param)):
+    param = cli_args.param[i]
+    value = cli_args.value[i]
+    tokens = value[1:-1].split(',')
+    arg = []
+    if value[0] == '[' and value[-1] == ']':
+      step = (1 if len(tokens) == 2 else tokens[2])
+      start = tokens[0]
+      end = tokens[1]
+      step = (int(step) if is_int(step) else float(step))
+      start = (int(start) if is_int(start) else float(start))
+      end = (int(end) if is_int(end) else float(end))
+      current = start
+      while current <= end:
+        arg.append(current)
+        current += step
+    elif value[0] == '{' and value[-1] == '}':
+      for token in tokens:
+        if is_int(token):
+          arg.append(int(token))
+        elif is_float(token):
+          arg.append(float(token))
+        else:
+          arg.append(token)
+    else:
+      print("Wrong format.")
+      sys.exit(1)
+    arg_vals[param] = arg
 
-  if len(param_properties) == 3:
-    transformed_param_range = (param_properties[2](param_range[0]), param_properties[2](param_range[1]))
-    if transformed_param_range[0] > transformed_param_range[1]:
-      transformed_param_range = (transformed_param_range[1], transformed_param_range[0])
-  else:
-    transformed_param_range = param_range
-
-  if param_type == int:
-    assert minval == transformed_param_range[0]
-    assert maxval == transformed_param_range[1]
-  elif param_type == float:
-    assert abs(minval - transformed_param_range[0]) < 0.05
-    assert abs(maxval - transformed_param_range[1]) < 0.05
+  for i in range(len(cli_args.param)):
+    param = cli_args.param[i]
+    prev_arg = arg_vals[param]
+    current_arg = copy.deepcopy(arg_vals[param])
+    for j in range(len(cli_args.param)):
+      other_param = cli_args.param[j]
+      if param == other_param: continue
+      for k in range(len(arg_vals[other_param])):
+        current_arg += prev_arg
+      prev_arg = current_arg
+    args[param] = current_arg
 
 # Save into CSV
 args.to_csv(args_file)
