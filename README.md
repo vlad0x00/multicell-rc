@@ -2,7 +2,7 @@
 
 A simulation of a reservoir computer comprised of cells in a tissue.
 
-By default, cells are arranged in an approximate cube:
+In the simplest scenario, cells are arranged in an approximate cube:
 
 <p align="center">
 <img src="res/cell_cube.png" alt="Cube tissue" width="30%"/>
