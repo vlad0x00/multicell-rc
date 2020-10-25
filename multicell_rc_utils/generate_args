@@ -127,6 +127,9 @@ else:
     except:
       return False
 
+  for i in range(len(cli_args.param)):
+    cli_args.param[i] = '--' + cli_args.param[i].lower().replace(' ', '-')
+
   arg_vals = {}
   for i in range(len(cli_args.param)):
     param = cli_args.param[i]
