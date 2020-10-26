@@ -80,7 +80,7 @@ def get_cell_types(output_file):
         cell_type_map[cell] = cell_type
   return cell_type_map
 
-def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, output_cells_random, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, z_layers, y_layers, x_layers, input_signal_depth):
+def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, output_cells_random, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, z_layers, y_layers, x_layers, input_signal_depth, cells_per_layer):
   """
     Builds the x and y lists for Lasso training. x consists of gene values from output cells and
     y is the ground truth for the given function and input signal.
@@ -104,7 +104,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
     input_signal_info[layer] = { "correct_cells" : 0, "bad_cells" : 0, "total_cells" : 0 }
 
   for cell, (cell_matches, cell_constant) in enumerate(zip(cell_input_matches, cell_input_constant)):
-    layer = cell // math.ceil(num_cells / z_layers)
+    layer = cell // cells_per_layer
     if all(cell_matches):
       input_signal_info[layer]["correct_cells"] += 1
     elif not all(cell_constant):

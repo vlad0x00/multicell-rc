@@ -54,6 +54,7 @@ BOOL gEnableSummary;
 S32 gSourceDist;
 REAL gCytokineNormalization;
 BOOL gNumericalAnalysis;
+S32 gCellsPerLayer;
 
 // Parameters provided to Biocellion and their indices in the input string array
 const S32 NUM_GENES_PARAM = 0;
@@ -84,6 +85,7 @@ const S32 ENABLE_SUMMARY_PARAM = 24;
 const S32 SOURCE_DIST_PARAM = 25;
 const S32 CYTOKINE_NORMALIZATION_PARAM = 26;
 const S32 NUMERICAL_ANALYSIS_PARAM = 27;
+const S32 CELLS_PER_LAYER_PARAM = 28;
 
 // Returns a vector of strings of passed arguments
 static Vector<std::string> readXMLParameters() {
@@ -502,6 +504,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   const S32 sourceDist = std::stoi(params[SOURCE_DIST_PARAM]);
   const REAL cytokineNormalization = std::stod(params[CYTOKINE_NORMALIZATION_PARAM]);
   const BOOL numericalAnalysis = (params[NUMERICAL_ANALYSIS_PARAM] == "True");
+  const S32 cellsPerLayer = std::stoi(params[CELLS_PER_LAYER_PARAM]);
 
   Vector<S32> nv;
   Vector<S32> varfOffsets;
@@ -642,6 +645,9 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   format.numericalAnalysis = size;
   size += sizeof(numericalAnalysis);
 
+  format.cellsPerLayer = size;
+  size += sizeof(cellsPerLayer);
+
   // Copy passed arguments into global data so it can be accessed in other processes
   v_globalData.resize(size);
   memcpy(&(v_globalData[0]), &format, sizeof(format));
@@ -675,6 +681,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   memcpy(&(v_globalData[format.sourceDist]), &sourceDist, sizeof(sourceDist));
   memcpy(&(v_globalData[format.cytokineNormalization]), &cytokineNormalization, sizeof(cytokineNormalization));
   memcpy(&(v_globalData[format.numericalAnalysis]), &numericalAnalysis, sizeof(numericalAnalysis));
+  memcpy(&(v_globalData[format.cellsPerLayer]), &cellsPerLayer, sizeof(cellsPerLayer));
 
   /* MODEL END */
 
@@ -718,6 +725,7 @@ void ModelRoutine::init( void ) {
   gSourceDist = *((S32*)(&(g[f.sourceDist])));
   gCytokineNormalization = *((REAL*)(&(g[f.cytokineNormalization])));
   gNumericalAnalysis = *((BOOL*)(&(g[f.numericalAnalysis])));
+  gCellsPerLayer = *((S32*)(&(g[f.cellsPerLayer])));
 
   /* MODEL END */
 
