@@ -55,16 +55,23 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
     CHECK(coordsVIdx.size() == (U64)(tissueVolume));
     CHECK(coordsOffset.size() == (U64)(tissueVolume));
 
+    const S32 cellsPerLayer = std::ceil((REAL)(gNumCells) / (REAL)(gZLayers));
+    const S32 skipCellsPerLayer = gXLayers * gYLayers - cellsPerLayer;
+
     // Place all the cells and assign them type
     CHECK(gNumCellTypes > 0);
-    for (S32 cell = 0; cell < gNumCells; cell++) {
+    for (S32 cell = 0, cellLocation = 0; cell < gNumCells; cell++, cellLocation++) {
       S32 cellType = gNumCellTypes * Util::getModelRand(MODEL_RNG_UNIFORM);
       if (cellType == gNumCellTypes) { cellType--; }
       CHECK(cellType >= 0 && cellType < gNumCellTypes);
       std::cout << ("Cell: " + std::to_string(cell) + ", Type: " + std::to_string(cellType) + "\n") << std::flush;
 
-      vIdx = coordsVIdx[cell];
-      vOffset = coordsOffset[cell];
+      if (cellLocation % (gXLayers * gYLayers) >= cellsPerLayer) {
+        cellLocation += skipCellsPerLayer;
+      }
+      CHECK((U64)(cellLocation) < coordsVIdx.size() && (U64)(cellLocation) < coordsOffset.size());
+      vIdx = coordsVIdx[cellLocation];
+      vOffset = coordsOffset[cellLocation];
 
       /* Initialize state */
       state.setType(cellType);

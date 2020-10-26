@@ -104,7 +104,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
     input_signal_info[layer] = { "correct_cells" : 0, "bad_cells" : 0, "total_cells" : 0 }
 
   for cell, (cell_matches, cell_constant) in enumerate(zip(cell_input_matches, cell_input_constant)):
-    layer = cell // (x_layers * y_layers)
+    layer = cell // math.ceil(num_cells / z_layers)
     if all(cell_matches):
       input_signal_info[layer]["correct_cells"] += 1
     elif not all(cell_constant):
@@ -117,7 +117,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
     cells_bad_input += input_signal_info[layer]["bad_cells"]
   input_signal_info["correct_input"] = cells_correct_input
   input_signal_info["bad_input"] = cells_bad_input
-  assert round(input_signal_info["correct_input"] / (num_cells / z_layers)) == min(input_signal_depth, z_layers)
+  assert math.ceil(input_signal_info["correct_input"] / math.ceil(num_cells / z_layers)) == min(input_signal_depth, z_layers)
 
   states = states[(window_size - 1):]
   for state in states:
