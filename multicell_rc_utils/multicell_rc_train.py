@@ -103,13 +103,22 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   for layer in range(z_layers):
     input_signal_info[layer] = { "correct_cells" : 0, "bad_cells" : 0, "total_cells" : 0 }
 
+  skip_cells_per_layer = x_layers * y_layers - cells_per_layer
+  cells_partial_layer_reach = math.ceil(num_cells / cells_per_layer)
+  cells_full_layer_reach = math.floor(num_cells / cells_per_layer)
+  cell_location = 0
   for cell, (cell_matches, cell_constant) in enumerate(zip(cell_input_matches, cell_input_constant)):
-    layer = cell // cells_per_layer
+    if cell_location % (x_layers * y_layers) >= cells_per_layer:
+      cell_location += skip_cells_per_layer
+    elif cells_partial_layer_reach < z_layers and cell_location // (x_layers * y_layers) == cells_full_layer_reach - 1 and cell_location % (x_layers * y_layers) == cells_per_layer - 1:
+      cell_location += 1
+    layer = cell_location // (x_layers * y_layers)
     if all(cell_matches):
       input_signal_info[layer]["correct_cells"] += 1
     elif not all(cell_constant):
       input_signal_info[layer]["bad_cells"] += 1
     input_signal_info[layer]["total_cells"] += 1
+    cell_location += 1
   cells_correct_input = 0
   cells_bad_input = 0
   for layer in range(z_layers):

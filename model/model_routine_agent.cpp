@@ -57,6 +57,8 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 
     // Place all the cells and assign them type
     const S32 skipCellsPerLayer = gXLayers * gYLayers - gCellsPerLayer;
+    const S32 cellsPartialLayerReach = std::ceil((REAL)(gNumCells) / (REAL)(gCellsPerLayer));
+    const S32 cellsFullLayerReach = std::floor((REAL)(gNumCells) / (REAL)(gCellsPerLayer));
     CHECK(gNumCellTypes > 0);
     for (S32 cell = 0, cellLocation = 0; cell < gNumCells; cell++, cellLocation++) {
       S32 cellType = gNumCellTypes * Util::getModelRand(MODEL_RNG_UNIFORM);
@@ -66,6 +68,8 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 
       if (cellLocation % (gXLayers * gYLayers) >= gCellsPerLayer) {
         cellLocation += skipCellsPerLayer;
+      } else if ((cellsPartialLayerReach < gZLayers) && (cellLocation / (gXLayers * gYLayers) == cellsFullLayerReach - 1) && (cellLocation % (gXLayers * gYLayers) == gCellsPerLayer - 1)) {
+        cellLocation++;
       }
       CHECK((U64)(cellLocation) < coordsVIdx.size() && (U64)(cellLocation) < coordsOffset.size());
       vIdx = coordsVIdx[cellLocation];

@@ -32,6 +32,9 @@ DOT_FILE = os.path.join(OUTPUT_DIR, "gene_networks.dot")
 NUM_GENES = 1 + args.cytokines * 2 + args.genes
 NUM_CELLS = args.cells
 NUM_CELL_TYPES = args.cell_types
+if args.tissue_depth > 0 and NUM_CELLS < args.tissue_depth:
+  print("Number of cells ({}) is smaller than the required number of layers ({}). Exiting...".format(NUM_CELLS, args.tissue_depth))
+  sys.exit(0)
 TISSUE_DEPTH = min(NUM_CELLS, args.tissue_depth if args.tissue_depth > 0 else math.ceil(NUM_CELLS ** (1. / 3.)))
 CONNECTIVITY = args.in_degree
 INPUT_SIGNAL_DEPTH = args.input_signal_depth
