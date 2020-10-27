@@ -68,7 +68,7 @@ void ModelRoutine::addSpAgents( const BOOL init, const VIdx& startVIdx, const VI
 
       if (cellLocation % (gXLayers * gYLayers) >= gCellsPerLayer) {
         cellLocation += skipCellsPerLayer;
-      } else if ((cellsPartialLayerReach < gZLayers) && (cellLocation / (gXLayers * gYLayers) == cellsFullLayerReach - 1) && (cellLocation % (gXLayers * gYLayers) == gCellsPerLayer - 1)) {
+      } else if ((cellsPartialLayerReach < gZLayers) && (cellLocation / (gXLayers * gYLayers) >= cellsFullLayerReach - 1) && (cellLocation % (gXLayers * gYLayers) == gCellsPerLayer - 1)) {
         cellLocation++;
       }
       CHECK((U64)(cellLocation) < coordsVIdx.size() && (U64)(cellLocation) < coordsOffset.size());
