@@ -13,10 +13,9 @@ results <- results[, -1]
 results$Secretion.high <- factor(results$Secretion.high)
 results$Cytokines <- factor(results$Cytokines)
 
-results$Genes <- floor(results$Genes / 5) * 5
+results$Genes <- floor(results$Genes / 10) * 10
 results$Tissue.width <- floor(sqrt(results$Cells / 3))
 results$Cells <- floor(results$Cells / 10) * 10
-results$Alpha.cytokines <- round(results$Alpha.cytokines, 3)
 
 # The code below adds a suffix 'cells' to the cells column rows
 #cells <- paste(results$Cells, 'cells')

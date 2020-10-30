@@ -42,13 +42,13 @@ Within the boolean network, the first gene is reserved for the input signal valu
 
 In the `cell_rc_utils` directory, run the scripts in the following order:
 
-- `generate_args sensitivity_analysis` to generate arguments for a number of simulations using Latin Hypercube Sampling.
-- `run_args` to run simulations in parallel.
-- `sensitivity_analysis` to perform the analysis.
+- `generate-args sensitivity_analysis` to generate arguments for a number of simulations using Latin Hypercube Sampling.
+- `run-args` to run simulations in parallel.
+- `sensitivity-analysis` to perform the analysis.
 
 ## Other analyses
 
 In the `cell_rc_utils` directory:
 
-- `generate_args parameter_combination` to generate arguments for all combinations of provided parameters. Run `generate_args --help` for information on how to provide parameters.
-- `run_args` to run simulations in parallel. The results are stored in `results.csv`.
+- `generate-args parameter_combination` to generate arguments for all combinations of provided parameters. Run `generate-args --help` for information on how to provide parameters.
+- `run-args` to run simulations in parallel. The results are stored in `results.csv`.
