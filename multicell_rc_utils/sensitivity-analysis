@@ -118,6 +118,7 @@ for i, param in enumerate(variable_columns):
   ax.set_ylabel("Accuracy")
   plt.tight_layout()
   plt.savefig(param + "_prcc.png")
+sensitivity_results.sort_values(by=['Correlation'], ascending=False, inplace=True)
 print(sensitivity_results)
 
 sensitivity_results.to_html('sensitivity_analysis.html')
