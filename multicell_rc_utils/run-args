@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import csv
 import uuid
+import base64
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
@@ -40,9 +41,12 @@ results_dir = join(this_dir, "results")
 shutil.rmtree(results_dir, ignore_errors=True)
 os.mkdir(results_dir)
 
+def get_random_suffix():
+  return base64.urlsafe_b64encode(uuid.uuid4().bytes).rstrip(b'=').decode('ascii')
+
 # This function is ran within a single process and performs all the simulation iterations for an argument set
 def do_run(arg_set):
-  out_prefix = "output-" + str(uuid.uuid4())
+  out_prefix = "output-" + get_random_suffix()
   with open(join(results_dir, out_prefix + "-stdout"), "w") as out, open(join(results_dir, out_prefix + "-stderr"), "w") as err:
     print("Args:", ' '.join(arg_set), file=out, flush=True)
     for i in range(cli_args.iterations):
