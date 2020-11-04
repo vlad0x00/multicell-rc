@@ -42,11 +42,13 @@ shutil.rmtree(results_dir, ignore_errors=True)
 os.mkdir(results_dir)
 
 def get_random_suffix():
-  return base64.urlsafe_b64encode(uuid.uuid4().bytes).rstrip(b'=').decode('ascii')
+  return base64.urlsafe_b64encode(uuid.uuid4().bytes).rstrip(b'=').replace(b'-', b'').decode('ascii')
 
 # This function is ran within a single process and performs all the simulation iterations for an argument set
 def do_run(arg_set):
-  out_prefix = "output-" + get_random_suffix()
+  while True:
+    out_prefix = "output-" + get_random_suffix()
+    if not any([ f.startswith(out_prefix) for f in os.listdir() ]): break
   with open(join(results_dir, out_prefix + "-stdout"), "w") as out, open(join(results_dir, out_prefix + "-stderr"), "w") as err:
     print("Args:", ' '.join(arg_set), file=out, flush=True)
     for i in range(cli_args.iterations):
