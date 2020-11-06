@@ -72,12 +72,14 @@ def partial_corr(C):
 
 results = pd.read_csv('results.csv', sep=',')
 
-accuracy_lt_06 = 0
-accuracy_count = 0
-for acc in results['Accuracy']:
-  if acc < 0.6: accuracy_lt_06 += 1
-  accuracy_count += 1
-print("Results with <60% accuracy: {}%".format(accuracy_lt_06 / accuracy_count * 100.0))
+sns.set_theme(font_scale=2.1, style='white')
+fig, ax = plt.subplots()
+fig.set_size_inches(14.03, 7)
+sns.histplot(data=results, x='Accuracy', ax=ax, bins=50, stat='probability')
+ax.set_ylabel("Fraction", rotation=0, labelpad=70)
+fig.tight_layout()
+fig.savefig("sensitivity_analysis_accuracies.png")
+plt.close(fig)
 
 variable_columns = []
 for i, column in enumerate(results.columns):
@@ -100,6 +102,7 @@ sensitivity_results = pd.DataFrame(columns=[ "Param", "Correlation", "P-value", 
 from pandas.plotting import table 
 
 # Make a table of results and plot the partially corrected variables
+sns.set_theme(font_scale=1.2, style='white')
 for i, param in enumerate(variable_columns):
   if i == 0:
     assert param == 'Accuracy'
@@ -111,21 +114,20 @@ for i, param in enumerate(variable_columns):
   sensitivity_results.loc[i] = [ param, prcc[i, 0], pvals[i, 0], "[{}, {}]".format(minval, maxval) ]
 
   datapoints = pd.DataFrame({ "x" : partial_vals[i, 0, 0, :], "y" : partial_vals[i, 0, 1, :] })
-  plt.figure()
-  ax = sns.scatterplot(data=datapoints, x="x", y="y", alpha=0.2)
-  #ax.get_legend().remove()
-  ax.set_xlabel(param)
-  ax.set_ylabel("Accuracy")
+
+  jointplot = sns.jointplot(data=datapoints, x='x', y='y', kind='hex', height=8)
+  jointplot.ax_joint.set_xlabel(param)
+  jointplot.ax_joint.set_ylabel("Accuracy", rotation=0, labelpad=30)
   plt.tight_layout()
-  plt.savefig(param + "_prcc.png")
-sensitivity_results.sort_values(by=['Correlation'], ascending=False, inplace=True)
-print(sensitivity_results)
+  plt.savefig(param.replace(' ', '_').lower() + "_prcc.png")
+sensitivity_results.sort_values(by=['Correlation'], ascending=False, inplace=True, ignore_index=True)
 
 sensitivity_results.to_html('sensitivity_analysis.html')
-with open('sensitivity_analysis.html', 'a') as f:
-  print("<br/>", file=f)
-  print("Results with <60% accuracy: {}%".format(accuracy_lt_06 / accuracy_count * 100.0), file=f)
 subprocess.run(['wkhtmltopdf', '--page-height', '100', '--page-width', '150', '-T', '0', '-B', '0', '-L', '0', '-R', '0', 'sensitivity_analysis.html', 'sensitivity_analysis.pdf'])
 subprocess.run(['magick', 'convert', '-colorspace', 'RGB', '-density', '300', 'sensitivity_analysis.pdf', '-quality', '100', '-transparent', 'white', '-crop', '1600x1000+0+0', '-trim', '+repage', '-background', 'white', '-flatten', 'sensitivity_analysis.png'])
+
 os.remove('sensitivity_analysis.html')
 os.remove('sensitivity_analysis.pdf')
+
+subprocess.run([ 'magick', 'convert', '-append', 'sensitivity_analysis.png', 'sensitivity_analysis_accuracies.png', 'sensitivity_analysis.png' ])
+os.remove('sensitivity_analysis_accuracies.png')
