@@ -34,9 +34,10 @@ results <- results[, -1]
 results <- select(results, c(Accuracy, Cell.types, Cytokines, Tissue.depth))
 results <- aggregate(results, by = list(results$Cell.types, results$Cytokines, results$Tissue.depth), FUN = mean)
 
-results %>% ggplot(aes(x=Cell.types, y=Cytokines, fill=Accuracy)) +
+results %>% ggplot(aes(x=Cell.types, y=Cytokines, fill=Accuracy, label=Accuracy)) +
   scale_fill_viridis(option = "inferno") +
   geom_tile() +
+  geom_text() +
   theme_bw() +
 #  facet_wrap(~Tissue.depth) +
   theme(text = element_text(size = 26), axis.title.y = element_text(angle = 0))
