@@ -81,16 +81,12 @@ fig.tight_layout()
 fig.savefig("sensitivity_analysis_accuracies.png")
 plt.close(fig)
 
-variable_columns = []
+# Extract only non-constant columns
+results_of_interest = pd.DataFrame()
 for i, column in enumerate(results.columns):
   if i == 0: continue
   if not all(x == results[column][0] for x in results[column]):
-    variable_columns.append(column)
-
-# Extract only non-constant columns
-results_of_interest = pd.DataFrame()
-for column in variable_columns:
-  results_of_interest[column] = results[column]
+    results_of_interest[column] = results[column]
 
 # Rank their values
 ranked_results_of_interest = stats.rankdata(results_of_interest.T.values, axis=1).T
@@ -103,7 +99,7 @@ from pandas.plotting import table
 
 # Make a table of results and plot the partially corrected variables
 sns.set_theme(font_scale=1.2, style='white')
-for i, param in enumerate(variable_columns):
+for i, param in enumerate(results_of_interest.columns):
   if i == 0:
     assert param == 'Accuracy'
     continue
