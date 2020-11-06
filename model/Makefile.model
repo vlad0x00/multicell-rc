@@ -26,8 +26,8 @@ endif
 #LINKFLAG = -static-intel #if using icpc
 LINKFLAG = #if using g++
 
-#CHECK_FLAG = -DENABLE_CHECK=0 #disable run-time check
-CHECK_FLAG = -DENABLE_CHECK=1 #enable run-time check
+CHECK_FLAG = -DENABLE_CHECK=0 #disable run-time check
+#CHECK_FLAG = -DENABLE_CHECK=1 #enable run-time check
 
 # DO NOT CHANGE BELOW THIS LINE
 
