@@ -7,6 +7,7 @@
 import csv
 import sys
 import os
+import copy
 import numpy as np
 import pandas as pd
 from scipy import stats, linalg
@@ -70,7 +71,15 @@ def partial_corr(C):
       
   return P_corr, V, R
 
-results = pd.read_csv('results.csv', sep=',')
+results = pd.read_csv('results.csv')
+
+del results[results.columns[0]]
+columns_wo_accuracy = list(copy.deepcopy(results.columns))
+assert columns_wo_accuracy[0] == 'Accuracy'
+del columns_wo_accuracy[0]
+results = results.groupby(columns_wo_accuracy, as_index=False).mean()
+results = results[[ 'Accuracy' ] + columns_wo_accuracy]
+results.reset_index(inplace=True)
 
 sns.set_theme(font_scale=2.1, style='white')
 fig, ax = plt.subplots()
