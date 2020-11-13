@@ -15,61 +15,64 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import subprocess
 
-def partial_corr(C):
+def partial_corr(variables):
   """
-  Returns the sample linear partial correlation coefficients between pairs of variables in C, controlling 
-  for the remaining variables in C.
+  Returns the sample linear partial correlation coefficients between pairs of variables in `variables`, controlling for the remaining variables.
   Parameters
   ----------
-  C : array-like, shape (n, p)
-      Array with the different variables. Each column of C is taken as a variable
+  variables : array-like, shape (num_samples, num_vars)
+      Input matrix. Every column is an array of samples for a given variable.
   Returns
   -------
-  P : array-like, shape (p, p)
-      P[i, j] contains the partial correlation of C[:, i] and C[:, j] controlling
-      for the remaining variables in C.
+  pcorr : array-like, shape (num_vars, num_vars)
+      pcorr[i, j] contains the partial correlation of variables[:, i] and variables[:, j] controlling
+      for the remaining variables.
 
-  V : array-like, shape (p, p)
-      V[i, j] contains the p-value of C[:, i] and C[:, j] partial correlation.
+  pvals : array-like, shape (num_vars, num_vars)
+      pvals[i, j] contains the p-value of variables[:, i] and variables[:, j] partial correlation.
 
-  R : array-like, shape (p, p, 2, n)
-      V[i, j, k, l] contains the partial residues of C[l, i] and C[l, j] for variable
-      at column i (k = 0) and column j (k = 1).
+  residues : array-like, shape (num_vars, num_vars, 2, num_samples)
+      residues[i, j, k, l] contains the partial residues of variables[l, i] and variables[l, j] for variable at column i (k = 0) and column j (k = 1).
   """
   
-  C = np.asarray(C)
-  n = C.shape[0]
-  C = np.column_stack((C, np.ones(n)))
-  p = C.shape[1]
+  variables = np.asarray(variables)
+  num_samples = variables.shape[0]
+  num_vars = variables.shape[1]
 
-  P_corr = np.zeros((p, p), dtype=np.float)
-  V = np.zeros((p, p), dtype=np.float)
-  R = np.zeros((p, p, 2, n), dtype=np.float)
+  pcorr = np.zeros((num_vars, num_vars), dtype=np.double)
+  pvals = np.zeros((num_vars, num_vars), dtype=np.double)
+  residues = np.zeros((num_vars, num_vars, 2, num_samples), dtype=np.double)
   
-  for i in range(p):
-    P_corr[i, i] = 1
-    V[i, i] = 0
-    for j in range(i + 1, p):
-      idx = np.ones(p, dtype=np.bool)
+  for i in range(num_vars):
+    pcorr[i, i] = 1.0
+    pvals[i, i] = 0.0
+    for j in range(i + 1, num_vars):
+      idx = np.ones(num_vars, dtype=np.bool)
       idx[i] = False
       idx[j] = False
-      beta_i = linalg.lstsq(C[:, idx], C[:, i])[0]
-      beta_j = linalg.lstsq(C[:, idx], C[:, j])[0]
 
-      res_i = C[:, i] - C[:, idx].dot(beta_i)
-      res_j = C[:, j] - C[:, idx].dot(beta_j)
+      var_other_samples = variables[:, idx]
+      var_i_samples = variables[:, i]
+      var_j_samples = variables[:, j]
+
+      var_other_samples_plus_intercept = np.column_stack((var_other_samples, np.ones(num_samples)))
+      beta_i = linalg.lstsq(var_other_samples_plus_intercept, var_i_samples)[0]
+      beta_j = linalg.lstsq(var_other_samples_plus_intercept, var_j_samples)[0]
+
+      residue_i = var_i_samples - var_other_samples_plus_intercept.dot(beta_i)
+      residue_j = var_j_samples - var_other_samples_plus_intercept.dot(beta_j)
       
-      corr, p_value = stats.pearsonr(res_i, res_j)
-      P_corr[i, j] = corr
-      P_corr[j, i] = corr
-      V[i, j] = p_value
-      V[j, i] = p_value
-      R[i, j, 0, :] = res_i
-      R[i, j, 1, :] = res_j
-      R[j, i, 0, :] = res_i
-      R[j, i, 1, :] = res_j
+      corr, p_value = stats.pearsonr(residue_i, residue_j)
+      pcorr[i, j] = corr
+      pcorr[j, i] = corr
+      pvals[i, j] = p_value
+      pvals[j, i] = p_value
+      residues[i, j, 0, :] = residue_i
+      residues[i, j, 1, :] = residue_j
+      residues[j, i, 0, :] = residue_j
+      residues[j, i, 1, :] = residue_i
       
-  return P_corr, V, R
+  return pcorr, pvals, residues
 
 results = pd.read_csv('results.csv')
 
@@ -81,15 +84,6 @@ results = results.groupby(columns_wo_accuracy, as_index=False).mean()
 results = results[[ 'Accuracy' ] + columns_wo_accuracy]
 results.reset_index(inplace=True)
 
-sns.set_theme(font_scale=2.1, style='white')
-fig, ax = plt.subplots()
-fig.set_size_inches(14.03, 7)
-sns.histplot(data=results, x='Accuracy', ax=ax, bins=50, stat='probability')
-ax.set_ylabel("Fraction", rotation=0, labelpad=70)
-fig.tight_layout()
-fig.savefig("sensitivity_analysis_accuracies.png")
-plt.close(fig)
-
 # Extract only non-constant columns
 results_of_interest = pd.DataFrame()
 for i, column in enumerate(results.columns):
@@ -98,7 +92,7 @@ for i, column in enumerate(results.columns):
     results_of_interest[column] = results[column]
 
 # Rank their values
-ranked_results_of_interest = stats.rankdata(results_of_interest.T.values, axis=1).T
+ranked_results_of_interest = stats.rankdata(results_of_interest.values, axis=0)
 
 prcc, pvals, partial_vals = partial_corr(ranked_results_of_interest)
 
@@ -133,6 +127,17 @@ subprocess.run(['magick', 'convert', '-colorspace', 'RGB', '-density', '300', 's
 
 os.remove('sensitivity_analysis.html')
 os.remove('sensitivity_analysis.pdf')
+
+table_width = int(subprocess.run([ 'identify', '-format', '%w', 'sensitivity_analysis.png' ], capture_output=True).stdout.decode())
+
+sns.set_theme(font_scale=2.1, style='white')
+fig, ax = plt.subplots()
+fig.set_size_inches(table_width / 100.0, 7.0)
+sns.histplot(data=results, x='Accuracy', ax=ax, bins=50, stat='probability')
+ax.set_ylabel("Fraction", rotation=0, labelpad=70)
+fig.tight_layout()
+fig.savefig("sensitivity_analysis_accuracies.png")
+plt.close(fig)
 
 subprocess.run([ 'magick', 'convert', '-append', 'sensitivity_analysis.png', 'sensitivity_analysis_accuracies.png', 'sensitivity_analysis.png' ])
 os.remove('sensitivity_analysis_accuracies.png')
