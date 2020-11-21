@@ -33,6 +33,7 @@ results <- results[, -1]
 
 results <- select(results, c(Accuracy, Cell.types, Cytokines, Tissue.depth))
 results <- aggregate(results, by = list(results$Cell.types, results$Cytokines, results$Tissue.depth), FUN = mean)
+results$Accuracy <- round(results$Accuracy, 2)
 
 results %>% ggplot(aes(x=Cell.types, y=Cytokines, fill=Accuracy, label=Accuracy)) +
   scale_fill_viridis(option = "inferno") +
