@@ -7,6 +7,8 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+import pandas as pd
+import seaborn as sns
 
 from vtk import vtkXMLPolyDataReader
 from vtk.util.numpy_support import vtk_to_numpy
@@ -65,6 +67,25 @@ def get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, o
 
   return states
 
+def get_cell_layers(num_cells, x_layers, y_layers, z_layers, cells_per_layer):
+  """
+    Returns a dictionary that maps cell id to cell layer.
+  """
+  cell_layer_map = {}
+  skip_cells_per_layer = x_layers * y_layers - cells_per_layer
+  cells_partial_layer_reach = math.ceil(num_cells / cells_per_layer)
+  cells_full_layer_reach = math.floor(num_cells / cells_per_layer)
+  cell_location = 0
+  for cell in range(num_cells):
+    if cell_location % (x_layers * y_layers) >= cells_per_layer:
+      cell_location += skip_cells_per_layer
+    elif cells_partial_layer_reach < z_layers and cell_location // (x_layers * y_layers) == cells_full_layer_reach - 1 and cell_location % (x_layers * y_layers) == cells_per_layer - 1:
+      cell_location += 1
+    layer = cell_location // (x_layers * y_layers)
+    cell_layer_map[cell] = layer
+    cell_location += 1
+  return cell_layer_map
+
 def get_cell_types(output_file):
   """
     Returns a dictionary that maps cell id to cell type.
@@ -92,6 +113,9 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   states = get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, auxiliary_files)
   states = states[1:] # We don't need initial state, only states 1+ are affected by the signal
 
+  cell_layer_map = get_cell_layers(num_cells, x_layers, y_layers, z_layers, cells_per_layer)
+  cell_type_map = get_cell_types(biocellion_output_file)
+
   cell_input_matches = [ [] for _ in range(num_cells) ]
   cell_input_constant = [ [] for _ in range(num_cells) ]
   for cell in range(num_cells):
@@ -104,22 +128,13 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   for layer in range(z_layers):
     input_signal_info[layer] = { "correct_cells" : 0, "bad_cells" : 0, "total_cells" : 0 }
 
-  skip_cells_per_layer = x_layers * y_layers - cells_per_layer
-  cells_partial_layer_reach = math.ceil(num_cells / cells_per_layer)
-  cells_full_layer_reach = math.floor(num_cells / cells_per_layer)
-  cell_location = 0
   for cell, (cell_matches, cell_constant) in enumerate(zip(cell_input_matches, cell_input_constant)):
-    if cell_location % (x_layers * y_layers) >= cells_per_layer:
-      cell_location += skip_cells_per_layer
-    elif cells_partial_layer_reach < z_layers and cell_location // (x_layers * y_layers) == cells_full_layer_reach - 1 and cell_location % (x_layers * y_layers) == cells_per_layer - 1:
-      cell_location += 1
-    layer = cell_location // (x_layers * y_layers)
+    layer = cell_layer_map[cell]
     if all(cell_matches):
       input_signal_info[layer]["correct_cells"] += 1
     elif not all(cell_constant):
       input_signal_info[layer]["bad_cells"] += 1
     input_signal_info[layer]["total_cells"] += 1
-    cell_location += 1
   cells_correct_input = 0
   cells_bad_input = 0
   for layer in range(z_layers):
@@ -133,28 +148,31 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   for state in states:
     assert len(state) == num_cells * num_genes
 
-  cell_types_map = get_cell_types(biocellion_output_file)
-
   if output_cells_random:
     output_cells = random.sample(range(num_cells), num_output_cells)
   else:
     output_cells = range(num_cells - 1, num_cells - num_output_cells - 1, -1)
 
+  not_output_cell_type = []
   output_states = [ [] for _ in range(len(states)) ]
   for i, state in enumerate(states):
     for cell in output_cells:
-      cell_type = cell_types_map[cell]
-      if cell_type >= num_output_cell_types: continue
+      cell_type = cell_type_map[cell]
+      if cell_type >= num_output_cell_types:
+        not_output_cell_type.append(cell)
+        continue
       cell_state = state[(cell * num_genes):((cell + 1) * num_genes)]
       assert len(cell_state) == num_genes
       output_states[i] += cell_state[-num_output_genes:]
   for state in output_states:
     assert len(state) == len(output_states[0])
-  if all([ cell_type >= num_output_cell_types for cell_type in [ cell_types_map[cell] for cell in output_cells ] ]):
-    print("\nNone of the output cells belong to the output cell type. Exiting...")
+  for cell in not_output_cell_type:
+    output_cells.remove(cell)
+  if num_output_cells > 0 and len(output_cells) == 0:
+    print("\nNone of the output cells belong to any of the output cell types. Exiting...")
     sys.exit(1)
-
   x = output_states
+
   if function == 'parity':
     parity = [ 0 ] * (len(input_signal) + 1 - window_size)
     for i, j in enumerate(range(window_size, len(input_signal) + 1)):
@@ -190,11 +208,11 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
 
   assert len(x) == len(y)
   for s in x:
-    assert len(s) <= num_output_cells * num_output_genes
+    assert len(s) == num_output_cells * num_output_genes
 
-  return x, y, input_signal_info
+  return x, y, input_signal_info, output_cells
 
-def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_output_genes, biocellion_output_file, output_dir, threads):
+def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_output_genes, biocellion_output_file, output_dir, threads, output_cells, x_layers, y_layers, z_layers, cells_per_layer):
   """
     Train Lasso on the provided x and y lists and plots a histogram of features used from each cell and cell type.
   """
@@ -212,61 +230,58 @@ def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_ou
 
   train_score = lasso.score(x_train, y_train)
   test_score = lasso.score(x_test, y_test)
-  coeff_used = np.sum(lasso.coef_ != 0)
-  coeffs = len(x[0])
 
   train_accuracy = sum([ 1 if a == b else 0 for a, b in zip(train_predicted, y_train) ]) / len(train_predicted)
   test_accuracy = sum([ 1 if a == b else 0 for a, b in zip(test_predicted, y_test) ]) / len(test_predicted)
 
-  cell_types_map = get_cell_types(biocellion_output_file)
-  cell_feature_count = {}
-  cell_type_feature_count = {}
-  for cell in range(num_cells - 1, num_cells - num_output_cells - 1, -1):
-    cell_type = cell_types_map[cell]
+  cell_layer_map = get_cell_layers(num_cells, x_layers, y_layers, z_layers, cells_per_layer)
+  cell_type_map = get_cell_types(biocellion_output_file)
+
+  output_cells_rank = {}
+  for rank, cell in enumerate(output_cells):
+    output_cells_rank[cell] = rank
+
+  cell_feature_data = { 'index' : [], 'cell' : [], 'features' : [], 'layer' : [] }
+  cell_type_feature_data = { 'index' : [], 'cell_type' : [], 'features' : [] }
+  for cell in output_cells:
+    cell_layer = cell_layer_map[cell]
+    cell_type = cell_type_map[cell]
+    cell_rank = output_cells_rank[cell]
     if cell_type >= num_output_cell_types: continue
-    coeff_start = (num_cells - 1 - cell) * num_output_genes
-    coeff_end = (num_cells - cell) * num_output_genes
+    coeff_start = cell_rank * num_output_genes
+    coeff_end = (cell_rank + 1) * num_output_genes
     feature_count = np.sum(lasso.coef_[coeff_start:coeff_end] != 0)
     if feature_count > 0:
-      if cell in cell_feature_count:
-        cell_feature_count[cell] += feature_count
+      cell_feature_data['cell'].append(cell)
+      cell_feature_data['features'].append(feature_count)
+      cell_feature_data['layer'].append(cell_layer)
+      if cell_type in cell_type_feature_data['cell_type']:
+        idx = cell_type_feature_data['cell_type'].index(cell_type)
+        cell_type_feature_data['features'][idx] += feature_count
       else:
-        cell_feature_count[cell] = feature_count
-      if cell_type in cell_type_feature_count:
-        cell_type_feature_count[cell_type] += feature_count
-      else:
-        cell_type_feature_count[cell_type] = feature_count
-  
+        cell_type_feature_data['cell_type'].append(cell_type)
+        cell_type_feature_data['features'].append(feature_count)
+  cell_feature_data['index'] = [ num for num in range(len(cell_feature_data['cell'])) ]
+  cell_type_feature_data['index'] = [ num for num in range(len(cell_type_feature_data['cell_type'])) ]
+
+  cell_feature_data = pd.DataFrame(cell_feature_data)
+  cell_type_feature_data = pd.DataFrame(cell_type_feature_data)
+
   plt.figure()
-  plt.bar(range(len(cell_feature_count)), sorted(cell_feature_count.values(), reverse=True))
-  xticks = [math.ceil(x) for x in plt.xticks()[0]]
-  xticks_new = []
-  for xtick in xticks:
-    if xtick < 0: continue
-    if xtick >= len(cell_feature_count):
-      xticks_new.append(len(cell_feature_count) - 1)
-      break
-    else:
-      xticks_new.append(xtick)
-  xticks = xticks_new
-  plt.xticks(xticks)
-  plt.yticks([math.ceil(y) for y in plt.yticks()[0]])
+  sns.barplot(data=cell_feature_data, x='index', y='features', hue='layer', dodge=False)
+  plt.xticks([])
+  plt.xlabel("Cell")
+  plt.ylabel("Features", rotation=0, labelpad=30)
+  plt.tight_layout()
   plt.savefig(os.path.join(output_dir, "cell_feature_count.png"))
 
   plt.figure()
-  plt.bar(range(len(cell_type_feature_count)), sorted(cell_type_feature_count.values(), reverse=True))
-  xticks = [math.ceil(x) for x in plt.xticks()[0]]
-  xticks_new = []
-  for xtick in xticks:
-    if xtick < 0: continue
-    if xtick >= len(cell_type_feature_count):
-      xticks_new.append(len(cell_type_feature_count) - 1)
-      break
-    else:
-      xticks_new.append(xtick)
-  xticks = xticks_new
-  plt.xticks(xticks)
-  plt.yticks([math.ceil(y) for y in plt.yticks()[0]])
+  sns.barplot(data=cell_type_feature_data, x='index', y='features', dodge=False)
+  plt.xticks([])
+  plt.xlabel("Cell type")
+  plt.ylabel("Features", rotation=0, labelpad=30)
+  plt.tight_layout()
   plt.savefig(os.path.join(output_dir, "cell_type_feature_count.png"))
 
-  return train_accuracy, test_accuracy, coeff_used, coeffs
+  max_features = len(x[0])
+  return train_accuracy, test_accuracy, cell_feature_data, cell_type_feature_data, max_features
