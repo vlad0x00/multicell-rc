@@ -267,21 +267,23 @@ def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_ou
   cell_feature_data = pd.DataFrame(cell_feature_data)
   cell_type_feature_data = pd.DataFrame(cell_type_feature_data)
 
-  plt.figure()
-  sns.barplot(data=cell_feature_data, x='index', y='features', hue='layer', dodge=False)
-  plt.xticks([])
-  plt.xlabel("Cell")
-  plt.ylabel("Features", rotation=0, labelpad=30)
-  plt.tight_layout()
-  plt.savefig(os.path.join(output_dir, "cell_feature_count.png"))
+  if len(cell_feature_data) > 0:
+    plt.figure()
+    sns.barplot(data=cell_feature_data, x='index', y='features', hue='layer', dodge=False)
+    plt.xticks([])
+    plt.xlabel("Cell")
+    plt.ylabel("Features", rotation=0, labelpad=30)
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, "cell_feature_count.png"))
 
-  plt.figure()
-  sns.barplot(data=cell_type_feature_data, x='index', y='features', dodge=False)
-  plt.xticks([])
-  plt.xlabel("Cell type")
-  plt.ylabel("Features", rotation=0, labelpad=30)
-  plt.tight_layout()
-  plt.savefig(os.path.join(output_dir, "cell_type_feature_count.png"))
+  if len(cell_type_feature_data) > 0:
+    plt.figure()
+    sns.barplot(data=cell_type_feature_data, x='index', y='features', dodge=False)
+    plt.xticks([])
+    plt.xlabel("Cell type")
+    plt.ylabel("Features", rotation=0, labelpad=30)
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, "cell_type_feature_count.png"))
 
   max_features = len(x[0])
   return train_accuracy, test_accuracy, cell_feature_data, cell_type_feature_data, max_features
