@@ -90,6 +90,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
     input_signal = [ int(x) for x in f.readline().split() ]
 
   states = get_states(num_genes, num_output_genes, num_cells, window_size, timesteps, output_dir, auxiliary_files)
+  states = states[1:] # We don't need initial state, only states 1+ are affected by the signal
 
   cell_input_matches = [ [] for _ in range(num_cells) ]
   cell_input_constant = [ [] for _ in range(num_cells) ]
