@@ -74,6 +74,7 @@ def partial_corr(variables):
 
 results = pd.read_csv('results.csv')
 
+# Group results with same args (e.g. iterations with same args) and summarize them with mean accuracy
 del results[results.columns[0]]
 columns_wo_accuracy = list(copy.deepcopy(results.columns))
 assert columns_wo_accuracy[0] == 'Accuracy'
