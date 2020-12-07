@@ -229,7 +229,7 @@ print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 # Print the statistics
 print("Training accuracy:", train_accuracy)
 print("Testing accuracy:", test_accuracy)
-features_used = cell_feature_data['features'].sum()
+features_used = int(cell_feature_data['features'].sum())
 if max_features > 0:
   features_used_percent = features_used / max_features * 100.0
 else:
@@ -237,7 +237,7 @@ else:
 print("LASSO features used: {} / {} ({:.2f}%)".format(features_used, max_features, features_used_percent))
 for layer in range(Z_LAYERS):
   layer_cells = cell_feature_data[cell_feature_data['layer'] == layer]
-  layer_features = layer_cells['features'].sum()
+  layer_features = int(layer_cells['features'].sum())
   if features_used > 0:
     layer_features_percent = layer_features / features_used * 100.0
   else:
