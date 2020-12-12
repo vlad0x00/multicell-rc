@@ -30,13 +30,13 @@ if cli_args.analysis == 'sensitivity_analysis':
   # Prefix, range, transformation (for lambda -> alpha)
   # Range type (or after transformation, if present) determines whether param is int or float
   params_properties = [
-    [ "--genes",                     [ 10,  500     ],                                                 ],
+  #  [ "--genes",                     [ 10,  500     ],                                                 ],
     [ "--cells",                     [ 1, 15        ], lambda x : x ** 3                               ],
     [ "--cell-types",                [ 1, 20        ],                                                 ],
     [ "--tissue-depth",              [ 0, 0         ],                                                 ],
-    [ "--output-gene-fraction",      [ 0.1, 1.0     ],                                                 ],
-    [ "--output-cell-fraction",      [ 0.1, 1.0     ],                                                 ],
-    [ "--output-cell-type-fraction", [ 0.1, 1.0     ],                                                 ],
+  #  [ "--output-gene-fraction",      [ 0.1, 1.0     ],                                                 ],
+  #  [ "--output-cell-fraction",      [ 0.1, 1.0     ],                                                 ],
+  #  [ "--output-cell-type-fraction", [ 0.1, 1.0     ],                                                 ],
     [ "--output-cells-random",       [ 0, 0         ], lambda x : ''                                   ],
     [ "--input-fraction",            [ 0.1, 1.0     ],                                                 ],
     [ "--input-signal-depth",        [ 1, 15        ],                                                 ],
