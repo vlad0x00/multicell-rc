@@ -115,7 +115,7 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
     nv.append(np.zeros(num_genes, dtype=np.int32))
 
     # Ensure the number of edges corresponds to the average input degree of nodes
-    total_edges = math.ceil((num_genes - 1 - num_cytokines) * connectivity + input_connections)
+    total_edges = math.ceil((num_genes - 1 - num_cytokines) * connectivity)
 
     # Number of possible edges excluding the input gene
     possible_edges_no_input = (num_genes - 1 - num_cytokines) ** 2
@@ -151,7 +151,7 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
       nv[-1][edge[1]] += 1
 
     # Ensure the average in-degree condition is satisfied
-    assert (connectivity - 0.01) < ((sum(nv[-1]) - input_connections) / (len(nv[-1]) - num_cytokines - 1)) < (connectivity + 0.01)
+    assert (connectivity - 0.01) < (sum(nv[-1]) / (len(nv[-1]) - num_cytokines - 1)) < (connectivity + 0.01)
 
     # Update gene variables
     varf.append([])
