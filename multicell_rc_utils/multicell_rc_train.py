@@ -242,6 +242,7 @@ def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_ou
     output_cells_rank[cell] = rank
 
   cell_feature_data = { 'index' : [], 'cell' : [], 'features' : [], 'layer' : [] }
+  cell_weights = {}
   cell_type_feature_data = { 'index' : [], 'cell_type' : [], 'features' : [] }
   for cell in output_cells:
     cell_layer = cell_layer_map[cell]
@@ -250,6 +251,9 @@ def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_ou
     if cell_type >= num_output_cell_types: continue
     coeff_start = cell_rank * num_output_genes
     coeff_end = (cell_rank + 1) * num_output_genes
+    cell_weights[cell] = []
+    for weight in lasso.coef_[coeff_start:coeff_end]:
+      cell_weights[cell].append(weight)
     feature_count = np.sum(lasso.coef_[coeff_start:coeff_end] != 0)
     if feature_count > 0:
       cell_feature_data['cell'].append(cell)
@@ -286,4 +290,4 @@ def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_ou
     plt.savefig(os.path.join(output_dir, "cell_type_feature_count.png"))
 
   max_features = len(x[0])
-  return train_accuracy, test_accuracy, cell_feature_data, cell_type_feature_data, max_features
+  return train_accuracy, test_accuracy, cell_feature_data, cell_type_feature_data, max_features, cell_weights

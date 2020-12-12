@@ -54,7 +54,8 @@ def do_run(arg_set):
     for i in range(cli_args.iterations):
       print("Iteration:", i + 1, file=out, flush=True)
       tempdir = out_prefix + "-#" + str(i)
-      args = [ executable, "-O", tempdir ] + arg_set
+      weights_file = join(results_dir, out_prefix + "-weights")
+      args = [ executable, "-F", weights_file,"-O", tempdir ] + arg_set
       subprocess.run(args, stdout=out, stderr=err, text=True)
       shutil.rmtree(tempdir, ignore_errors=True)
 

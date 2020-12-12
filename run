@@ -65,6 +65,7 @@ INPUT_SIGNAL_FILE = os.path.join(OUTPUT_DIR, "input_signal")
 INPUT_SIGNAL_LENGTH = SIMULATION_STEPS
 FUNCTION = args.function
 AUXILIARY_FILES = args.auxiliary
+LASSO_WEIGHTS = args.lasso_weights
 NEW = not args.reuse
 THREADS = args.threads
 WARMUP_STEPS = args.warmup_timesteps
@@ -222,7 +223,7 @@ for layer in range(Z_LAYERS):
 # Train Lasso on gene states
 print("Training LASSO... ", end='', flush=True)
 t1 = time.time()
-train_accuracy, test_accuracy, cell_feature_data, cell_type_feature_data, max_features = multicell_rc_train.train_lasso(x, y, NUM_CELLS, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, NUM_OUTPUT_GENES, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, THREADS, output_cells, X_LAYERS, Y_LAYERS, Z_LAYERS, CELLS_PER_LAYER)
+train_accuracy, test_accuracy, cell_feature_data, cell_type_feature_data, max_features, cell_weights = multicell_rc_train.train_lasso(x, y, NUM_CELLS, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, NUM_OUTPUT_GENES, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, THREADS, output_cells, X_LAYERS, Y_LAYERS, Z_LAYERS, CELLS_PER_LAYER)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
@@ -243,3 +244,12 @@ for layer in range(Z_LAYERS):
   else:
     layer_features_percent = 0.0
   print("Layer {}: {} / {} ({:.2f}%)".format(layer, layer_features, features_used, layer_features_percent))
+
+if LASSO_WEIGHTS:
+  output_cells = list(cell_weights.keys())
+  print("Output cells: {}".format(' '.join([ str(c) for c in output_cells ])))
+  print("Output cell weights (cells with all 0 weights omitted):")
+  for cell in output_cells:
+    weights = cell_weights[cell]
+    if any([ w != 0 for w in weights ]):
+      print("{}: {}".format(cell, ' '.join([ str(w) for w in weights ])))
