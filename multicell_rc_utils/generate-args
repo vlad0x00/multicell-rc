@@ -44,7 +44,7 @@ if cli_args.analysis == 'sensitivity_analysis':
     [ "--cytokines",                 [ 0, 20        ],                                                 ],
     [ "--cytokine-threshold",        [ 1.0, 100.0   ],                                                 ],
     [ "--delay",                     [ 0, 0         ],                                                 ],
-    [ "--window-size",               [ 5, 5         ],                                                 ],
+    [ "--window-size",               [ 7, 7         ],                                                 ],
   #  [ "--function",                  [ 0, 1         ], lambda f : 'median' if f == 0 else 'parity'     ],
   ]
 
