@@ -38,7 +38,7 @@ if cli_args.analysis == 'sensitivity_analysis':
   #  [ "--output-cell-fraction",      [ 0.1, 1.0     ],                                                 ],
   #  [ "--output-cell-type-fraction", [ 0.1, 1.0     ],                                                 ],
     [ "--output-cells-random",       [ 0, 0         ], lambda x : ''                                   ],
-    [ "--input-fraction",            [ 0.1, 1.0     ],                                                 ],
+  #  [ "--input-fraction",            [ 0.1, 1.0     ],                                                 ],
     [ "--input-signal-depth",        [ 1, 15        ],                                                 ],
     [ "--alpha-cytokines",           [ 2.5, 30.0    ], lambda x : 5.0 / (x ** 2)                       ],
     [ "--cytokines",                 [ 0, 20        ],                                                 ],
