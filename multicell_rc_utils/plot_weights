@@ -39,6 +39,6 @@ for filenum, filename in enumerate(os.listdir(cli_args.weights_dir)):
             has_input_signal.append(cell < input_cells)
             i += 1
         i += 1
-    if filenum % 50 == 49: print("{} files processed".format(filenum))
+    if filenum % 50 == 0 and filenum > 0: print("{} files processed".format(filenum))
 data = pd.DataFrame(list(zip(weights, has_input_signal)), columns=[ 'weight', 'has_input_signal' ])
 sns.histplot(data=data, x='weight', hue='has_input_signal', log_scale=True).get_figure().savefig('plot.png')
