@@ -1,38 +1,44 @@
 #!/usr/bin/env python3
 
 import os
-import seaborn
+import seaborn as sns
 import argparse
-import pandas
+import pandas as pd
 
 parser = argparse.ArgumentParser()
 parser.add_argument('weights_dir')
 cli_args = parser.parse_args()
 
-data = pd.DataFrame(columns=[ 'weight', 'has_input_signal' ])
-for filename in os.listdir(cli_args.weights_dir):
+weights = []
+has_input_signal = []
+for filenum, filename in enumerate(os.listdir(cli_args.weights_dir)):
   if filename.endswith('-stdout'):
     with open(os.path.join(cli_args.weights_dir, filename)) as f:
       lines = f.readlines()
       i = 0
       while i < len(lines):
-        if 'Cell input signal:' in line[i]
+        if 'Cell input signal:' in lines[i]:
           input_cells = 0
           layers_cells = []
-          while not 'Training LASSO' in line[i]:
-            tokens = line[i].split()
-            input_cells += int(tokens[3])
+          i += 1
+          while not 'Training LASSO' in lines[i]:
+            tokens = lines[i].split()
+            input_cells += int(tokens[2])
             layers_cells.append(int(tokens[4]))
             i += 1
-        elif 'Output cells:' in line[i]:
-          tokens = line[i].split()
+        elif 'Output cells:' in lines[i]:
+          tokens = lines[i].split()
           output_cells = [ int(c) for c in tokens[2:] ]
-        elif 'Output cell weights' in line[i]:
-          cell_weights = {}
-          while i < len(lines) and not 'Itertation' in line[i] and not 'Running' in line[i]:
-            tokens = line[i].split()
+        elif 'Output cell weights' in lines[i]:
+          i += 1
+          while i < len(lines) and not 'Iteration' in lines[i] and not 'Running' in lines[i]:
+            tokens = lines[i].split()
             cell = int(tokens[0][:-1])
-            weight = sum([ abs(w) for w in tokens[1:] ])
-            data.append({ 'weight' : weight, 'has_input_signal' : cell < input_cells })
+            weight = sum([ abs(float(w)) for w in tokens[1:] ])
+            weights.append(weight)
+            has_input_signal.append(cell < input_cells)
             i += 1
         i += 1
+    if filenum % 50 == 49: print("{} files processed".format(filenum))
+data = pd.DataFrame(list(zip(weights, has_input_signal)), columns=[ 'weight', 'has_input_signal' ])
+sns.histplot(data=data, x='weight', hue='has_input_signal', log_scale=True).get_figure().savefig('plot.png')
