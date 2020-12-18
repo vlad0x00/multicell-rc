@@ -11,7 +11,8 @@ cli_args = parser.parse_args()
 
 weights = []
 has_input_signal = []
-for filenum, filename in enumerate(os.listdir(cli_args.weights_dir)):
+filenum = 0
+for filename in os.listdir(cli_args.weights_dir):
   if filename.endswith('-stdout'):
     with open(os.path.join(cli_args.weights_dir, filename)) as f:
       lines = f.readlines()
@@ -40,5 +41,6 @@ for filenum, filename in enumerate(os.listdir(cli_args.weights_dir)):
             i += 1
         i += 1
     if filenum % 50 == 0 and filenum > 0: print("{} files processed".format(filenum))
+    filenum += 1
 data = pd.DataFrame(list(zip(weights, has_input_signal)), columns=[ 'weight', 'has_input_signal' ])
 sns.histplot(data=data, x='weight', hue='has_input_signal', log_scale=True).get_figure().savefig('plot.png')
