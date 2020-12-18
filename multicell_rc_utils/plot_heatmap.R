@@ -9,37 +9,26 @@ library(stringr)
 library(viridis)
 library(viridisLite)
 
-#results_2layers <- read.csv('results_2layers.csv')
-#rownames(results_2layers) <- results_2layers[, 1]
-#results_2layers <- results_2layers[, -1]
-
-#results_3layers <- read.csv('results_3layers.csv')
-#rownames(results_3layers) <- results_3layers[, 1]
-#results_3layers <- results_3layers[, -1]
-
-#results_4layers <- read.csv('results_4layers.csv')
-#rownames(results_4layers) <- results_4layers[, 1]
-#results_4layers <- results_4layers[, -1]
-
-#results_5layers <- read.csv('results_5layers.csv')
-#rownames(results_5layers) <- results_5layers[, 1]
-#results_5layers <- results_5layers[, -1]
-
-#results <- rbind(results_2layers, results_3layers, results_4layers, results_5layers)
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 2) {
+ cat("Missing params to plot.")
+ q()
+}
 
 results <- read.csv('results.csv')
 rownames(results) <- results[, 1]
 results <- results[, -1]
 
-results <- select(results, c(Accuracy, Cell.types, Cytokines, Tissue.depth))
-results <- aggregate(results, by = list(results$Cell.types, results$Cytokines, results$Tissue.depth), FUN = mean)
+results <- select(results, c(Accuracy, args[1], args[2]))
+results <- aggregate(results, by = results[args], FUN = mean)
+results <- results[,-length(colnames(results))]
+results <- results[,-length(colnames(results))]
 results$Accuracy <- round(results$Accuracy, 2)
 
-results %>% ggplot(aes(x=Cell.types, y=Cytokines, fill=Accuracy, label=Accuracy)) +
+results %>% ggplot(aes_string(x=args[1], y=args[2], fill="Accuracy", label="Accuracy")) +
   scale_fill_viridis(option = "inferno") +
   geom_tile() +
   geom_text() +
   theme_bw() +
-#  facet_wrap(~Tissue.depth) +
   theme(text = element_text(size = 26), axis.title.y = element_text(angle = 0))
 ggsave('plot.png', width = 20, height = 15)
