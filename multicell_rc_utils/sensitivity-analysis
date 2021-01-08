@@ -73,6 +73,8 @@ def partial_corr(variables):
   return pcorr, pvals, residues
 
 results = pd.read_csv('results.csv')
+# If both Cells and Cubic tissue length parameters are present, they will cancel each other out in sensitivity analysis
+del results['Cubic tissue length']
 
 # Group results with same args (e.g. iterations with same args) and summarize them with mean accuracy
 del results[results.columns[0]]

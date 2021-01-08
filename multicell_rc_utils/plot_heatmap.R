@@ -16,7 +16,6 @@ if (length(args) != 2) {
 }
 
 results <- read.csv('results.csv')
-rownames(results) <- results[, 1]
 results <- results[, -1]
 
 results <- select(results, c(Accuracy, args[1], args[2]))
