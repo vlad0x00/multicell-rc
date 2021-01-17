@@ -45,7 +45,7 @@ parser.add_argument('-P', '--output-cell-type-fraction', type=fraction_type, def
 parser.add_argument('-o', '--output-cells-random', action='store_true', help="Use random cells from anywhere in the tissue for LASSO training instead of only from the end.")
 parser.add_argument('-k', '--in-degree', type=abovezero_float, default=2.0, help="Average node in-degree of gene network(s).")
 parser.add_argument('-l', '--input-fraction', type=fraction_type, default=0.5, help="Fraction of nodes connected to the input signal.")
-parser.add_argument('-I', '--input-signal-depth', type=zeroplus_int, default=1, help="Average node in-degree of gene network(s).")
+parser.add_argument('-I', '--input-signal-depth', type=zeroplus_int, default=1, help="How many layers of cells are reached by the input signal.")
 parser.add_argument('-a', '--alpha-cytokines', type=zeroplus_float, default=1.0/45.0, help="Molecular decay rate of cytokines.")
 parser.add_argument('-b', '--beta-cytokines', type=zeroplus_float, default=5.0, help="Grid diffusion coefficient of cytokines.")
 parser.add_argument('-y', '--cytokines', type=zeroplus_int, default=5, help="Number of cytokines in the simulation.")
