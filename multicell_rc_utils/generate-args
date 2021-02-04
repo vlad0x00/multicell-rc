@@ -30,22 +30,22 @@ if cli_args.analysis == 'sensitivity_analysis':
   # Prefix, range, transformation (for lambda -> alpha)
   # Range type (or after transformation, if present) determines whether param is int or float
   params_properties = [
-  #  [ "--genes",                     [ 10,  500     ],                                                 ],
+    [ "--genes",                     [ 10,  500     ],                                                 ],
     [ "--cells",                     [ 1, 15        ], lambda x : x ** 3                               ],
     [ "--cell-types",                [ 1, 20        ],                                                 ],
     [ "--tissue-depth",              [ 0, 0         ],                                                 ],
-  #  [ "--output-gene-fraction",      [ 0.1, 1.0     ],                                                 ],
-  #  [ "--output-cell-fraction",      [ 0.1, 1.0     ],                                                 ],
-  #  [ "--output-cell-type-fraction", [ 0.1, 1.0     ],                                                 ],
+#    [ "--output-gene-fraction",      [ 0.1, 1.0     ],                                                 ],
+    [ "--output-cell-fraction",      [ 1.0, 1.0     ],                                                 ],
+#    [ "--output-cell-type-fraction", [ 0.1, 1.0     ],                                                 ],
     [ "--output-cells-random",       [ 0, 0         ], lambda x : ''                                   ],
-  #  [ "--input-fraction",            [ 0.1, 1.0     ],                                                 ],
+    [ "--input-fraction",            [ 0.1, 1.0     ],                                                 ],
     [ "--input-signal-depth",        [ 1, 15        ],                                                 ],
     [ "--alpha-cytokines",           [ 2.5, 30.0    ], lambda x : 5.0 / (x ** 2)                       ],
     [ "--cytokines",                 [ 0, 20        ],                                                 ],
     [ "--cytokine-threshold",        [ 1.0, 100.0   ],                                                 ],
     [ "--delay",                     [ 0, 0         ],                                                 ],
-    [ "--window-size",               [ 7, 7         ],                                                 ],
-  #  [ "--function",                  [ 0, 1         ], lambda f : 'median' if f == 0 else 'parity'     ],
+    [ "--window-size",               [ 3, 7         ],                                                 ],
+    [ "--function",                  [ 0, 1         ], lambda f : 'median' if f == 0 else 'parity'     ],
   ]
 
   num_params = len(params_properties)
