@@ -105,6 +105,7 @@ for i, param in enumerate(results_of_interest.columns):
   if i == 0:
     assert param == 'Accuracy'
     continue
+  if param == 'Function': continue
   print("Plotting {}".format(param))
   minval = min(results[param])
   maxval = max(results[param])
