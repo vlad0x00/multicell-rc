@@ -1,14 +1,14 @@
 # Multicellular Reservoir Computer
 
-A simulation of a reservoir computer comprised of cells in a tissue.
+A simulation of a reservoir computer comprised of cells in a community.
 
 In the simplest scenario, cells are arranged in an approximate cube:
 
 <p align="center">
-<img src="res/cell_cube.png" alt="Cube tissue" width="30%"/>
+<img src="res/cell_cube.png" alt="Cube community" width="30%"/>
 </p>
 
-Throughout the simulation, the input signal comes from one face of the simulation space, varying between low and high levels and stimulating the tissue. The cells that receive the signal communicate with other cells using cytokines and propagate the information to the cell layer on the other side. A number of cells on the other side are used as output, and LASSO regression is trained on their gene values.
+Throughout the simulation, the input signal comes from one face of the simulation space, varying between low and high levels and stimulating the cell community. The cells that receive the signal communicate with other cells using cytokines and propagate the information to the cell layer on the other side. A number of cells on the other side are used as output, and LASSO regression is trained on their gene values.
 
 <p align="center">
 <img src="res/cell_layers.png" alt="Cell layers" width="50%"/>
