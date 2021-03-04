@@ -29,17 +29,17 @@ def make_network_dot(num_genes, varf, dot_file):
   graph = nx.DiGraph()
 
   # Generate the graph nodes
-  for cell_type, variable_matrix in enumerate(varf):
+  for strain, variable_matrix in enumerate(varf):
     for gene, _ in enumerate(variable_matrix):
-      node = Node(str(cell_type) + "_" + str(gene))
+      node = Node(str(strain) + "_" + str(gene))
       graph.add_node(node)
 
   # Generate the graph edges
-  for cell_type, variable_matrix in enumerate(varf):
+  for strain, variable_matrix in enumerate(varf):
     for gene, variables in enumerate(variable_matrix):
-      node = Node(str(cell_type) + "_" + str(gene))
+      node = Node(str(strain) + "_" + str(gene))
       for v in variables:
-        var_node = Node(str(cell_type) + "_" + str(v))
+        var_node = Node(str(strain) + "_" + str(v))
         graph.add_edge(var_node, node)
 
   # Save the .dot file
@@ -64,21 +64,21 @@ def generate_cytokine_normalization_files(num_genes, nv_file, varf_file, tt_file
 
   # Save nv
   with open(nv_file, 'w') as f:
-    for cell_type_nv in nv:
-      f.write(' '.join([str(x) for x in cell_type_nv]))
+    for strain_nv in nv:
+      f.write(' '.join([str(x) for x in strain_nv]))
       f.write('\n')
 
   # Save varf
   with open(varf_file, 'w') as f:
-    for cell_type_varf in varf:
-      for gene_varf in cell_type_varf:
+    for strain_varf in varf:
+      for gene_varf in strain_varf:
         f.write(' '.join([str(x) for x in gene_varf]))
         f.write('\n')
 
   # Save nv
   with open(tt_file, 'w') as f:
-    for cell_type_tt in tt:
-      for gene_tt in cell_type_tt:
+    for strain_tt in tt:
+      for gene_tt in strain_tt:
         f.write(' '.join([str(x) for x in gene_tt]))
         f.write('\n')
 
@@ -93,14 +93,14 @@ def generate_cytokine_normalization_files(num_genes, nv_file, varf_file, tt_file
     f.write(' '.join([str(x) for x in state]))
     f.write('\n')
 
-def generate_gene_functions(num_cell_types, num_genes, connectivity, input_connections, num_cytokines, nv_file, varf_file, tt_file, dot_file):
+def generate_gene_functions(num_strains, num_genes, connectivity, input_connections, num_cytokines, nv_file, varf_file, tt_file, dot_file):
   """
-    Generate the truth tables for genes for each cell type
+    Generate the truth tables for genes for each strain
   """
   assert input_connections < num_genes
 
   """
-    Each of the three lists is first indexed by cell type and then by gene.
+    Each of the three lists is first indexed by strain and then by gene.
 
     nv : The number of input gene variables for each gene function
     varf : The list of input genes variables for each gene function
@@ -110,8 +110,8 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
   varf = []
   tt = []
 
-  for cell_type in range(num_cell_types):
-    # Initialize nv-s for current cell type
+  for strain in range(num_strains):
+    # Initialize nv-s for current strain
     nv.append(np.zeros(num_genes, dtype=np.int32))
 
     # Ensure the number of edges corresponds to the average input degree of nodes
@@ -176,21 +176,21 @@ def generate_gene_functions(num_cell_types, num_genes, connectivity, input_conne
 
   # Save nv
   with open(nv_file, 'w') as f:
-    for cell_type_nv in nv:
-      f.write(' '.join([str(x) for x in cell_type_nv]))
+    for strain_nv in nv:
+      f.write(' '.join([str(x) for x in strain_nv]))
       f.write('\n')
 
   # Save varf
   with open(varf_file, 'w') as f:
-    for cell_type_varf in varf:
-      for gene_varf in cell_type_varf:
+    for strain_varf in varf:
+      for gene_varf in strain_varf:
         f.write(' '.join([str(x) for x in gene_varf]))
         f.write('\n')
 
   # Save nv
   with open(tt_file, 'w') as f:
-    for cell_type_tt in tt:
-      for gene_tt in cell_type_tt:
+    for strain_tt in tt:
+      for gene_tt in strain_tt:
         f.write(' '.join([str(x) for x in gene_tt]))
         f.write('\n')
 

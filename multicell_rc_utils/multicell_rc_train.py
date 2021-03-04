@@ -86,22 +86,22 @@ def get_cell_layers(num_cells, x_layers, y_layers, z_layers, cells_per_layer):
     cell_location += 1
   return cell_layer_map
 
-def get_cell_types(output_file):
+def get_strains(output_file):
   """
-    Returns a dictionary that maps cell id to cell type.
+    Returns a dictionary that maps cell id to strain.
     Takes Biocellion output as the input file.
   """
-  cell_type_map = {}
+  strain_map = {}
   with open(output_file, 'r') as f:
     for line in f:
       if line.startswith("Cell:"):
         tokens = line.split(',')
         cell = int(tokens[0].split(':')[1])
-        cell_type = int(tokens[1].split(':')[1])
-        cell_type_map[cell] = cell_type
-  return cell_type_map
+        strain = int(tokens[1].split(':')[1])
+        strain_map[cell] = strain
+  return strain_map
 
-def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_cell_types, output_cells_random, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, z_layers, y_layers, x_layers, input_signal_depth, cells_per_layer):
+def process_output(input_signal_file, biocellion_output_file, output_dir, num_genes, num_cells, num_output_genes, num_output_cells, num_output_strains, output_cells_random, window_size, delay, timesteps, function, auxiliary_files, threads, warmup_steps, z_layers, y_layers, x_layers, input_signal_depth, cells_per_layer):
   """
     Builds the x and y lists for Lasso training. x consists of gene values from output cells and
     y is the ground truth for the given function and input signal.
@@ -114,7 +114,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   states = states[1:] # We don't need initial state, only states 1+ are affected by the signal
 
   cell_layer_map = get_cell_layers(num_cells, x_layers, y_layers, z_layers, cells_per_layer)
-  cell_type_map = get_cell_types(biocellion_output_file)
+  strain_map = get_strains(biocellion_output_file)
 
   cell_input_matches = [ [] for _ in range(num_cells) ]
   cell_input_constant = [ [] for _ in range(num_cells) ]
@@ -153,23 +153,23 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   else:
     output_cells = range(num_cells - 1, num_cells - num_output_cells - 1, -1)
 
-  not_output_cell_type = []
+  not_output_strain = []
   output_states = [ [] for _ in range(len(states)) ]
   for i, state in enumerate(states):
     for cell in output_cells:
-      cell_type = cell_type_map[cell]
-      if cell_type >= num_output_cell_types:
-        not_output_cell_type.append(cell)
+      strain = strain_map[cell]
+      if strain >= num_output_strains:
+        not_output_strain.append(cell)
         continue
       cell_state = state[(cell * num_genes):((cell + 1) * num_genes)]
       assert len(cell_state) == num_genes
       output_states[i] += cell_state[-num_output_genes:]
   for state in output_states:
     assert len(state) == len(output_states[0])
-  for cell in not_output_cell_type:
+  for cell in not_output_strain:
     output_cells.remove(cell)
   if num_output_cells > 0 and len(output_cells) == 0:
-    print("\nNone of the output cells belong to any of the output cell types. Exiting...")
+    print("\nNone of the output cells belong to any of the output strains. Exiting...")
     sys.exit(1)
   x = output_states
 
@@ -212,9 +212,9 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
 
   return x, y, input_signal_info, output_cells
 
-def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_output_genes, biocellion_output_file, output_dir, threads, output_cells, x_layers, y_layers, z_layers, cells_per_layer):
+def train_lasso(x, y, num_cells, num_output_cells, num_output_strains, num_output_genes, biocellion_output_file, output_dir, threads, output_cells, x_layers, y_layers, z_layers, cells_per_layer):
   """
-    Train Lasso on the provided x and y lists and plots a histogram of features used from each cell and cell type.
+    Train Lasso on the provided x and y lists and plots a histogram of features used from each cell and strain.
   """
   from sklearn.linear_model import Lasso, LassoCV
   from sklearn.model_selection import train_test_split
@@ -235,7 +235,7 @@ def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_ou
   test_accuracy = sum([ 1 if a == b else 0 for a, b in zip(test_predicted, y_test) ]) / len(test_predicted)
 
   cell_layer_map = get_cell_layers(num_cells, x_layers, y_layers, z_layers, cells_per_layer)
-  cell_type_map = get_cell_types(biocellion_output_file)
+  strain_map = get_strains(biocellion_output_file)
 
   output_cells_rank = {}
   for rank, cell in enumerate(output_cells):
@@ -243,12 +243,12 @@ def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_ou
 
   cell_feature_data = { 'index' : [], 'cell' : [], 'features' : [], 'layer' : [] }
   cell_weights = {}
-  cell_type_feature_data = { 'index' : [], 'cell_type' : [], 'features' : [] }
+  strain_feature_data = { 'index' : [], 'strain' : [], 'features' : [] }
   for cell in output_cells:
     cell_layer = cell_layer_map[cell]
-    cell_type = cell_type_map[cell]
+    strain = strain_map[cell]
     cell_rank = output_cells_rank[cell]
-    if cell_type >= num_output_cell_types: continue
+    if strain >= num_output_strains: continue
     coeff_start = cell_rank * num_output_genes
     coeff_end = (cell_rank + 1) * num_output_genes
     cell_weights[cell] = []
@@ -259,17 +259,17 @@ def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_ou
       cell_feature_data['cell'].append(cell)
       cell_feature_data['features'].append(feature_count)
       cell_feature_data['layer'].append(cell_layer)
-      if cell_type in cell_type_feature_data['cell_type']:
-        idx = cell_type_feature_data['cell_type'].index(cell_type)
-        cell_type_feature_data['features'][idx] += feature_count
+      if strain in strain_feature_data['strain']:
+        idx = strain_feature_data['strain'].index(strain)
+        strain_feature_data['features'][idx] += feature_count
       else:
-        cell_type_feature_data['cell_type'].append(cell_type)
-        cell_type_feature_data['features'].append(feature_count)
+        strain_feature_data['strain'].append(strain)
+        strain_feature_data['features'].append(feature_count)
   cell_feature_data['index'] = [ num for num in range(len(cell_feature_data['cell'])) ]
-  cell_type_feature_data['index'] = [ num for num in range(len(cell_type_feature_data['cell_type'])) ]
+  strain_feature_data['index'] = [ num for num in range(len(strain_feature_data['strain'])) ]
 
   cell_feature_data = pd.DataFrame(cell_feature_data)
-  cell_type_feature_data = pd.DataFrame(cell_type_feature_data)
+  strain_feature_data = pd.DataFrame(strain_feature_data)
 
   if len(cell_feature_data) > 0:
     plt.figure()
@@ -280,14 +280,14 @@ def train_lasso(x, y, num_cells, num_output_cells, num_output_cell_types, num_ou
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "cell_feature_count.png"))
 
-  if len(cell_type_feature_data) > 0:
+  if len(strain_feature_data) > 0:
     plt.figure()
-    sns.barplot(data=cell_type_feature_data, x='index', y='features', dodge=False)
+    sns.barplot(data=strain_feature_data, x='index', y='features', dodge=False)
     plt.xticks([])
-    plt.xlabel("Cell type")
+    plt.xlabel("Strain")
     plt.ylabel("Features", rotation=0, labelpad=30)
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, "cell_type_feature_count.png"))
+    plt.savefig(os.path.join(output_dir, "strain_feature_count.png"))
 
   max_features = len(x[0])
-  return train_accuracy, test_accuracy, cell_feature_data, cell_type_feature_data, max_features, cell_weights
+  return train_accuracy, test_accuracy, cell_feature_data, strain_feature_data, max_features, cell_weights

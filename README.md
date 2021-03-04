@@ -8,7 +8,7 @@ Cells are arranged in square layers along the input signal source axis. Througho
 <img src="res/cell_layers.png" alt="Cell layers" width="50%"/>
 </p>
 
-Each cell simulates gene regulation with a random boolean network. The number of cell types can be specified, where every cell type has its own boolean network topology and every cell is assigned a random cell type. Every cell has a randomized initial state for all of its genes.
+Each cell simulates gene regulation with a random boolean network. The number of cell strains can be specified, where every strain has its own boolean network topology and every cell is assigned a random strain. Every cell has a randomized initial state for all of its genes.
 
 <p align="center">
 <img src="res/gene_network.png" alt="Gene network" width="50%"/>

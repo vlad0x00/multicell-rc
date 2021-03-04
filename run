@@ -31,7 +31,7 @@ GENE_INITIAL_STATES_FILE = os.path.join(OUTPUT_DIR, "gene_initial_states")
 DOT_FILE = os.path.join(OUTPUT_DIR, "gene_networks.dot")
 NUM_GENES = 1 + args.cytokines * 2 + args.genes
 NUM_CELLS = args.cells
-NUM_CELL_TYPES = args.cell_types
+NUM_STRAINS = args.strains
 if args.tissue_depth > 0 and NUM_CELLS < args.tissue_depth:
   print("Number of cells ({}) is smaller than the required number of layers ({}). Exiting...".format(NUM_CELLS, args.tissue_depth))
   sys.exit(0)
@@ -53,7 +53,7 @@ CELL_RADIUS = args.cell_radius
 IF_GRID_SPACING = args.voxel_length
 NUM_OUTPUT_GENES = math.ceil(args.genes * args.output_gene_fraction)
 NUM_OUTPUT_CELLS = math.ceil(NUM_CELLS * args.output_cell_fraction)
-NUM_OUTPUT_CELL_TYPES = math.ceil(NUM_CELL_TYPES * args.output_cell_type_fraction)
+NUM_OUTPUT_STRAINS = math.ceil(NUM_STRAINS * args.output_strain_fraction)
 OUTPUT_CELLS_RANDOM = args.output_cells_random
 SIMULATION_STEPS = args.timesteps
 DELAY = args.delay
@@ -177,7 +177,7 @@ assert CYTOKINE_NORMALIZATION > 0.0
 print("Tissue shape: {} x {} x {}".format(X_LAYERS, Y_LAYERS, Z_LAYERS))
 
 # Arguments passed to Biocellion directly
-ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_CELL_TYPES) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " " + str(Z_LAYERS) + " " + str(Y_LAYERS) + " " + str(X_LAYERS) + " " + str(KAPPA) + " " + str(SUMMARY) + " " + str(SOURCE_DIST) + " " + str(CYTOKINE_NORMALIZATION) + " " + str(False) + " " + str(CELLS_PER_LAYER)
+ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_STRAINS) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " " + str(Z_LAYERS) + " " + str(Y_LAYERS) + " " + str(X_LAYERS) + " " + str(KAPPA) + " " + str(SUMMARY) + " " + str(SOURCE_DIST) + " " + str(CYTOKINE_NORMALIZATION) + " " + str(False) + " " + str(CELLS_PER_LAYER)
 
 # Remove the output dir of a previous run, if any, and create a new one
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
@@ -187,7 +187,7 @@ os.makedirs(OUTPUT_DIR)
 if NEW:
   print("Generating initial gene network(s) state(s), functions, and input signal... ", end='', flush=True)
   t1 = time.time()
-  multicell_rc_gen.generate_gene_functions(NUM_CELL_TYPES, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
+  multicell_rc_gen.generate_gene_functions(NUM_STRAINS, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
   multicell_rc_gen.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
   multicell_rc_gen.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_CYTOKINES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
   t2 = time.time()
@@ -205,7 +205,7 @@ print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 # Load gene states from files of all simulation steps
 print("Processing output... ", end='', flush=True)
 t1 = time.time()
-x, y, input_signal_info, output_cells = multicell_rc_train.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, OUTPUT_CELLS_RANDOM, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, Z_LAYERS, Y_LAYERS, X_LAYERS, INPUT_SIGNAL_DEPTH, CELLS_PER_LAYER)
+x, y, input_signal_info, output_cells = multicell_rc_train.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_STRAINS, OUTPUT_CELLS_RANDOM, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, Z_LAYERS, Y_LAYERS, X_LAYERS, INPUT_SIGNAL_DEPTH, CELLS_PER_LAYER)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
@@ -223,7 +223,7 @@ for layer in range(Z_LAYERS):
 # Train Lasso on gene states
 print("Training LASSO... ", end='', flush=True)
 t1 = time.time()
-train_accuracy, test_accuracy, cell_feature_data, cell_type_feature_data, max_features, cell_weights = multicell_rc_train.train_lasso(x, y, NUM_CELLS, NUM_OUTPUT_CELLS, NUM_OUTPUT_CELL_TYPES, NUM_OUTPUT_GENES, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, THREADS, output_cells, X_LAYERS, Y_LAYERS, Z_LAYERS, CELLS_PER_LAYER)
+train_accuracy, test_accuracy, cell_feature_data, strain_feature_data, max_features, cell_weights = multicell_rc_train.train_lasso(x, y, NUM_CELLS, NUM_OUTPUT_CELLS, NUM_OUTPUT_STRAINS, NUM_OUTPUT_GENES, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, THREADS, output_cells, X_LAYERS, Y_LAYERS, Z_LAYERS, CELLS_PER_LAYER)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 

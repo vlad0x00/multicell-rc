@@ -59,7 +59,7 @@ S32 gCellsPerLayer;
 // Parameters provided to Biocellion and their indices in the input string array
 const S32 NUM_GENES_PARAM = 0;
 const S32 NUM_CELLS_PARAM = 1;
-const S32 NUM_CELL_TYPES_PARAM = 2;
+const S32 NUM_STRAINS_PARAM = 2;
 const S32 NV_FILE_PARAM = 3;
 const S32 VARF_FILE_PARAM = 4;
 const S32 TT_FILE_PARAM = 5;
@@ -190,7 +190,7 @@ void ModelRoutine::updateSpAgentInfo( Vector<SpAgentInfo>& v_spAgentInfo ) {/* s
 
   const auto params = readXMLParameters();
   const S32 numGenes = std::stoi(params[NUM_GENES_PARAM]);
-  const S32 numCellTypes = std::stoi(params[NUM_CELL_TYPES_PARAM]);
+  const S32 numCellTypes = std::stoi(params[NUM_STRAINS_PARAM]);
   const REAL ifGridSpacing = std::stod(params[IF_GRID_SPACING_PARAM]);
 
   /* Provide information about the discrete agent types in the user model */
@@ -478,7 +478,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   const auto params = readXMLParameters();
   const S32 numGenes = std::stoi(params[NUM_GENES_PARAM]);
   const S32 numCells = std::stoi(params[NUM_CELLS_PARAM]);
-  const S32 numCellTypes = std::stoi(params[NUM_CELL_TYPES_PARAM]);
+  const S32 numCellTypes = std::stoi(params[NUM_STRAINS_PARAM]);
   auto nvFile = std::ifstream(params[NV_FILE_PARAM]);
   auto varfFile = std::ifstream(params[VARF_FILE_PARAM]);
   auto ttFile = std::ifstream(params[TT_FILE_PARAM]);
