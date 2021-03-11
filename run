@@ -128,7 +128,7 @@ ESM_NORMALIZATION_ADDITIONAL_PARAMS = str(ESM_NORMALIZATION_NUM_GENES) + " 1 1 "
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
 os.makedirs(OUTPUT_DIR)
 
-multicell_rc_gen.generate_esm_normalization_files(ESM_NORMALIZATION_NUM_GENES, NV_FILE, VARF_FILE, TT_FILE, INPUT_SIGNAL_FILE, ESM_NORMALIZATION_INPUT_SIGNAL_LENGTH, GENE_INITIAL_STATES_FILE)
+multicell_rc_gen.generate_ESM_normalization_files(ESM_NORMALIZATION_NUM_GENES, NV_FILE, VARF_FILE, TT_FILE, INPUT_SIGNAL_FILE, ESM_NORMALIZATION_INPUT_SIGNAL_LENGTH, GENE_INITIAL_STATES_FILE)
 multicell_rc_gen.make_params_xml(PARAMS_FILE, OUTPUT_DIR, ESM_NORMALIZATION_SIMULATION_STEPS, ESM_NORMALIZATION_ADDITIONAL_PARAMS, THREADS, ESM_NORMALIZATION_UNIVERSE_SIZE, ESM_NORMALIZATION_UNIVERSE_SIZE)
 
 os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE)
@@ -145,7 +145,7 @@ input_vals = nested_dict(3, float)
 with open(BIOCELLION_OUTPUT_FILE, 'r') as f:
   counter = 0
   for line in f:
-    if 'esm0_max' in line:
+    if 'ESM0_max' in line:
       counter += 1
       if counter == 2: ESM_NORMALIZATION = float(line.split(':')[1])
     elif 'Input signal val' in line:
