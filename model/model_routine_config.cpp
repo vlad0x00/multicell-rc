@@ -36,12 +36,12 @@ S32* gGeneInitialStates;
 S32* gInputSignal;
 REAL gAlphaInput;
 REAL gBetaInput;
-REAL gAlphaCytokines;
-REAL gBetaCytokines;
-S32 gNumCytokines;
+REAL gAlphaESM;
+REAL gBetaESM;
+S32 gNumESMs;
 REAL gSecretionLow;
 REAL gSecretionHigh;
-REAL gCytokineThreshold;
+REAL gESMThreshold;
 REAL gCellRadius;
 REAL gIfGridSpacing;
 REAL gDirichletBoundary;
@@ -52,7 +52,7 @@ S32 gXLayers;
 BOOL gKappa;
 BOOL gEnableSummary;
 S32 gSourceDist;
-REAL gCytokineNormalization;
+REAL gESMNormalization;
 BOOL gNumericalAnalysis;
 S32 gCellsPerLayer;
 
@@ -65,12 +65,12 @@ const S32 VARF_FILE_PARAM = 4;
 const S32 TT_FILE_PARAM = 5;
 const S32 GENE_INITIAL_STATES_FILE_PARAM = 6;
 const S32 INPUT_SIGNAL_FILE_PARAM = 7;
-const S32 ALPHA_CYTOKINES_PARAM = 8;
-const S32 BETA_CYTOKINES_PARAM = 9;
-const S32 NUM_CYTOKINES_PARAM = 10;
+const S32 ALPHA_ESM_PARAM = 8;
+const S32 BETA_ESM_PARAM = 9;
+const S32 NUM_ESMS_PARAM = 10;
 const S32 SECRETION_LOW_PARAM = 11;
 const S32 SECRETION_HIGH_PARAM = 12;
-const S32 CYTOKINE_THRESHOLD_PARAM = 13;
+const S32 ESM_THRESHOLD_PARAM = 13;
 const S32 CELL_RADIUS_PARAM = 14;
 const S32 IF_GRID_SPACING_PARAM = 15;
 const S32 DIRICHLET_BOUNDARY_PARAM = 16;
@@ -83,7 +83,7 @@ const S32 X_LAYERS_PARAM = 22;
 const S32 KAPPA_PARAM = 23;
 const S32 ENABLE_SUMMARY_PARAM = 24;
 const S32 SOURCE_DIST_PARAM = 25;
-const S32 CYTOKINE_NORMALIZATION_PARAM = 26;
+const S32 ESM_NORMALIZATION_PARAM = 26;
 const S32 NUMERICAL_ANALYSIS_PARAM = 27;
 const S32 CELLS_PER_LAYER_PARAM = 28;
 
@@ -229,7 +229,7 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
   /* MODEL START */
 
   const auto params = readXMLParameters();
-  const S32 numCytokines = std::stoi(params[NUM_CYTOKINES_PARAM]);
+  const S32 numESMs = std::stoi(params[NUM_ESMS_PARAM]);
 
   PDEInfo pdeInfo;
   GridPhiInfo gridPhiInfo;
@@ -283,9 +283,9 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
   pdeInfo.v_gridPhiInfo.push_back(gridPhiInfo);
   v_phiPDEInfo.push_back(pdeInfo);
 
-  // Initialize cytokine PDEs
-  for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
-    pdeInfo.pdeIdx = 1 + cytokine;
+  // Initialize ESM PDEs
+  for (S32 esm = 0; esm < numESMs; esm++) {
+    pdeInfo.pdeIdx = 1 + esm;
     pdeInfo.pdeType = PDE_TYPE_REACTION_DIFFUSION_STEADY_STATE_LINEAR;
     pdeInfo.numLevels = NUM_AMR_LEVELS;
     pdeInfo.numTimeSteps = 0;
@@ -311,8 +311,8 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
 
     pdeInfo.callAdjustRHSTimeDependentLinear = false;
 
-    gridPhiInfo.elemIdx = 1 + cytokine;
-    gridPhiInfo.name = "cytokine" + std::to_string(cytokine);
+    gridPhiInfo.elemIdx = 1 + esm;
+    gridPhiInfo.name = "ESM" + std::to_string(esm);
     gridPhiInfo.syncMethod = VAR_SYNC_METHOD_DELTA;
     gridPhiInfo.aa_bcType[0][0] = BC_TYPE_NEUMANN_CONST; /* dummy */
     gridPhiInfo.aa_bcVal[0][0] = 0.0;                    /* dummy */
@@ -343,9 +343,9 @@ void ModelRoutine::updateIfGridModelVarInfo( Vector<IfGridModelVarInfo>& v_ifGri
   /* MODEL START */
 
   const auto params = readXMLParameters();
-  const S32 numCytokines = std::stoi(params[NUM_CYTOKINES_PARAM]);
+  const S32 numESMs = std::stoi(params[NUM_ESMS_PARAM]);
 
-  // Initialize RHS for input and cytokines
+  // Initialize RHS for input and ESMs
   v_ifGridModelRealInfo.clear();
   IfGridModelVarInfo info;
 
@@ -353,8 +353,8 @@ void ModelRoutine::updateIfGridModelVarInfo( Vector<IfGridModelVarInfo>& v_ifGri
   info.syncMethod = VAR_SYNC_METHOD_DELTA;
   v_ifGridModelRealInfo.push_back(info);
 
-  for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
-    info.name = std::to_string(cytokine) + "_rhs";
+  for (S32 esm = 0; esm < numESMs; esm++) {
+    info.name = std::to_string(esm) + "_rhs";
     info.syncMethod = VAR_SYNC_METHOD_DELTA;
     v_ifGridModelRealInfo.push_back(info);
   }
@@ -404,7 +404,7 @@ void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
 
   const auto params = readXMLParameters();
   const auto numGenes = std::stoi(params[NUM_GENES_PARAM]);
-  const auto numCytokines = std::stoi(params[NUM_CYTOKINES_PARAM]);
+  const auto numESMs = std::stoi(params[NUM_ESMS_PARAM]);
 
   /* FileOutputInfo class holds the information related to file output of simulation results. */
   fileOutputInfo.particleOutput = true;
@@ -416,8 +416,8 @@ void ModelRoutine::updateFileOutputInfo( FileOutputInfo& fileOutputInfo ) {
   }
   fileOutputInfo.v_particleExtraOutputVectorVarName.clear();
   // Don't output phi for every step
-  fileOutputInfo.v_gridPhiOutput.assign(1 + numCytokines, false);
-  fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(1 + numCytokines, false);
+  fileOutputInfo.v_gridPhiOutput.assign(1 + numESMs, false);
+  fileOutputInfo.v_gridPhiOutputDivideByKappa.assign(1 + numESMs, false);
 
   /* MODEL END */
 
@@ -436,7 +436,7 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
     {SUMMARY_TYPE_SUM, SUMMARY_TYPE_AVG, SUMMARY_TYPE_MIN, SUMMARY_TYPE_MAX} */
 
   const auto params = readXMLParameters();
-  const auto numCytokines = std::stoi(params[NUM_CYTOKINES_PARAM]);
+  const auto numESMs = std::stoi(params[NUM_ESMS_PARAM]);
 
   SummaryOutputInfo info;
   v_summaryOutputIntInfo.clear();
@@ -453,14 +453,14 @@ void ModelRoutine::updateSummaryOutputInfo( Vector<SummaryOutputInfo>& v_summary
     info.type = SUMMARY_TYPE_AVG;
     v_summaryOutputRealInfo.push_back(info);
 
-    for (S32 cytokine = 0; cytokine < numCytokines; cytokine++) {
-      info.name = "cytokine" + std::to_string(cytokine) + "_min";
+    for (S32 esm = 0; esm < numESMs; esm++) {
+      info.name = "ESM" + std::to_string(esm) + "_min";
       info.type = SUMMARY_TYPE_MIN;
       v_summaryOutputRealInfo.push_back(info);
-      info.name = "cytokine" + std::to_string(cytokine) + "_max";
+      info.name = "ESM" + std::to_string(esm) + "_max";
       info.type = SUMMARY_TYPE_MAX;
       v_summaryOutputRealInfo.push_back(info);
-      info.name = "cytokine" + std::to_string(cytokine) + "_avg";
+      info.name = "ESM" + std::to_string(esm) + "_avg";
       info.type = SUMMARY_TYPE_AVG;
       v_summaryOutputRealInfo.push_back(info);
     }
@@ -484,12 +484,12 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   auto ttFile = std::ifstream(params[TT_FILE_PARAM]);
   auto geneInitialStatesFile = std::ifstream(params[GENE_INITIAL_STATES_FILE_PARAM]);
   auto inputSignalFile = std::ifstream(params[INPUT_SIGNAL_FILE_PARAM]);
-  const REAL alphaCytokines = std::stod(params[ALPHA_CYTOKINES_PARAM]);
-  const REAL betaCytokines = std::stod(params[BETA_CYTOKINES_PARAM]);
-  const S32 numCytokines = std::stoi(params[NUM_CYTOKINES_PARAM]);
+  const REAL alphaESM = std::stod(params[ALPHA_ESM_PARAM]);
+  const REAL betaESM = std::stod(params[BETA_ESM_PARAM]);
+  const S32 numESMs = std::stoi(params[NUM_ESMS_PARAM]);
   const REAL secretionLow = std::stod(params[SECRETION_LOW_PARAM]);
   const REAL secretionHigh = std::stod(params[SECRETION_HIGH_PARAM]);
-  const REAL cytokineThreshold = std::stod(params[CYTOKINE_THRESHOLD_PARAM]);
+  const REAL ESMThreshold = std::stod(params[ESM_THRESHOLD_PARAM]);
   const REAL cellRadius = std::stod(params[CELL_RADIUS_PARAM]);
   const REAL ifGridSpacing = std::stod(params[IF_GRID_SPACING_PARAM]);
   const REAL dirichletBoundary = std::stod(params[DIRICHLET_BOUNDARY_PARAM]);
@@ -502,7 +502,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   const BOOL kappa = (params[KAPPA_PARAM] == "True");
   const BOOL enableSummary = (params[ENABLE_SUMMARY_PARAM] == "True");
   const S32 sourceDist = std::stoi(params[SOURCE_DIST_PARAM]);
-  const REAL cytokineNormalization = std::stod(params[CYTOKINE_NORMALIZATION_PARAM]);
+  const REAL ESMNormalization = std::stod(params[ESM_NORMALIZATION_PARAM]);
   const BOOL numericalAnalysis = (params[NUMERICAL_ANALYSIS_PARAM] == "True");
   const S32 cellsPerLayer = std::stoi(params[CELLS_PER_LAYER_PARAM]);
 
@@ -591,14 +591,14 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   format.betaInput = size;
   size += sizeof(betaInput);
 
-  format.alphaCytokines = size;
-  size += sizeof(alphaCytokines);
+  format.alphaESM = size;
+  size += sizeof(alphaESM);
 
-  format.betaCytokines = size;
-  size += sizeof(betaCytokines);
+  format.betaESM = size;
+  size += sizeof(betaESM);
 
-  format.numCytokines = size;
-  size += sizeof(numCytokines);
+  format.numESMs = size;
+  size += sizeof(numESMs);
 
   format.secretionLow = size;
   size += sizeof(secretionLow);
@@ -606,8 +606,8 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   format.secretionHigh = size;
   size += sizeof(secretionHigh);
 
-  format.cytokineThreshold = size;
-  size += sizeof(cytokineThreshold);
+  format.ESMThreshold = size;
+  size += sizeof(ESMThreshold);
 
   format.cellRadius = size;
   size += sizeof(cellRadius);
@@ -639,8 +639,8 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   format.sourceDist = size;
   size += sizeof(sourceDist);
 
-  format.cytokineNormalization = size;
-  size += sizeof(cytokineNormalization);
+  format.ESMNormalization = size;
+  size += sizeof(ESMNormalization);
 
   format.numericalAnalysis = size;
   size += sizeof(numericalAnalysis);
@@ -663,12 +663,12 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   memcpy(&(v_globalData[format.inputSignal]), &(inputSignal[0]), inputSignal.size() * sizeof(inputSignal[0]));
   memcpy(&(v_globalData[format.alphaInput]), &alphaInput, sizeof(alphaInput));
   memcpy(&(v_globalData[format.betaInput]), &betaInput, sizeof(betaInput));
-  memcpy(&(v_globalData[format.alphaCytokines]), &alphaCytokines, sizeof(alphaCytokines));
-  memcpy(&(v_globalData[format.betaCytokines]), &betaCytokines, sizeof(betaCytokines));
-  memcpy(&(v_globalData[format.numCytokines]), &numCytokines, sizeof(numCytokines));
+  memcpy(&(v_globalData[format.alphaESM]), &alphaESM, sizeof(alphaESM));
+  memcpy(&(v_globalData[format.betaESM]), &betaESM, sizeof(betaESM));
+  memcpy(&(v_globalData[format.numESMs]), &numESMs, sizeof(numESMs));
   memcpy(&(v_globalData[format.secretionLow]), &secretionLow, sizeof(secretionLow));
   memcpy(&(v_globalData[format.secretionHigh]), &secretionHigh, sizeof(secretionHigh));
-  memcpy(&(v_globalData[format.cytokineThreshold]), &cytokineThreshold, sizeof(cytokineThreshold));
+  memcpy(&(v_globalData[format.ESMThreshold]), &ESMThreshold, sizeof(ESMThreshold));
   memcpy(&(v_globalData[format.cellRadius]), &cellRadius, sizeof(cellRadius));
   memcpy(&(v_globalData[format.ifGridSpacing]), &ifGridSpacing, sizeof(ifGridSpacing));
   memcpy(&(v_globalData[format.dirichletBoundary]), &dirichletBoundary, sizeof(dirichletBoundary));
@@ -679,7 +679,7 @@ void ModelRoutine::initGlobal( Vector<U8>& v_globalData ) {
   memcpy(&(v_globalData[format.kappa]), &kappa, sizeof(kappa));
   memcpy(&(v_globalData[format.enableSummary]), &enableSummary, sizeof(enableSummary));
   memcpy(&(v_globalData[format.sourceDist]), &sourceDist, sizeof(sourceDist));
-  memcpy(&(v_globalData[format.cytokineNormalization]), &cytokineNormalization, sizeof(cytokineNormalization));
+  memcpy(&(v_globalData[format.ESMNormalization]), &ESMNormalization, sizeof(ESMNormalization));
   memcpy(&(v_globalData[format.numericalAnalysis]), &numericalAnalysis, sizeof(numericalAnalysis));
   memcpy(&(v_globalData[format.cellsPerLayer]), &cellsPerLayer, sizeof(cellsPerLayer));
 
@@ -707,12 +707,12 @@ void ModelRoutine::init( void ) {
   gInputSignal = (S32*)(&(g[f.inputSignal]));
   gAlphaInput = *((REAL*)(&(g[f.alphaInput])));
   gBetaInput = *((REAL*)(&(g[f.betaInput])));
-  gAlphaCytokines = *((REAL*)(&(g[f.alphaCytokines])));
-  gBetaCytokines = *((REAL*)(&(g[f.betaCytokines])));
-  gNumCytokines = *((S32*)(&(g[f.numCytokines])));
+  gAlphaESM = *((REAL*)(&(g[f.alphaESM])));
+  gBetaESM = *((REAL*)(&(g[f.betaESM])));
+  gNumESMs = *((S32*)(&(g[f.numESMs])));
   gSecretionLow = *((REAL*)(&(g[f.secretionLow])));
   gSecretionHigh = *((REAL*)(&(g[f.secretionHigh])));
-  gCytokineThreshold = *((REAL*)(&(g[f.cytokineThreshold])));
+  gESMThreshold = *((REAL*)(&(g[f.ESMThreshold])));
   gCellRadius = *((REAL*)(&(g[f.cellRadius])));
   gIfGridSpacing = *((REAL*)(&(g[f.ifGridSpacing])));
   gDirichletBoundary = *((REAL*)(&(g[f.dirichletBoundary])));
@@ -723,7 +723,7 @@ void ModelRoutine::init( void ) {
   gKappa = *((BOOL*)(&(g[f.kappa])));
   gEnableSummary = *((BOOL*)(&(g[f.enableSummary])));
   gSourceDist = *((S32*)(&(g[f.sourceDist])));
-  gCytokineNormalization = *((REAL*)(&(g[f.cytokineNormalization])));
+  gESMNormalization = *((REAL*)(&(g[f.ESMNormalization])));
   gNumericalAnalysis = *((BOOL*)(&(g[f.numericalAnalysis])));
   gCellsPerLayer = *((S32*)(&(g[f.cellsPerLayer])));
 

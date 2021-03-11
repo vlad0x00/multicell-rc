@@ -87,7 +87,7 @@ total_files = 0
 valid_files = 0
 
 # Save all data into the dictionary
-data = { 'Accuracy' : [], 'Lambda cytokines' : [] }
+data = { 'Accuracy' : [], 'Lambda ESM' : [] }
 
 # Iterate the results dir for output files
 for dirpath, dirnames, filenames in os.walk(join(this_dir, 'results')):
@@ -106,15 +106,15 @@ for dirpath, dirnames, filenames in os.walk(join(this_dir, 'results')):
             assert args_found
             # Load the arg values every time Testing accuracy is encountered for multiple iteration simulations
             for arg in vars(args):
-              argname = arg.replace('_', ' ').capitalize()
+              argname = arg.replace('_', ' ').replace('esm', 'ESM').capitalize()
               argval = getattr(args, arg)
               if argname in data:
                 data[argname].append(argval)
               else:
                 data[argname] = [ argval ]
 
-            lambda_cytokines = math.sqrt(data['Beta cytokines'][-1] / data['Alpha cytokines'][-1])
-            data['Lambda cytokines'].append(lambda_cytokines)
+            lambda_ESM = math.sqrt(data['Beta ESM'][-1] / data['Alpha ESM'][-1])
+            data['Lambda ESM'].append(lambda_ESM)
 
             accuracy = float(line.split()[2])
             assert 0.0 <= accuracy <= 1.0
@@ -125,8 +125,8 @@ for dirpath, dirnames, filenames in os.walk(join(this_dir, 'results')):
         if args_found and accuracy_found: valid_files += 1
 
 # These are unnecessary, as lambda can substitute for both
-data.pop('Alpha cytokines', None)
-data.pop('Beta cytokines', None)
+data.pop('Alpha ESM', None)
+data.pop('Beta ESM', None)
 
 print("Done!")
 print("Valid / total files: {} / {} ({}%)".format(valid_files, total_files, valid_files / total_files * 100))

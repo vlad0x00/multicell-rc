@@ -59,16 +59,16 @@ void ModelRoutine::updateSummaryVar( const VIdx& vIdx, const NbrUBAgentData& nbr
   /* MODEL START */
 
   if (gEnableSummary) {
-    CHECK(v_realVal.size() == (U32)((1 + gNumCytokines) * 3));
+    CHECK(v_realVal.size() == (U32)((1 + gNumESMs) * 3));
     CHECK(v_intVal.size() == 0);
 
     v_realVal[0] = nbrUBEnv.getPhi(0, 0, 0, 0);
     v_realVal[1] = nbrUBEnv.getPhi(0, 0, 0, 0);
     v_realVal[2] = nbrUBEnv.getPhi(0, 0, 0, 0);
 
-    for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
+    for (S32 esm = 0; esm < gNumESMs; esm++) {
       for (S32 i = 0; i < 3; i++) {
-        v_realVal[3 + cytokine * 3 + i] = nbrUBEnv.getPhi(0, 0, 0, 1 + cytokine);
+        v_realVal[3 + esm * 3 + i] = nbrUBEnv.getPhi(0, 0, 0, 1 + esm);
       }
     }
   }

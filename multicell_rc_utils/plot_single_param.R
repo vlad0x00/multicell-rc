@@ -17,9 +17,9 @@ results <- read.csv('results.csv')
 
 results$Tissue.depth <- factor(results$Tissue.depth)
 
-ggplot(results, aes_string(x=args[1], y="Accuracy", color="Tissue.depth")) +
+ggplot(results, aes_string(x=args[1], y="Accuracy")) +
   stat_summary(geom="line", fun=mean, linetype="dashed") +
-  #stat_summary(geom="point", fun=mean, color="red") +
+  stat_summary(geom="point", fun=mean, color="red") +
   geom_smooth(formula=y ~ x, method=stats::loess) +
   theme_bw() +
   theme(text = element_text(size = 26), axis.title.y = element_text(angle = 0))

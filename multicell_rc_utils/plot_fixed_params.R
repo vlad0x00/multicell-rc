@@ -10,7 +10,7 @@ results <- read.csv('results.csv', stringsAsFactors = FALSE)
 rownames(results) <- results[, 1]
 results <- results[, -1]
 results$Secretion.high <- factor(results$Secretion.high)
-results$Cytokines <- factor(results$Cytokines)
+results$ESMs <- factor(results$ESMs)
 
 cells <- paste(results$Cells, 'cells')
 cells_levels <- paste(unique(sort(results$Cells)), 'cells')

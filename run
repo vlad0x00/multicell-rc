@@ -29,7 +29,7 @@ VARF_FILE = os.path.join(OUTPUT_DIR, "varf")
 TT_FILE = os.path.join(OUTPUT_DIR, "tt")
 GENE_INITIAL_STATES_FILE = os.path.join(OUTPUT_DIR, "gene_initial_states")
 DOT_FILE = os.path.join(OUTPUT_DIR, "gene_networks.dot")
-NUM_GENES = 1 + args.cytokines * 2 + args.genes
+NUM_GENES = 1 + args.esms * 2 + args.genes
 NUM_CELLS = args.cells
 NUM_STRAINS = args.strains
 if args.tissue_depth > 0 and NUM_CELLS < args.tissue_depth:
@@ -42,13 +42,13 @@ DIRICHLET_BOUNDARY = 100_000
 INPUT_THRESHOLD = -1.0 # To be numerically calculated
 ALPHA_INPUT = 0.2
 BETA_INPUT = 5
-ALPHA_CYTOKINES = args.alpha_cytokines
-BETA_CYTOKINES = args.beta_cytokines
-NUM_CYTOKINES = args.cytokines
-INPUT_CONNECTIONS = math.ceil((NUM_GENES - (1 + NUM_CYTOKINES)) * args.input_fraction)
+ALPHA_ESM = args.alpha_esm
+BETA_ESM = args.beta_esm
+NUM_ESMS = args.esms
+INPUT_CONNECTIONS = math.ceil((NUM_GENES - (1 + NUM_ESMS)) * args.input_fraction)
 SECRETION_LOW = args.secretion_low
 SECRETION_HIGH = args.secretion_high
-CYTOKINE_THRESHOLD = args.cytokine_threshold
+ESM_THRESHOLD = args.esm_threshold
 CELL_RADIUS = args.cell_radius
 IF_GRID_SPACING = args.voxel_length
 NUM_OUTPUT_GENES = math.ceil(args.genes * args.output_gene_fraction)
@@ -76,11 +76,11 @@ assert X_LAYERS * Y_LAYERS * Z_LAYERS >= NUM_CELLS
 CELLS_PER_LAYER = math.ceil(NUM_CELLS / Z_LAYERS)
 UNIVERSE_LENGTH = 1 + TISSUE_DEPTH + 1
 UNIVERSE_WIDTH = 1 + max(X_LAYERS, Y_LAYERS) + 1
-CYTOKINE_NORMALIZATION_NUM_GENES = 3
-CYTOKINE_NORMALIZATION_UNIVERSE_SIZE = 20
-CYTOKINE_NORMALIZATION_SIMULATION_STEPS = 2
-CYTOKINE_NORMALIZATION_INPUT_SIGNAL_LENGTH = CYTOKINE_NORMALIZATION_SIMULATION_STEPS + 1
-CYTOKINE_NORMALIZATION = -1.0 # To be numerically calculated
+ESM_NORMALIZATION_NUM_GENES = 3
+ESM_NORMALIZATION_UNIVERSE_SIZE = 20
+ESM_NORMALIZATION_SIMULATION_STEPS = 2
+ESM_NORMALIZATION_INPUT_SIGNAL_LENGTH = ESM_NORMALIZATION_SIMULATION_STEPS + 1
+ESM_NORMALIZATION = -1.0 # To be numerically calculated
 
 assert SIMULATION_STEPS > WARMUP_STEPS
 assert CELL_RADIUS <= IF_GRID_SPACING
@@ -122,14 +122,14 @@ print("Running numerical analysis for parameters... ", end='', flush=True)
 t1 = time.time()
 
 # Arguments passed to Biocellion directly
-CYTOKINE_NORMALIZATION_ADDITIONAL_PARAMS = str(CYTOKINE_NORMALIZATION_NUM_GENES) + " 1 1 " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " 1 " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " 1 1 1 " + str(KAPPA) + " " + str(True) + " " + str(CYTOKINE_NORMALIZATION_UNIVERSE_SIZE // 2) + " 1.0 " + str(True) + " " + str(CELLS_PER_LAYER)
+ESM_NORMALIZATION_ADDITIONAL_PARAMS = str(ESM_NORMALIZATION_NUM_GENES) + " 1 1 " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_ESM) + " " + str(BETA_ESM) + " 1 " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(ESM_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " 1 1 1 " + str(KAPPA) + " " + str(True) + " " + str(ESM_NORMALIZATION_UNIVERSE_SIZE // 2) + " 1.0 " + str(True) + " " + str(CELLS_PER_LAYER)
 
 # Remove the output dir of a previous run, if any, and create a new one
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
 os.makedirs(OUTPUT_DIR)
 
-multicell_rc_gen.generate_cytokine_normalization_files(CYTOKINE_NORMALIZATION_NUM_GENES, NV_FILE, VARF_FILE, TT_FILE, INPUT_SIGNAL_FILE, CYTOKINE_NORMALIZATION_INPUT_SIGNAL_LENGTH, GENE_INITIAL_STATES_FILE)
-multicell_rc_gen.make_params_xml(PARAMS_FILE, OUTPUT_DIR, CYTOKINE_NORMALIZATION_SIMULATION_STEPS, CYTOKINE_NORMALIZATION_ADDITIONAL_PARAMS, THREADS, CYTOKINE_NORMALIZATION_UNIVERSE_SIZE, CYTOKINE_NORMALIZATION_UNIVERSE_SIZE)
+multicell_rc_gen.generate_esm_normalization_files(ESM_NORMALIZATION_NUM_GENES, NV_FILE, VARF_FILE, TT_FILE, INPUT_SIGNAL_FILE, ESM_NORMALIZATION_INPUT_SIGNAL_LENGTH, GENE_INITIAL_STATES_FILE)
+multicell_rc_gen.make_params_xml(PARAMS_FILE, OUTPUT_DIR, ESM_NORMALIZATION_SIMULATION_STEPS, ESM_NORMALIZATION_ADDITIONAL_PARAMS, THREADS, ESM_NORMALIZATION_UNIVERSE_SIZE, ESM_NORMALIZATION_UNIVERSE_SIZE)
 
 os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE)
 t2 = time.time()
@@ -145,9 +145,9 @@ input_vals = nested_dict(3, float)
 with open(BIOCELLION_OUTPUT_FILE, 'r') as f:
   counter = 0
   for line in f:
-    if 'cytokine0_max' in line:
+    if 'esm0_max' in line:
       counter += 1
-      if counter == 2: CYTOKINE_NORMALIZATION = float(line.split(':')[1])
+      if counter == 2: ESM_NORMALIZATION = float(line.split(':')[1])
     elif 'Input signal val' in line:
       tokens = line.split()
       x, y, z = [ int(coord) for coord in tokens[3][1:-1].split(',') ]
@@ -172,12 +172,12 @@ for x in input_vals.keys():
 
 INPUT_THRESHOLD = (input_vals[0][0][SOURCE_DIST - 1 + INPUT_SIGNAL_DEPTH] + input_vals[0][0][SOURCE_DIST - 1 + INPUT_SIGNAL_DEPTH + 1]) / 2
 assert INPUT_THRESHOLD > 0.0
-assert CYTOKINE_NORMALIZATION > 0.0
+assert ESM_NORMALIZATION > 0.0
 
 print("Tissue shape: {} x {} x {}".format(X_LAYERS, Y_LAYERS, Z_LAYERS))
 
 # Arguments passed to Biocellion directly
-ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_STRAINS) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_CYTOKINES) + " " + str(BETA_CYTOKINES) + " " + str(NUM_CYTOKINES) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(CYTOKINE_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " " + str(Z_LAYERS) + " " + str(Y_LAYERS) + " " + str(X_LAYERS) + " " + str(KAPPA) + " " + str(SUMMARY) + " " + str(SOURCE_DIST) + " " + str(CYTOKINE_NORMALIZATION) + " " + str(False) + " " + str(CELLS_PER_LAYER)
+ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_STRAINS) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_ESM) + " " + str(BETA_ESM) + " " + str(NUM_ESMS) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(ESM_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " " + str(Z_LAYERS) + " " + str(Y_LAYERS) + " " + str(X_LAYERS) + " " + str(KAPPA) + " " + str(SUMMARY) + " " + str(SOURCE_DIST) + " " + str(ESM_NORMALIZATION) + " " + str(False) + " " + str(CELLS_PER_LAYER)
 
 # Remove the output dir of a previous run, if any, and create a new one
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
@@ -187,9 +187,9 @@ os.makedirs(OUTPUT_DIR)
 if NEW:
   print("Generating initial gene network(s) state(s), functions, and input signal... ", end='', flush=True)
   t1 = time.time()
-  multicell_rc_gen.generate_gene_functions(NUM_STRAINS, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_CYTOKINES, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
+  multicell_rc_gen.generate_gene_functions(NUM_STRAINS, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_ESMS, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
   multicell_rc_gen.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
-  multicell_rc_gen.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_CYTOKINES, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
+  multicell_rc_gen.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_ESMS, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
   t2 = time.time()
   print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 # Generate the Biocellion XML

@@ -144,23 +144,23 @@ void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junction
 
   const auto cellType = state.getType();
 
-  // Determine input signal and cytokine levels in the cell's surroundings
+  // Determine input signal and ESM levels in the cell's surroundings
   REAL aaaRatio[3][3][3];
   REAL* avgPhi = nullptr;
-  avgPhi = new REAL[1 + gNumCytokines];
+  avgPhi = new REAL[1 + gNumESMs];
   avgPhi[0] = 0.0;
-  for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-    avgPhi[1 + cytokine] = 0.0;
+  for (S32 esm = 0; esm < gNumESMs; esm++) {
+    avgPhi[1 + esm] = 0.0;
   }
   // Calculate the cell overlap with neighbouring voxels
   Util::computeSphereUBVolOvlpRatio(SPHERE_UB_VOL_OVLP_RATIO_MAX_LEVEL, vOffset, state.getRadius(), aaaRatio);
-  // Iterate the surrounding voxels and sum up phi (input/cytokine levels)
+  // Iterate the surrounding voxels and sum up phi (input/ESM levels)
   for(S32 i = -1 ; i <= 1; i++) {
     for(S32 j = -1 ; j <= 1; j++) {
       for(S32 k = -1 ; k <= 1; k++) {
         avgPhi[0] += nbrUBEnv.getPhi(i, j, k, 0) * aaaRatio[i + 1][j + 1][k + 1];
-        for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-          avgPhi[1 + cytokine] += nbrUBEnv.getPhi(i, j, k, 1 + cytokine) * aaaRatio[i + 1][j + 1][k + 1];
+        for (S32 esm = 0; esm < gNumESMs; esm++) {
+          avgPhi[1 + esm] += nbrUBEnv.getPhi(i, j, k, 1 + esm) * aaaRatio[i + 1][j + 1][k + 1];
         }
       }
     }
@@ -173,19 +173,19 @@ void ModelRoutine::adjustSpAgent( const VIdx& vIdx, const JunctionData& junction
   newBools.push_back((avgPhi[0] > gInputThreshold) ? 1 : 0);
   state.setBoolVal(0, newBools.back());
 
-  // Push new cytokine input gene values and update them immediately for internal genes
-  for (S32 cytokine = 0; cytokine < gNumCytokines; cytokine++) {
-    if (avgPhi[1 + cytokine] / gCytokineNormalization > gCytokineThreshold) {
+  // Push new ESM input gene values and update them immediately for internal genes
+  for (S32 esm = 0; esm < gNumESMs; esm++) {
+    if (avgPhi[1 + esm] / gESMNormalization > gESMThreshold) {
       newBools.push_back(1);
     } else {
       newBools.push_back(0);
     }
-    CHECK(S32(newBools.size() - 1) == 1 + cytokine);
+    CHECK(S32(newBools.size() - 1) == 1 + esm);
     state.setBoolVal(newBools.size() - 1, newBools.back());
   }
 
-  // Update cytokine output and internal genes
-  for (S32 gene = 1 + gNumCytokines; gene < gNumGenes; gene++) {
+  // Update ESM output and internal genes
+  for (S32 gene = 1 + gNumESMs; gene < gNumGenes; gene++) {
     const auto nv = getNv(cellType)[gene];
     CHECK(nv >= 0);
 

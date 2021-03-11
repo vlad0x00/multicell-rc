@@ -57,7 +57,7 @@ def make_network_dot(num_genes, varf, dot_file):
       else:
         subprocess.run([ 'dot', '-T', 'png', dot_file ], stdout=f)
 
-def generate_cytokine_normalization_files(num_genes, nv_file, varf_file, tt_file, signal_file, signal_len, state_file):
+def generate_ESM_normalization_files(num_genes, nv_file, varf_file, tt_file, signal_file, signal_len, state_file):
   nv = [ np.zeros(num_genes, dtype=np.int64) ]
   varf = [ [ [ 0 ] for _ in range(num_genes) ] ]
   tt = [ [ [ 0 ] for _ in range(num_genes) ] ]
@@ -93,7 +93,7 @@ def generate_cytokine_normalization_files(num_genes, nv_file, varf_file, tt_file
     f.write(' '.join([str(x) for x in state]))
     f.write('\n')
 
-def generate_gene_functions(num_strains, num_genes, connectivity, input_connections, num_cytokines, nv_file, varf_file, tt_file, dot_file):
+def generate_gene_functions(num_strains, num_genes, connectivity, input_connections, num_ESMs, nv_file, varf_file, tt_file, dot_file):
   """
     Generate the truth tables for genes for each strain
   """
@@ -115,25 +115,25 @@ def generate_gene_functions(num_strains, num_genes, connectivity, input_connecti
     nv.append(np.zeros(num_genes, dtype=np.int32))
 
     # Ensure the number of edges corresponds to the average input degree of nodes
-    total_edges = math.ceil((num_genes - 1 - num_cytokines) * connectivity)
+    total_edges = math.ceil((num_genes - 1 - num_ESMs) * connectivity)
 
     # Number of possible edges excluding the input gene
-    possible_edges_no_input = (num_genes - 1 - num_cytokines) ** 2
+    possible_edges_no_input = (num_genes - 1 - num_ESMs) ** 2
     edges_no_input = [ (0, 0) ] * possible_edges_no_input
     idx = 0
     for i in range(1, num_genes):
       for j in range(1, num_genes):
-        if j < (1 + num_cytokines): continue
-        if (1 + num_cytokines) <= i < (1 + 2 * num_cytokines): continue
+        if j < (1 + num_ESMs): continue
+        if (1 + num_ESMs) <= i < (1 + 2 * num_ESMs): continue
         edges_no_input[idx] = (i, j)
         idx += 1
     assert idx == possible_edges_no_input
 
     # Number of possible edges from the input gene
-    possible_edges_input = num_genes - 1 - num_cytokines
+    possible_edges_input = num_genes - 1 - num_ESMs
     edges_input = [ (0, 0) ] * possible_edges_input
     idx = 0
-    for j in range(1 + num_cytokines, num_genes):
+    for j in range(1 + num_ESMs, num_genes):
       edges_input[idx] = (0, j)
       idx += 1
     assert idx == possible_edges_input
@@ -151,7 +151,7 @@ def generate_gene_functions(num_strains, num_genes, connectivity, input_connecti
       nv[-1][edge[1]] += 1
 
     # Ensure the average in-degree condition is satisfied
-    assert (connectivity - 0.01) < (sum(nv[-1]) / (len(nv[-1]) - num_cytokines - 1)) < (connectivity + 0.01)
+    assert (connectivity - 0.01) < (sum(nv[-1]) / (len(nv[-1]) - num_ESMs - 1)) < (connectivity + 0.01)
 
     # Update gene variables
     varf.append([])
@@ -207,7 +207,7 @@ def generate_input_signal(signal_len, signal_file):
   with open(signal_file, 'w') as f:
     f.write(' '.join([str(x) for x in arr]))
 
-def generate_gene_initial_states(num_genes, num_cells, num_cytokines, input_signal_file, state_file):
+def generate_gene_initial_states(num_genes, num_cells, num_ESMs, input_signal_file, state_file):
   """
     Generate random initial states for genes for all cells
   """
@@ -218,7 +218,7 @@ def generate_gene_initial_states(num_genes, num_cells, num_cytokines, input_sign
     for _ in range(num_cells):
       state = np.random.randint(2, size=num_genes)
       state[0] = input_signal[0] # 0
-      for i in range(num_cytokines):
+      for i in range(num_ESMs):
         state[i + 1] = 0 # Initial substance levels are 0, otherwise grid phi initialization is non-trivial
       f.write(' '.join([str(x) for x in state]))
       f.write('\n')

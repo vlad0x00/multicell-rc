@@ -47,7 +47,7 @@ def partial_corr(variables):
     pcorr[i, i] = 1.0
     pvals[i, i] = 0.0
     for j in range(i + 1, num_vars):
-      idx = np.ones(num_vars, dtype=np.bool)
+      idx = np.ones(num_vars, dtype=bool)
       idx[i] = False
       idx[j] = False
 
