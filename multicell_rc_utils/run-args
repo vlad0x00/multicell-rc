@@ -106,7 +106,8 @@ for dirpath, dirnames, filenames in os.walk(join(this_dir, 'results')):
             assert args_found
             # Load the arg values every time Testing accuracy is encountered for multiple iteration simulations
             for arg in vars(args):
-              argname = arg.replace('_', ' ').replace('esm', 'ESM').capitalize()
+              argname = arg.replace('_', ' ').replace('esm', 'ESM')
+              argname = argname[0].upper() + argname[1:]
               argval = getattr(args, arg)
               if argname in data:
                 data[argname].append(argval)
