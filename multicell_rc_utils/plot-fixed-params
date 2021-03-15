@@ -12,6 +12,7 @@ window_levels <- nlevels(factor(results$Window.size))
 results %>% ggplot(aes(x=Accuracy)) +
   geom_histogram(binwidth=0.025) +
   theme_bw() +
-  theme(text = element_text(size = 26), axis.title.y = element_text(angle = 0)) +
+  theme(text = element_text(size = 26)) +
+  ylab("Count") +
   facet_wrap(~ Function + Window.size, ncol=window_levels)
 ggsave('plot.png', width = 20, height = 15)

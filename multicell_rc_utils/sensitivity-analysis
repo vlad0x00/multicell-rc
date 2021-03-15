@@ -117,7 +117,7 @@ for i, param in enumerate(results_of_interest.columns):
 
   jointplot = sns.jointplot(data=datapoints, x='x', y='y', kind='reg', height=8, joint_kws={ 'line_kws' : {'color' : '#CF0044'} })
   jointplot.ax_joint.set_xlabel("Residual " + param)
-  jointplot.ax_joint.set_ylabel("Residual Accuracy", rotation=0, labelpad=30)
+  jointplot.ax_joint.set_ylabel("Residual Accuracy")
   plt.tight_layout()
   plt.savefig(param.replace(' ', '_').lower() + "_prcc.png")
 
@@ -125,7 +125,7 @@ for i, param in enumerate(results_of_interest.columns):
 
   jointplot = sns.jointplot(data=datapoints, x='x', y='y', kind='reg', height=8, joint_kws={ 'line_kws' : {'color' : '#CF0044'} })
   jointplot.ax_joint.set_xlabel(param)
-  jointplot.ax_joint.set_ylabel("Accuracy", rotation=0, labelpad=30)
+  jointplot.ax_joint.set_ylabel("Accuracy")
   plt.tight_layout()
   plt.savefig(param.replace(' ', '_').lower() + "_corr.png")
 sensitivity_results.sort_values(by=['Correlation'], ascending=False, inplace=True, ignore_index=True)
@@ -143,7 +143,7 @@ sns.set_theme(font_scale=2.1, style='white')
 fig, ax = plt.subplots()
 fig.set_size_inches(table_width / 100.0, 7.0)
 sns.histplot(data=results, x='Accuracy', ax=ax, bins=50, stat='probability')
-ax.set_ylabel("Fraction", rotation=0, labelpad=70)
+ax.set_ylabel("Fraction")
 fig.tight_layout()
 fig.savefig("sensitivity_analysis_accuracies.png")
 plt.close(fig)
