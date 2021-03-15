@@ -6,15 +6,7 @@ library(dplyr)
 library(grid)
 library(gridExtra)
 
-results <- read.csv('results.csv', stringsAsFactors = FALSE)
-rownames(results) <- results[, 1]
-results <- results[, -1]
-results$Secretion.high <- factor(results$Secretion.high)
-results$ESMs <- factor(results$ESMs)
-
-cells <- paste(results$Cells, 'cells')
-cells_levels <- paste(unique(sort(results$Cells)), 'cells')
-results$Cells <- factor(cells, levels = cells_levels)
+results <- read.csv('results.csv')
 window_levels <- nlevels(factor(results$Window.size))
 
 results %>% ggplot(aes(x=Accuracy)) +
