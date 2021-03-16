@@ -262,7 +262,7 @@ void ModelRoutine::updatePhiPDEInfo( Vector<PDEInfo>& v_phiPDEInfo ) {
   pdeInfo.callAdjustRHSTimeDependentLinear = false;
 
   gridPhiInfo.elemIdx = 0;
-  gridPhiInfo.name = "input_substance";
+  gridPhiInfo.name = "input_molecules";
   gridPhiInfo.syncMethod = VAR_SYNC_METHOD_DELTA;
   gridPhiInfo.aa_bcType[0][0] = BC_TYPE_NEUMANN_CONST;
   gridPhiInfo.aa_bcVal[0][0] = 0.0;
@@ -349,7 +349,7 @@ void ModelRoutine::updateIfGridModelVarInfo( Vector<IfGridModelVarInfo>& v_ifGri
   v_ifGridModelRealInfo.clear();
   IfGridModelVarInfo info;
 
-  info.name = "input_substance_rhs";
+  info.name = "input_molecules_rhs";
   info.syncMethod = VAR_SYNC_METHOD_DELTA;
   v_ifGridModelRealInfo.push_back(info);
 

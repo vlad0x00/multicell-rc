@@ -203,7 +203,7 @@ def generate_input_signal(signal_len, signal_file):
     Generate a random binary signal.
   """
   arr = np.random.randint(2, size=signal_len)
-  arr[0] = 0 # Initial substance level is 0, otherwise grid phi initialization is non-trivial
+  arr[0] = 0 # Initial molecule level is 0, otherwise grid phi initialization is non-trivial
   with open(signal_file, 'w') as f:
     f.write(' '.join([str(x) for x in arr]))
 
@@ -219,7 +219,7 @@ def generate_gene_initial_states(num_genes, num_cells, num_ESMs, input_signal_fi
       state = np.random.randint(2, size=num_genes)
       state[0] = input_signal[0] # 0
       for i in range(num_ESMs):
-        state[i + 1] = 0 # Initial substance levels are 0, otherwise grid phi initialization is non-trivial
+        state[i + 1] = 0 # Initial molecule levels are 0, otherwise grid phi initialization is non-trivial
       f.write(' '.join([str(x) for x in state]))
       f.write('\n')
 

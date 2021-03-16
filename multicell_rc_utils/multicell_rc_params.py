@@ -27,7 +27,7 @@ def parse_args(args=None):
   parser.add_argument('-g', '--genes', type=positive_int, default=100, help="Number of (internal) genes per cell.")
   parser.add_argument('-c', '--cells', type=positive_int, default=12*12*12, help="Number of cells in the simulation.")
   parser.add_argument('-p', '--strains', type=positive_int, default=10, help="Number of strains in the simulation.")
-  parser.add_argument('-D', '--tissue-depth', type=nonnegative_int, default=3, help="Depth of tissue, in square cell layers, from the input substance source to the output cell layer. If zero, cells are arranged in a cube.")
+  parser.add_argument('-D', '--tissue-depth', type=nonnegative_int, default=3, help="Depth of tissue, in square cell layers, from the input source to the output cell layer. If zero, cells are arranged in a cube.")
   parser.add_argument('-G', '--output-gene-fraction', type=fraction_type, default=1.0, help="Fraction of (internal) genes used for output.")
   parser.add_argument('-C', '--output-cell-fraction', type=fraction_type, default=1.0/3.0, help="Fraction of cells used for output.")
   parser.add_argument('-P', '--output-strain-fraction', type=fraction_type, default=1.0, help="Fraction of strains used for output.")
