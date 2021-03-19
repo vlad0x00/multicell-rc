@@ -1,6 +1,6 @@
 # Multicellular Reservoir Computer
 
-A simulation of a reservoir computer comprised of of a community of cells.
+A simulation of a reservoir computer comprised of a community of cells.
 
 Cells are arranged in square layers along the input signal source axis. Throughout the simulation, the input signal comes from one face of the simulation space, varying between low and high levels and stimulating the cell community. The cells that receive the signal communicate with other cells using extracellular signaling molecules (ESMs) and propagate the information through further layers. A number of cells on the other side are used as output, and LASSO regression is trained on their gene values.
 
