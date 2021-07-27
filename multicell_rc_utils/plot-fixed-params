@@ -5,14 +5,18 @@ library(reshape2)
 library(dplyr)
 library(grid)
 library(gridExtra)
+library(stringi)
 
 results <- read.csv('results.csv')
 window_levels <- nlevels(factor(results$Window.size))
 
+results$Function.text <- paste(stri_trans_totitle(results$Function), "function", sep = " ")
+results$Window.size.text <- paste("Window size", results$Window.size, sep = " ")
+
 results %>% ggplot(aes(x=Accuracy)) +
   geom_histogram(binwidth=0.025) +
   theme_bw() +
-  theme(text = element_text(size = 26)) +
-  ylab("Count") +
-  facet_wrap(~ Function + Window.size, ncol=window_levels)
-ggsave('plot.png', width = 20, height = 15)
+  theme(text = element_text(size = 14)) +
+  ylab("Experiments") +
+  facet_grid(Function.text ~ results$Window.size.text) #, ncol=window_levels)
+ggsave('plot.png', width = 7.5, height = 5.625)

@@ -30,4 +30,4 @@ results %>% ggplot(aes_string(x=args[1], y=args[2], fill="Accuracy", label="Accu
   geom_text() +
   theme_bw() +
   theme(text = element_text(size = 26), axis.title.y = element_text(angle = 0))
-ggsave('plot.png', width = 20, height = 15)
+ggsave('plot.png', width = 10, height = 7.5)

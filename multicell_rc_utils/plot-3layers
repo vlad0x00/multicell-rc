@@ -1,0 +1,26 @@
+#!/bin/bash
+
+ln -sf results-fixed-params.csv results.csv
+./plot-fixed-params
+cp -f plot.png plot-fixed-params.png
+
+ln -sf results-sensitivity-analysis.csv results.csv
+./sensitivity-analysis
+
+ln -sf results-genes.csv results.csv
+./plot-single-param Genes firstcol "A)"
+cp -f plot.png plot-genes.png
+
+ln -sf results-cells.csv results.csv
+./plot-single-param Cells secondcol "B)"
+cp -f plot.png plot-cells.png
+
+ln -sf results-strains.csv results.csv
+./plot-single-param Strains firstcol "C)"
+cp -f plot.png plot-strains.png
+
+ln -sf results-esms.csv results.csv
+./plot-single-param ESMs secondcol "D)"
+cp -f plot.png plot-esms.png
+
+montage -mode concatenate -tile 2x2 plot-genes.png plot-cells.png plot-strains.png plot-esms.png -resize 75% plot-3layers.png

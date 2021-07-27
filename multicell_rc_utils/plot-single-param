@@ -8,19 +8,45 @@ library(gridExtra)
 library(stringr)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 1) {
+if (length(args) < 1) {
   cat("Missing param to plot.")
   q()
 }
 
 results <- read.csv('results.csv')
 
-results$Tissue.depth <- factor(results$Tissue.depth)
+errorbar.width <- (max(results[[args[1]]]) - min(results[[args[1]]])) / 20.0
 
-ggplot(results, aes_string(x=args[1], y="Accuracy")) +
-  stat_summary(geom="line", fun=mean, linetype="dashed") +
-  stat_summary(geom="point", fun=mean, color="red") +
-  geom_smooth(formula=y ~ x, method=stats::loess) +
+acc_idx <- grep("Accuracy", colnames(results))
+
+results.mean <- aggregate(results[, acc_idx], list(results[[args[1]]]), mean)
+results.sd <- aggregate(results[, acc_idx], list(results[[args[1]]]), sd)
+
+colnames(results.mean) <- c(args[1], "Accuracy.mean")
+colnames(results.sd) <- c(args[1], "Accuracy.sd")
+
+results <- merge(results.mean, results.sd, by = args[1])
+
+g <- ggplot(results, aes_string(x = args[1], y = "Accuracy.mean")) +
+  geom_errorbar(aes(ymin = Accuracy.mean - Accuracy.sd, ymax = Accuracy.mean + Accuracy.sd), width = errorbar.width) +
+  geom_smooth(formula = y ~ x, method=stats::loess, size = 1.0, se = FALSE) +
   theme_bw() +
-  theme(text = element_text(size = 26))
-ggsave('plot.png', width = 20, height = 15)
+  ylab("Accuracy") +
+  ylim(0.415, 1.03) +
+  theme(text = element_text(size = 15))
+
+if (length(args) >= 2 && args[2] == 'secondcol') {
+  g <- g + ylab("") + theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+}
+
+if (length(args) >= 3) {
+  x <- 0
+  if (args[3] == 'A)') {
+    x <- 20
+  } else if (args[3] == 'C)') {
+    x <- 1
+  }
+  g <- g + annotate("text", x = x, y = 1.02, label = args[3], size = 6)
+}
+
+ggsave('plot.png', width = 5, height = 4.5)
