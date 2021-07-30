@@ -10,3 +10,10 @@ multicell_rc_utils/Rplots.pdf
 multicell_rc_utils/*_prcc.png
 multicell_rc_utils/*_corr.png
 multicell_rc_utils/sensitivity_analysis.png
+multicell_rc_utils/plot-3layers.png
+multicell_rc_utils/plot-cells.png
+multicell_rc_utils/plot-esms.png
+multicell_rc_utils/plot-fixed-params.png
+multicell_rc_utils/plot-genes.png
+multicell_rc_utils/plot-strains.png
+multicell_rc_utils/results*.csv
