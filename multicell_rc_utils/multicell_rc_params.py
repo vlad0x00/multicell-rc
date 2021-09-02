@@ -7,21 +7,21 @@ from functools import partial
 
 # Parse the arguments
 def parse_args(args=None):
-  def int_range(strval, minval=0, maxval=float('inf')):
+  def int_range(strval, minval=0, maxval=2**64):
     val = int(strval)
     if val < minval or val > maxval: raise argparse.ArgumentTypeError(f"{val} is invalid, please input an integer >{minval} and <{maxval}.")
     return val
 
-  def float_range(strval, minval=0, maxval=float('inf')):
+  def float_range(strval, minval=0.0, maxval=float('inf')):
     val = float(strval)
-    if val < minval or val > maxval: raise argparse.ArgumentTypeError(f"{val} is invalid, please input an integer >={minval} and <={maxval}.")
+    if val < minval or val > maxval: raise argparse.ArgumentTypeError(f"{val} is invalid, please input a float >={minval} and <={maxval}.")
     return val
 
   fraction_type = partial(float_range, minval=0.0, maxval=1.0)
   nonnegative_int = partial(int_range, minval=0)
   positive_int = partial(int_range, minval=1)
-  nonnegative_float = partial(int_range, minval=0.0)
-  positive_float = partial(int_range, minval=1.0)
+  nonnegative_float = partial(float_range, minval=0.0)
+  oneplus_float = partial(float_range, minval=1.0)
 
   parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument('-g', '--genes', type=positive_int, default=100, help="Number of (reservoir) genes per cell.")
@@ -32,7 +32,7 @@ def parse_args(args=None):
   parser.add_argument('-C', '--output-cell-fraction', type=fraction_type, default=1.0/3.0, help="Fraction of cells used for output.")
   parser.add_argument('-P', '--output-strain-fraction', type=fraction_type, default=1.0, help="Fraction of strains used for output.")
   parser.add_argument('-o', '--output-cells-random', action='store_true', help="Use random cells from anywhere in the tissue for LASSO training instead of only from the end.")
-  parser.add_argument('-k', '--in-degree', type=positive_float, default=2.0, help="Average node in-degree of gene network(s).")
+  parser.add_argument('-k', '--in-degree', type=oneplus_float, default=2.0, help="Average node in-degree of gene network(s).")
   parser.add_argument('-l', '--input-fraction', type=fraction_type, default=0.5, help="Fraction of nodes connected to the input signal.")
   parser.add_argument('-I', '--input-signal-depth', type=nonnegative_int, default=1, help="How many layers of cells are reached by the input signal.")
   parser.add_argument('-a', '--alpha-esm', type=nonnegative_float, default=1.0/45.0, help="Molecular decay rate of ESMs.")
@@ -41,8 +41,8 @@ def parse_args(args=None):
   parser.add_argument('-L', '--secretion-low', type=nonnegative_float, default=1.0, help="Basal ESM secretion when the gene is off.")
   parser.add_argument('-H', '--secretion-high', type=nonnegative_float, default=5.0, help="ESM secretion when the gene is on.")
   parser.add_argument('-t', '--esm-threshold', type=nonnegative_float, default=11.5, help="ESM threshold to turn a gene on. Value is relative to basal secretion.")
-  parser.add_argument('-r', '--cell-radius', type=positive_float, default=10.0, help="Cell radius.")
-  parser.add_argument('-v', '--voxel-length', type=positive_float, default=20.0, help="Simulation space voxel edge length.")
+  parser.add_argument('-r', '--cell-radius', type=oneplus_float, default=10.0, help="Cell radius.")
+  parser.add_argument('-v', '--voxel-length', type=oneplus_float, default=20.0, help="Simulation space voxel edge length.")
   parser.add_argument('-T', '--timesteps', type=positive_int, default=1000, help="Number of simulation timesteps.")
   parser.add_argument('-W', '--warmup-timesteps', type=nonnegative_int, default=100, help="Number of initial simulation timesteps to exclude from training.")
   parser.add_argument('-d', '--delay', type=nonnegative_int, default=2, help="Step delay between input signal and output layer prediction.")
