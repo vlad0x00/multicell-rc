@@ -13,10 +13,11 @@ window_levels <- nlevels(factor(results$Window.size))
 results$Function.text <- paste(stri_trans_totitle(results$Function), "function", sep = " ")
 results$Window.size.text <- paste("Window size", results$Window.size, sep = " ")
 
-results %>% ggplot(aes(x=Accuracy)) +
-  geom_histogram(binwidth=0.025) +
+results %>% ggplot(aes(x = Accuracy, fill = System)) +
+  geom_histogram(binwidth = 0.025, alpha=0.5, position="identity") +
+  scale_fill_manual(values=c("blue", "grey50")) +
   theme_bw() +
-  theme(text = element_text(size = 14)) +
+  theme(text = element_text(size = 14), panel.spacing.x = unit(4, "mm"), panel.spacing.y = unit(4, "mm")) +
   ylab("Experiments") +
   facet_grid(Function.text ~ results$Window.size.text) #, ncol=window_levels)
-ggsave('plot.png', width = 7.5, height = 5.625)
+ggsave('plot.png', width = 10.0, height = 5.625)

@@ -33,9 +33,9 @@ g <- ggplot(results, aes_string(x = args[1], y = "Accuracy.mean")) +
   theme_bw() +
   ylab("Accuracy") +
   ylim(0.415, 1.03) +
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 21))
 
-if (length(args) >= 2 && args[2] == 'secondcol') {
+if (length(args) >= 2 && args[2] == 'hideacc') {
   g <- g + ylab("") + theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
 }
 
@@ -49,4 +49,4 @@ if (length(args) >= 3) {
   g <- g + annotate("text", x = x, y = 1.02, label = args[3], size = 6)
 }
 
-ggsave('plot.png', width = 5, height = 4.5)
+ggsave('plot.png', width = 5, height = 5)
