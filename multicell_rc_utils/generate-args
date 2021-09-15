@@ -60,7 +60,7 @@ if cli_args.analysis == 'sensitivity_analysis':
       int : np.int64,
       float : np.float64,
       np.float64 : np.float64,
-      str : np.str
+      str : str
     }
     args[param_prefix] = np.zeros(cli_args.num_samples, dtype=types[param_type])
 
