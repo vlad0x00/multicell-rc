@@ -42,10 +42,10 @@ if cli_args.analysis == 'sensitivity_analysis':
     [ "--input-signal-depth",        [ 1, 15        ],                                                 ],
     [ "--alpha-esm",           [ 2.5, 30.0    ], lambda x : 5.0 / (x ** 2)                       ],
     [ "--esms",                 [ 0, 20        ],                                                 ],
-    [ "--esm-threshold",        [ 1.0, 100.0   ],                                                 ],
+    [ "--esm-threshold",        [ 10.0, 100.0   ],                                                 ],
     [ "--delay",                     [ 0, 0         ],                                                 ],
-    [ "--window-size",               [ 3, 7         ],                                                 ],
-    [ "--function",                  [ 0, 1         ], lambda f : 'median' if f == 0 else 'parity'     ],
+    [ "--window-size",               [ 7, 7         ],                                                 ],
+    [ "--function",                  [ 1, 1         ], lambda f : 'median' if f == 0 else 'parity'     ],
   ]
 
   num_params = len(params_properties)
