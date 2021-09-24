@@ -1,12 +1,8 @@
 #!/bin/bash
 
 cp -f results-proof-of-concept-combined.csv results.csv
-./plot-proof-of-concept
+./plot-combined System
 cp -f plot.png plot-proof-of-concept-combined.png
-
-cp -f results-proof-of-concept-combined-no-comm.csv results.csv
-./plot-proof-of-concept-no-comm
-cp -f plot.png plot-proof-of-concept-combined-no-comm.png
 
 cp -f results-sensitivity-analysis.csv results.csv
 ./sensitivity-analysis

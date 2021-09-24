@@ -7,13 +7,19 @@ library(grid)
 library(gridExtra)
 library(stringi)
 
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) < 1) {
+  cat("Missing param to plot.")
+  q()
+}
+
 results <- read.csv('results.csv')
 window_levels <- nlevels(factor(results$Window.size))
 
 results$Function.text <- paste(stri_trans_totitle(results$Function), "function", sep = " ")
 results$Window.size.text <- paste("Window size", results$Window.size, sep = " ")
 
-results %>% ggplot(aes(x = Accuracy, fill = System)) +
+results %>% ggplot(aes_string(x = "Accuracy", fill = args[1])) +
   geom_histogram(binwidth = 0.025, alpha=0.5, position="identity") +
   scale_fill_manual(values=c("blue", "grey50")) +
   theme_bw() +
