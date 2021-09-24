@@ -9,7 +9,7 @@ library(stringi)
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 1) {
-  cat("Missing param to plot.")
+  cat("Missing fill column.")
   q()
 }
 
@@ -19,11 +19,15 @@ window_levels <- nlevels(factor(results$Window.size))
 results$Function.text <- paste(stri_trans_totitle(results$Function), "function", sep = " ")
 results$Window.size.text <- paste("Window size", results$Window.size, sep = " ")
 
-results %>% ggplot(aes_string(x = "Accuracy", fill = args[1])) +
+results[,args[1]] <- factor(results[,args[1]])
+
+g <- results %>% ggplot(aes_string(x = "Accuracy", fill = args[1])) +
   geom_histogram(binwidth = 0.025, alpha=0.5, position="identity") +
-  scale_fill_manual(values=c("blue", "grey50")) +
   theme_bw() +
   theme(text = element_text(size = 14), panel.spacing.x = unit(4, "mm"), panel.spacing.y = unit(4, "mm")) +
   ylab("Experiments") +
   facet_grid(Function.text ~ results$Window.size.text) #, ncol=window_levels)
+if (length(args) == 3) {
+  g + scale_fill_manual(values=c(args[2], args[3]))
+}
 ggsave('plot.png', width = 10.0, height = 5.625)

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cp -f results-proof-of-concept-combined.csv results.csv
-./plot-combined System
+./plot-combined System blue grey50
 cp -f plot.png plot-proof-of-concept-combined.png
 
 cp -f results-sensitivity-analysis.csv results.csv
