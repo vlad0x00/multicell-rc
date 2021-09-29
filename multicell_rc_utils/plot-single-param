@@ -8,26 +8,26 @@ library(gridExtra)
 library(stringr)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 1) {
+if (length(args) < 2) {
   cat("Missing param to plot.")
   q()
 }
 
-results <- read.csv('results.csv')
+results <- read.csv(args[1])
 
-errorbar.width <- (max(results[[args[1]]]) - min(results[[args[1]]])) / 20.0
+errorbar.width <- (max(results[[args[2]]]) - min(results[[args[2]]])) / 20.0
 
 acc_idx <- grep("Accuracy", colnames(results))
 
-results.mean <- aggregate(results[, acc_idx], list(results[[args[1]]]), mean)
-results.sd <- aggregate(results[, acc_idx], list(results[[args[1]]]), sd)
+results.mean <- aggregate(results[, acc_idx], list(results[[args[2]]]), mean)
+results.sd <- aggregate(results[, acc_idx], list(results[[args[2]]]), sd)
 
-colnames(results.mean) <- c(args[1], "Accuracy.mean")
-colnames(results.sd) <- c(args[1], "Accuracy.sd")
+colnames(results.mean) <- c(args[2], "Accuracy.mean")
+colnames(results.sd) <- c(args[2], "Accuracy.sd")
 
-results <- merge(results.mean, results.sd, by = args[1])
+results <- merge(results.mean, results.sd, by = args[2])
 
-g <- ggplot(results, aes_string(x = args[1], y = "Accuracy.mean")) +
+g <- ggplot(results, aes_string(x = args[2], y = "Accuracy.mean")) +
   geom_errorbar(aes(ymin = Accuracy.mean - Accuracy.sd, ymax = Accuracy.mean + Accuracy.sd), width = errorbar.width) +
   geom_smooth(formula = y ~ x, method=stats::loess, size = 1.0, se = FALSE) +
   theme_bw() +
@@ -35,18 +35,18 @@ g <- ggplot(results, aes_string(x = args[1], y = "Accuracy.mean")) +
   ylim(0.415, 1.03) +
   theme(text = element_text(size = 21))
 
-if (length(args) >= 2 && args[2] == 'hideacc') {
+if (length(args) >= 3 && args[3] == 'hideacc') {
   g <- g + ylab("") + theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
 }
 
-if (length(args) >= 3) {
+if (length(args) >= 4) {
   x <- 0
-  if (args[3] == 'A)') {
+  if (args[4] == 'A)') {
     x <- 20
-  } else if (args[3] == 'C)') {
+  } else if (args[4] == 'C)') {
     x <- 1
   }
-  g <- g + annotate("text", x = x, y = 1.02, label = args[3], size = 6)
+  g <- g + annotate("text", x = x, y = 1.02, label = args[4], size = 6)
 }
 
-ggsave('plot.png', width = 5, height = 5)
+ggsave(paste0(args[1], ".png"), width = 5, height = 5)

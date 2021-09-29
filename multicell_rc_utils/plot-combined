@@ -8,26 +8,26 @@ library(gridExtra)
 library(stringi)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 1) {
-  cat("Missing fill column.")
+if (length(args) < 2) {
+  cat("Missing args.")
   q()
 }
 
-results <- read.csv('results.csv')
+results <- read.csv(args[1])
 window_levels <- nlevels(factor(results$Window.size))
 
 results$Function.text <- paste(stri_trans_totitle(results$Function), "function", sep = " ")
 results$Window.size.text <- paste("Window size", results$Window.size, sep = " ")
 
-results[,args[1]] <- factor(results[,args[1]])
+results[,args[2]] <- factor(results[,args[2]])
 
-g <- results %>% ggplot(aes_string(x = "Accuracy", fill = args[1])) +
+g <- results %>% ggplot(aes_string(x = "Accuracy", fill = args[2])) +
   geom_histogram(binwidth = 0.025, alpha=0.5, position="identity") +
   theme_bw() +
   theme(text = element_text(size = 14), panel.spacing.x = unit(4, "mm"), panel.spacing.y = unit(4, "mm")) +
   ylab("Experiments") +
   facet_grid(Function.text ~ results$Window.size.text) #, ncol=window_levels)
-if (length(args) == 3) {
-  g + scale_fill_manual(values=c(args[2], args[3]))
+if (length(args) == 4) {
+  g + scale_fill_manual(values=c(args[3], args[4]))
 }
-ggsave('plot.png', width = 10.0, height = 5.625)
+ggsave(paste0(args[1], ".png"), width = 10.0, height = 5.625)

@@ -1,29 +1,22 @@
 #!/bin/bash
 
-cp -f results-proof-of-concept-combined.csv results.csv
-./plot-combined System blue grey50
-cp -f plot.png plot-proof-of-concept-combined.png
+pids=()
 
-cp -f results-sensitivity-analysis.csv results.csv
-./sensitivity-analysis
+./plot-combined results-proof-of-concept-combined.csv System blue grey50 & pids+=( $! )
 
-cp -f results-genes.csv results.csv
-./plot-single-param Genes showacc "A)"
-cp -f plot.png plot-genes.png
+#cp -f results-sensitivity-analysis.csv results.csv
+#./sensitivity-analysis
 
-cp -f results-cells.csv results.csv
-./plot-single-param Cells hideacc "B)"
-convert plot.png -crop 1400x1500+100+0 +repage plot2.png
-mv -f plot2.png plot-cells.png
+./plot-single-param results-genes.csv Genes showacc "A)" & pids+=( $! )
 
-cp -f results-strains.csv results.csv
-./plot-single-param Strains hideacc "C)"
-convert plot.png -crop 1400x1500+100+0 +repage plot2.png
-mv -f plot2.png plot-strains.png
+{ ./plot-single-param results-cells.csv Cells hideacc "B)" && convert results-cells.csv.png -crop 1400x1500+100+0 +repage results-cells.csv.png.tmp && mv -f results-cells.csv.png.tmp results-cells.csv.png; } & pids+=( $! )
 
-cp -f results-esms.csv results.csv
-./plot-single-param ESMs hideacc "D)"
-convert plot.png -crop 1400x1500+100+0 +repage plot2.png
-mv -f plot2.png plot-esms.png
+{ ./plot-single-param results-strains.csv Strains hideacc "C)" && convert results-strains.csv.png -crop 1400x1500+100+0 +repage results-strains.csv.png.tmp && mv -f results-strains.csv.png.tmp results-strains.csv.png; } & pids+=( $! )
 
-montage -mode concatenate -tile 4x1 -geometry -6+2 plot-genes.png plot-cells.png plot-strains.png plot-esms.png -resize 75% plot-3layers.png
+{ ./plot-single-param results-esms.csv ESMs hideacc "D)" && convert results-esms.csv.png -crop 1400x1500+100+0 +repage results-esms.csv.png.tmp && mv -f results-esms.csv.png.tmp results-esms.csv.png; } & pids+=( $! )
+
+for pid in "${pids[@]}"; do
+  wait "$pid" || exit -1
+done
+
+montage -mode concatenate -tile 4x1 -geometry -6+2 results-genes.csv.png results-cells.csv.png results-strains.csv.png results-esms.csv.png -resize 75% plot-3layers.png
