@@ -149,7 +149,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   if output_cells_random:
     output_cells = random.sample(range(num_cells), num_output_cells)
   else:
-    output_cells = range(num_cells - 1, num_cells - num_output_cells - 1, -1)
+    output_cells = list(range(num_cells - 1, num_cells - num_output_cells - 1, -1))
 
   not_output_strain = []
   output_states = [ [] for _ in range(len(states)) ]
