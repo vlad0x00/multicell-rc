@@ -151,19 +151,22 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
   else:
     output_cells = list(range(num_cells - 1, num_cells - num_output_cells - 1, -1))
 
-  not_output_strain = []
   output_states = [ [] for _ in range(len(states)) ]
   for i, state in enumerate(states):
     for cell in output_cells:
       strain = strain_map[cell]
       if strain >= num_output_strains:
-        not_output_strain.append(cell)
         continue
       cell_state = state[(cell * num_genes):((cell + 1) * num_genes)]
       assert len(cell_state) == num_genes
       output_states[i] += cell_state[-num_output_genes:]
   for state in output_states:
     assert len(state) == len(output_states[0])
+  not_output_strain = []
+  for cell in output_cells:
+    strain = strain_map[cell]
+    if strain >= num_output_strains:
+      not_output_strain.append(cell)
   for cell in not_output_strain:
     output_cells.remove(cell)
   if num_output_cells > 0 and len(output_cells) == 0:
@@ -206,7 +209,7 @@ def process_output(input_signal_file, biocellion_output_file, output_dir, num_ge
 
   assert len(x) == len(y)
   for s in x:
-    assert len(s) == num_output_cells * num_output_genes
+    assert len(s) == len(output_cells) * num_output_genes
 
   return x, y, input_signal_info, output_cells
 
@@ -246,7 +249,7 @@ def train_lasso(x, y, num_cells, num_output_cells, num_output_strains, num_outpu
     cell_layer = cell_layer_map[cell]
     strain = strain_map[cell]
     cell_rank = output_cells_rank[cell]
-    if strain >= num_output_strains: continue
+    if strain >= num_output_strains: assert False
     coeff_start = cell_rank * num_output_genes
     coeff_end = (cell_rank + 1) * num_output_genes
     cell_weights[cell] = []
