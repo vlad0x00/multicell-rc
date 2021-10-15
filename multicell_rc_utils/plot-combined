@@ -21,11 +21,14 @@ results$Window.size.text <- paste("Window size", results$Window.size, sep = " ")
 
 results[,args[2]] <- factor(results[,args[2]])
 
+legend.title <- paste(str_split(args[2], '\\.')[[1]], collapse = ' ')
+
 g <- results %>% ggplot(aes_string(x = "Accuracy", fill = args[2])) +
   geom_histogram(binwidth = 0.025, alpha=0.5, position="identity") +
   theme_bw() +
   theme(text = element_text(size = 14), panel.spacing.x = unit(4, "mm"), panel.spacing.y = unit(4, "mm")) +
   ylab("Experiments") +
+  labs(fill = legend.title) +
   facet_grid(Function.text ~ results$Window.size.text) #, ncol=window_levels)
 if (length(args) == 4) {
   g + scale_fill_manual(values=c(args[3], args[4]))
