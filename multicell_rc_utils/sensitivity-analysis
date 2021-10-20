@@ -72,7 +72,8 @@ def partial_corr(variables):
       
   return pcorr, pvals, residues
 
-results = pd.read_csv('results.csv')
+assert len(sys.argv) == 2
+results = pd.read_csv(sys.argv[1])
 
 # Group results with same args (e.g. iterations with same args) and summarize them with mean accuracy
 del results[results.columns[0]]

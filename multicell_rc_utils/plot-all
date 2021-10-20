@@ -4,8 +4,7 @@ pids=()
 
 ./plot-combined results-proof-of-concept-combined.csv System blue grey50 & pids+=( $! )
 
-#cp -f results-sensitivity-analysis.csv results.csv
-#./sensitivity-analysis
+./sensitivity-analysis results-sensitivity-analysis.csv & pids+=( $! )
 
 ./plot-single-param results-genes.csv Genes showacc "A)" & pids+=( $! )
 
