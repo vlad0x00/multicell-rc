@@ -1,0 +1,15 @@
+#!/bin/bash
+
+pids=()
+
+./combine-results results-proof-of-concept-1cell.csv results-proof-of-concept.csv results-proof-of-concept-combined.csv System Unicellular Multicellular & pids+=( $! )
+
+./combine-results results-proof-of-concept-no-comm.csv results-proof-of-concept.csv results-proof-of-concept-no-comm-combined.csv "ESM Communication" No Yes & pids+=( $! )
+
+./combine-results results-proof-of-concept-1cell.csv results-proof-of-concept-half-strains.csv results-proof-of-concept-half-strains-combined.csv System Unicellular "Multicellular" & pids+=( $! )
+
+./combine-results results-proof-of-concept-1cell.csv results-3layer-better.csv results-3layer-better-combined.csv System Unicellular "Layered Multicellular" & pids+=( $! )
+
+for pid in "${pids[@]}"; do
+  wait "$pid" || exit -1
+done

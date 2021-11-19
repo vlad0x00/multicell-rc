@@ -14,6 +14,12 @@ pids=()
 
 { ./plot-single-param results-esms.csv ESMs hideacc "D)" && convert results-esms.csv.png -crop 1400x1500+100+0 +repage results-esms.csv.png.tmp && mv -f results-esms.csv.png.tmp results-esms.csv.png; } & pids+=( $! )
 
+./plot-combined results-proof-of-concept-no-comm-combined.csv ESM.Communication & pids+=( $! )
+
+./plot-combined results-proof-of-concept-half-strains-combined.csv System blue grey50 & pids+=( $! )
+
+./plot-combined results-3layer-better-combined.csv System blue grey50 & pids+=( $! )
+
 for pid in "${pids[@]}"; do
   wait "$pid" || exit -1
 done
