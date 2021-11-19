@@ -5,5 +5,3 @@ model/*.so
 multicell_rc_utils/results
 multicell_rc_utils/args.csv
 multicell_rc_utils/Rplots.pdf
-multicell_rc_utils/*.png
-multicell_rc_utils/results*.csv
