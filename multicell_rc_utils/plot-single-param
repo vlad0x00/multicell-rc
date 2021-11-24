@@ -8,8 +8,8 @@ library(gridExtra)
 library(stringr)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 2) {
-  cat("Missing param to plot.")
+if (length(args) < 3) {
+  cat("Missing args.")
   q()
 }
 
@@ -31,6 +31,7 @@ g <- ggplot(results, aes_string(x = args[2], y = "Accuracy.mean")) +
   geom_errorbar(aes(ymin = Accuracy.mean - Accuracy.sd, ymax = Accuracy.mean + Accuracy.sd), width = errorbar.width) +
   geom_smooth(formula = y ~ x, method=stats::loess, size = 1.0, se = FALSE) +
   theme_bw() +
+  xlab(args[5]) +
   ylab("Accuracy") +
   ylim(0.415, 1.03) +
   theme(text = element_text(size = 21))
