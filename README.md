@@ -20,15 +20,22 @@ Within the boolean network, the first gene is reserved for the input signal valu
 <img src="res/gene_layout.png" alt="Gene layout" width="70%"/>
 </p>
 
-## Requirements
+## Manuscript data and plots
 
+`multicell_rc_utils` contains all the simulation generated data in `*.csv` files and plots in `*.png` files. To regenerate the plots, run `multicell_rc_utils/plot-all`. Plotting requires the following software:
+- R with tidyverse and stringi packages
+- Python 3.8+ (package requirements in requirements.txt)
+- wkhtmltopdf
+- imagemagick
+
+## Running the simulation(s)
+
+### Requirements
 - Unix-like OS
 - C++14 compliant compiler (GCC 6.1+ or Clang 3.4+)
 - Python 3.8+ (package requirements in requirements.txt)
 
-## Running the simulation
-
-`run` is the main driver script for the simulation. Passing `--help` option will display all the configurable parameters.
+`run` is the main driver script for the simulation. Passing `--help` option will display all the configurable parameters. `run` will automatically build the the simulation before running it. You can also build it yourself by running `make` in the `model/` directory.
 
 ## Running sensitivity analysis
 
@@ -38,7 +45,7 @@ In the `multicell_rc_utils` directory, run the scripts in the following order:
 - `run-args` to run simulations in parallel.
 - `sensitivity-analysis` to perform the analysis.
 
-## Other analyses
+### Other analyses
 
 In the `multicell_rc_utils` directory:
 

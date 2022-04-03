@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument('analysis', choices=[ 'sensitivity_analysis', 'parameter_combinations' ] , help="What to generate arguments for.")
 parser.add_argument('-s', '--num-samples', type=int, default=10_000, help="Number of samples for sensitivity analysis.")
 parser.add_argument('-p', '--param', action='append', help="Parameter to generate combinations for.")
-parser.add_argument('-r', '--value', action='append', help="Range of values of the parameter to generate combinations for. Formats include [min,max,step], with step being optinal and 1 by default and {val1,val2,val3} for specific values.")
+parser.add_argument('-r', '--value', action='append', help="Range of values of the parameter to generate combinations for. Formats include [min,max,step], with step being optinal and 1 by default and {val1,val2,...} for specific values. Put quotes around [] and {} as they can have a specific meaning in the shell otherwise.")
 cli_args = parser.parse_args()
 
 # Initialize the data frame

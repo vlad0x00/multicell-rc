@@ -1,11 +1,7 @@
 #!/usr/bin/env Rscript
 
-library(tidyverse)
-library(reshape2)
-library(dplyr)
-library(grid)
-library(gridExtra)
-library(stringr)
+suppressMessages(library(tidyverse))
+suppressMessages(library(stringi))
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 3) {

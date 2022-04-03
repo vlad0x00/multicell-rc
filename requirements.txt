@@ -6,3 +6,4 @@ vtk
 seaborn
 networkx
 sklearn
+pyDOE
