@@ -22,7 +22,7 @@ Within the boolean network, the first gene is reserved for the input signal valu
 
 ## Manuscript data and plots
 
-`multicell_rc_utils` contains all the simulation generated data in `*.csv` files and plots in `*.png` files. To regenerate the plots, run `multicell_rc_utils/plot-all`. Plotting requires the following software:
+`multicell_rc_utils/` directory contains all the simulation generated data in `*.csv` files and plots in `*.png` files. To regenerate the plots, run `multicell_rc_utils/plot-all`. Plotting requires the following software:
 - R with tidyverse and stringi packages
 - Python 3.8+ (package requirements in requirements.txt)
 - wkhtmltopdf
@@ -35,19 +35,19 @@ Within the boolean network, the first gene is reserved for the input signal valu
 - C++14 compliant compiler (GCC 6.1+ or Clang 3.4+)
 - Python 3.8+ (package requirements in requirements.txt)
 
-`run` is the main driver script for the simulation. Passing `--help` option will display all the configurable parameters. `run` will automatically build the the simulation before running it. You can also build it yourself by running `make` in the `model/` directory.
+In the root directory, `run` is the main driver script for running a simulation. Passing `--help` option will display all the configurable parameters. `run` will automatically build the the simulation before running it. You can also build it yourself by running `make` in the `model/` directory.
 
 ## Running sensitivity analysis
 
-In the `multicell_rc_utils` directory, run the scripts in the following order:
+In the `multicell_rc_utils/` directory, run the scripts in the following order:
 
 - `generate-args sensitivity_analysis` to generate arguments for a number of simulations using Latin Hypercube Sampling.
-- `run-args` to run simulations in parallel.
+- `run-args` to run simulations in parallel. Adjust the number of processes and threads to the capabilities of the machine (`run-args --help for extra information`). The results are stored in `results.csv`.
 - `sensitivity-analysis` to perform the analysis.
 
 ### Other analyses
 
-In the `multicell_rc_utils` directory:
+In the `multicell_rc_utils/` directory:
 
-- `generate-args parameter_combination` to generate arguments for all combinations of provided parameters. Run `generate-args --help` for information on how to provide parameters.
-- `run-args` to run simulations in parallel. The results are stored in `results.csv`.
+- `generate-args parameter_combination` to generate arguments for all combinations of provided parameters. Run `generate-args --help` for information on how to provide the parameters.
+- `run-args` to run simulations in parallel. Adjust the number of processes and threads to the capabilities of the machine (`run-args --help for extra information`) The results are stored in `results.csv`.

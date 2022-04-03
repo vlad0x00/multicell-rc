@@ -24,7 +24,7 @@ sns.set(font_scale=1.1)
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-i', '--iterations', type=int, default=5, help="Number of repeated simulations per set of arguments.")
-parser.add_argument('-p', '--processes', type=int, default=60, help="Number of parallel processes to use for running simulations.")
+parser.add_argument('-p', '--processes', type=int, default=2, help="Number of parallel processes to use for running simulations.")
 parser.add_argument('-t', '--threads', type=int, default=2, help="Number of threads per process.")
 cli_args = parser.parse_args()
 
