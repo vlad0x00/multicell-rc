@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/270886541.svg)](https://zenodo.org/badge/latestdoi/270886541)
+
 # Multicellular Reservoir Computer
 
 A simulation of a reservoir computer comprised of a community of cells.
