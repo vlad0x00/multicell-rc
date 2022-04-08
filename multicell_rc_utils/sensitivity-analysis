@@ -72,6 +72,9 @@ def partial_corr(variables):
       
   return pcorr, pvals, residues
 
+def program_exists(program):
+  return subprocess.run([ f"command -v {program} &>/dev/null" ], shell=True).returncode == 0
+
 assert len(sys.argv) == 2
 results = pd.read_csv(sys.argv[1])
 
@@ -98,7 +101,7 @@ prcc, pvals, partial_vals = partial_corr(ranked_results_of_interest)
 
 sensitivity_results = pd.DataFrame(columns=[ "Param", "Correlation", "P-value", "Range" ])
 
-from pandas.plotting import table 
+from pandas.plotting import table
 
 # Make a table of results and plot the partially corrected variables
 sns.set_theme(font_scale=1.2, style='white')
@@ -131,23 +134,34 @@ for i, param in enumerate(results_of_interest.columns):
   plt.savefig(param.replace(' ', '_').lower() + "_corr.png")
 sensitivity_results.sort_values(by=['Correlation'], ascending=False, inplace=True, ignore_index=True)
 
-sensitivity_results.to_html('sensitivity_analysis.html')
-subprocess.run(['wkhtmltopdf', '--page-height', '100', '--page-width', '150', '-T', '0', '-B', '0', '-L', '0', '-R', '0', 'sensitivity_analysis.html', 'sensitivity_analysis.pdf'])
-subprocess.run(['magick', 'convert', '-colorspace', 'RGB', '-density', '300', 'sensitivity_analysis.pdf', '-quality', '100', '-transparent', 'white', '-crop', '1600x1000+0+0', '-trim', '+repage', '-background', 'white', '-flatten', 'sensitivity_analysis.png'])
+print("================== Sensitivity analysis results ===================")
+print(sensitivity_results)
+print("===================================================================")
 
-os.remove('sensitivity_analysis.html')
-os.remove('sensitivity_analysis.pdf')
+wkhtmltopdf_present = program_exists('wkhtmltopdf')
+magick_present = program_exists('magick')
+identify_present = program_exists('identify')
 
-table_width = int(subprocess.run([ 'identify', '-format', '%w', 'sensitivity_analysis.png' ], capture_output=True).stdout.decode())
+if wkhtmltopdf_present and magick_present and identify_present:
+  sensitivity_results.to_html('sensitivity_analysis.html')
+  subprocess.run(['wkhtmltopdf', '--page-height', '100', '--page-width', '150', '-T', '0', '-B', '0', '-L', '0', '-R', '0', 'sensitivity_analysis.html', 'sensitivity_analysis.pdf'])
+  subprocess.run(['magick', 'convert', '-colorspace', 'RGB', '-density', '300', 'sensitivity_analysis.pdf', '-quality', '100', '-transparent', 'white', '-crop', '1600x1000+0+0', '-trim', '+repage', '-background', 'white', '-flatten', 'sensitivity_analysis.png'])
 
-sns.set_theme(font_scale=2.1, style='white')
-fig, ax = plt.subplots()
-fig.set_size_inches(table_width / 100.0, 7.0)
-sns.histplot(data=results, x='Accuracy', ax=ax, bins=50, stat='probability')
-ax.set_ylabel("Fraction")
-fig.tight_layout()
-fig.savefig("sensitivity_analysis_accuracies.png")
-plt.close(fig)
+  os.remove('sensitivity_analysis.html')
+  os.remove('sensitivity_analysis.pdf')
 
-subprocess.run([ 'magick', 'convert', '-append', 'sensitivity_analysis.png', 'sensitivity_analysis_accuracies.png', 'sensitivity_analysis.png' ])
-#os.remove('sensitivity_analysis_accuracies.png')
+  table_width = int(subprocess.run([ 'identify', '-format', '%w', 'sensitivity_analysis.png' ], capture_output=True).stdout.decode())
+
+  sns.set_theme(font_scale=2.1, style='white')
+  fig, ax = plt.subplots()
+  fig.set_size_inches(table_width / 100.0, 7.0)
+  sns.histplot(data=results, x='Accuracy', ax=ax, bins=50, stat='probability')
+  ax.set_ylabel("Fraction")
+  fig.tight_layout()
+  fig.savefig("sensitivity_analysis_accuracies.png")
+  plt.close(fig)
+
+  subprocess.run([ 'magick', 'convert', '-append', 'sensitivity_analysis.png', 'sensitivity_analysis_accuracies.png', 'sensitivity_analysis.png' ])
+  #os.remove('sensitivity_analysis_accuracies.png')
+else:
+  print("wkhtmltopdf, magick and/or identify are not present. Cannot generate sensitivity analysis table and accuracy distribution.")

@@ -25,17 +25,18 @@ Within the boolean network, the first gene is reserved for the input signal valu
 ## Manuscript data and plots
 
 `multicell_rc_utils/` directory contains all the simulation generated data in `*.csv` files and plots in `*.png` files. To regenerate the plots, run `multicell_rc_utils/plot-all`. Plotting requires the following software:
-- R with tidyverse and stringi packages
-- Python 3.8+ (package requirements in requirements.txt)
-- wkhtmltopdf
-- imagemagick
+- Unix-like OS
+- R (Tested with version 4.1.3) with tidyverse and stringi packages
+- Python 3 (Tested with version 3.8; package requirements in requirements.txt)
+- wkhtmltopdf (Tested with version 0.12.6)
+- imagemagick (Tested with version 7.1.0-29)
 
 ## Running the simulation(s)
 
 ### Requirements
 - Unix-like OS
 - C++14 compliant compiler (GCC 6.1+ or Clang 3.4+)
-- Python 3.8+ (package requirements in requirements.txt)
+- Python 3 (Tested with version 3.8; package requirements in requirements.txt)
 
 In the root directory, `run` is the main driver script for running a simulation. Passing `--help` option will display all the configurable parameters. `run` will automatically build the the simulation before running it. You can also build it yourself by running `make` in the `model/` directory.
 
