@@ -47,7 +47,7 @@ The following sections describe how to run the simulations to generate the manus
 ## Running sensitivity analysis
 
 In the root directory, run the scripts in the following order:
-- `generate-args sensitivity_analysis` to generate arguments (in `args.csv` file) for a number of simulations using Latin Hypercube Sampling. For the data showed in the manuscript, the arguments used are at `args/args-sensitivity-analysis.csv` which can be used by simplying copying it into the door dir: `mv args/args-sensitivity-analysis.csv args.csv`.
+- `generate-args sensitivity_analysis` to generate arguments (in `args.csv` file) for a number of simulations using Latin Hypercube Sampling. For the data showed in the manuscript, the arguments used are at `args/args-sensitivity-analysis.csv` which can be used by simplying copying it into the root dir: `mv args/args-sensitivity-analysis.csv args.csv`.
 - `run-args` to run simulations in parallel. Adjust the number of processes and threads to the capabilities of the machine (`run-args --help for extra information`). The results are stored in `results.csv`.
 - `mv results.csv analysis/` to move the results to the `analysis/` directory. The `results.csv` file used for manuscript plots can be found at `analysis/data/results-sensitivity-analysis.csv`
 - `sensitivity-analysis results.csv` in `analysis/` dir to perform the analysis.
