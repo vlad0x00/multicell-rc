@@ -77,7 +77,7 @@ def program_exists(program):
   return subprocess.run([ f"command -v {program} &>/dev/null" ], shell=True).returncode == 0
 
 assert len(sys.argv) == 2
-results = pd.read_csv(f'{join("data", sys.argv[1])}')
+results = pd.read_csv(sys.argv[1])
 
 # Group results with same args (e.g. iterations with same args) and summarize them with mean accuracy
 del results[results.columns[0]]
@@ -124,7 +124,7 @@ for i, param in enumerate(results_of_interest.columns):
   jointplot.ax_joint.set_xlabel("Residual " + param)
   jointplot.ax_joint.set_ylabel("Residual Accuracy")
   plt.tight_layout()
-  plt.savefig(join("plots", param.replace(' ', '_').lower() + "_prcc.png"))
+  plt.savefig(param.replace(' ', '_').lower() + "_prcc.png")
 
   datapoints = pd.DataFrame({ 'x' : results_of_interest[param], 'y' : results_of_interest['Accuracy'] })
 
@@ -132,7 +132,7 @@ for i, param in enumerate(results_of_interest.columns):
   jointplot.ax_joint.set_xlabel(param)
   jointplot.ax_joint.set_ylabel("Accuracy")
   plt.tight_layout()
-  plt.savefig(join("plots", param.replace(' ', '_').lower() + "_corr.png"))
+  plt.savefig(param.replace(' ', '_').lower() + "_corr.png")
 sensitivity_results.sort_values(by=['Correlation'], ascending=False, inplace=True, ignore_index=True)
 
 print("================== Sensitivity analysis results ===================")
@@ -162,7 +162,7 @@ if wkhtmltopdf_present and magick_present and identify_present:
   fig.savefig("sensitivity_analysis_accuracies.png")
   plt.close(fig)
 
-  subprocess.run([ 'magick', 'convert', '-append', 'sensitivity_analysis.png', 'sensitivity_analysis_accuracies.png', 'plots/sensitivity_analysis.png' ])
+  subprocess.run([ 'magick', 'convert', '-append', 'sensitivity_analysis.png', 'sensitivity_analysis_accuracies.png', 'sensitivity_analysis.png' ])
   os.remove('sensitivity_analysis.png')
   os.remove('sensitivity_analysis_accuracies.png')
 else:

@@ -2,6 +2,8 @@
 
 pids=()
 
+cd data
+
 ./combine-results results-proof-of-concept-1cell.csv results-proof-of-concept.csv results-proof-of-concept-combined.csv System Unicellular Multicellular & pids+=( $! )
 
 ./combine-results results-proof-of-concept-no-comm.csv results-proof-of-concept.csv results-proof-of-concept-no-comm-combined.csv "ESM Communication" No Yes & pids+=( $! )

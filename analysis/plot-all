@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd data
+
 pids=()
 
 ./plot-combined results-proof-of-concept-combined.csv System blue grey50 & pids+=( $! )
@@ -25,3 +27,5 @@ for pid in "${pids[@]}"; do
 done
 
 montage -mode concatenate -tile 4x1 -geometry -6+2 results-genes.csv.png results-cells.csv.png results-strains.csv.png results-esms.csv.png -resize 75% plot-3layers.png
+
+mv *.png ../plots/

@@ -9,7 +9,7 @@ if (length(args) < 3) {
   q()
 }
 
-results <- read.csv(paste0("data/", args[1]))
+results <- read.csv(args[1])
 
 errorbar.width <- (max(results[[args[2]]]) - min(results[[args[2]]])) / 20.0
 
@@ -46,4 +46,4 @@ if (length(args) >= 4) {
   g <- g + annotate("text", x = x, y = 1.02, label = args[4], size = 6)
 }
 
-ggsave(paste0("plots/", args[1], ".png"), width = 5, height = 5)
+ggsave(paste0(args[1], ".png"), width = 5, height = 5)

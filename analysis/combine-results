@@ -16,7 +16,7 @@ parser.add_argument('value2')
 cli_args = parser.parse_args()
 
 idx = 0
-with open(join("data", cli_args.results1)) as results1, open(join("data", cli_args.results2)) as results2, open(join("data", cli_args.output, 'w')) as results3:
+with open(cli_args.results1) as results1, open(cli_args.results2) as results2, open(cli_args.output, 'w') as results3:
   results1_reader = csv.reader(results1)
   results2_reader = csv.reader(results2)
   results3_writer = csv.writer(results3)

@@ -9,7 +9,7 @@ if (length(args) < 2) {
   q()
 }
 
-results <- read.csv(paste0("data/", args[1]))
+results <- read.csv(args[1])
 window_levels <- nlevels(factor(results$Window.size))
 
 results$Function.text <- paste(stri_trans_totitle(results$Function), "function", sep = " ")
@@ -29,4 +29,4 @@ g <- results %>% ggplot(aes_string(x = "Accuracy", fill = args[2])) +
 if (length(args) == 4) {
   g + scale_fill_manual(values=c(args[3], args[4]))
 }
-ggsave(paste0("plots/", args[1], ".png"), width = 10.0, height = 5.625)
+ggsave(paste0(args[1], ".png"), width = 10.0, height = 5.625)
