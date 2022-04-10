@@ -20,16 +20,6 @@ From: ubuntu:20.04
     
     # Install the necessary R packages
     Rscript -e 'install.packages(c("tidyverse", "stringi"))'
-    
-    # Obtain the multicell-rc code
-    wget https://github.com/vlad0x00/multicell-rc/archive/refs/tags/v${MULTICELL_RC_VERSION}.zip
-    unzip v${MULTICELL_RC_VERSION}.zip
-    rm -f v${MULTICELL_RC_VERSION}.zip
-
-    # Build the multicell-rc code
-    cd multicell-rc-${MULTICELL_RC_VERSION}/model
-    make
-    cd ../..
 
 %environment
     export LC_ALL=C
@@ -37,9 +27,6 @@ From: ubuntu:20.04
     export DEBIAN_FRONTEND=noninteractive
     # Necessary for tidyverse package
     export TZ='America/Vancouver'
-
-%runscript
-    multicell-rc-${MULTICELL_RC_VERSION}/run
 
 %labels
     Author Vladimir Nikolic
