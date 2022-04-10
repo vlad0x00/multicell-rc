@@ -140,13 +140,13 @@ print(sensitivity_results)
 print("===================================================================")
 
 wkhtmltopdf_present = program_exists('wkhtmltopdf')
-magick_present = program_exists('magick')
+convert_present = program_exists('convert')
 identify_present = program_exists('identify')
 
-if wkhtmltopdf_present and magick_present and identify_present:
+if wkhtmltopdf_present and convert_present and identify_present:
   sensitivity_results.to_html('sensitivity_analysis.html')
   subprocess.run(['wkhtmltopdf', '--page-height', '100', '--page-width', '150', '-T', '0', '-B', '0', '-L', '0', '-R', '0', 'sensitivity_analysis.html', 'sensitivity_analysis.pdf'])
-  subprocess.run(['magick', 'convert', '-colorspace', 'RGB', '-density', '300', 'sensitivity_analysis.pdf', '-quality', '100', '-transparent', 'white', '-crop', '1600x1000+0+0', '-trim', '+repage', '-background', 'white', '-flatten', 'sensitivity_analysis.png'])
+  subprocess.run(['convert', '-colorspace', 'RGB', '-density', '300', 'sensitivity_analysis.pdf', '-quality', '100', '-transparent', 'white', '-crop', '1600x1000+0+0', '-trim', '+repage', '-background', 'white', '-flatten', 'sensitivity_analysis.png'])
 
   os.remove('sensitivity_analysis.html')
   os.remove('sensitivity_analysis.pdf')
@@ -162,7 +162,7 @@ if wkhtmltopdf_present and magick_present and identify_present:
   fig.savefig("sensitivity_analysis_accuracies.png")
   plt.close(fig)
 
-  subprocess.run([ 'magick', 'convert', '-append', 'sensitivity_analysis.png', 'sensitivity_analysis_accuracies.png', 'sensitivity_analysis.png' ])
+  subprocess.run([ 'convert', '-append', 'sensitivity_analysis.png', 'sensitivity_analysis_accuracies.png', 'sensitivity_analysis.png' ])
   os.remove('sensitivity_analysis_accuracies.png')
 else:
-  print("wkhtmltopdf, magick and/or identify are not present. Cannot generate sensitivity analysis table and accuracy distribution.")
+  print("wkhtmltopdf, convert and/or identify are not present. Cannot generate sensitivity analysis table and accuracy distribution.")
