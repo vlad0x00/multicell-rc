@@ -163,7 +163,6 @@ if wkhtmltopdf_present and magick_present and identify_present:
   plt.close(fig)
 
   subprocess.run([ 'magick', 'convert', '-append', 'sensitivity_analysis.png', 'sensitivity_analysis_accuracies.png', 'sensitivity_analysis.png' ])
-  os.remove('sensitivity_analysis.png')
   os.remove('sensitivity_analysis_accuracies.png')
 else:
   print("wkhtmltopdf, magick and/or identify are not present. Cannot generate sensitivity analysis table and accuracy distribution.")
