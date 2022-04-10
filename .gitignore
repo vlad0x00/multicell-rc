@@ -4,4 +4,4 @@ model/*.o
 model/*.so
 data/results
 data/args.csv
-data/Rplots.pdf
+Rplots.pdf
