@@ -1,0 +1,9 @@
+,--cells,--output-cell-fraction,--delay,--window-size,--tissue-depth,--function,--input-signal-depth
+0,1,1.0,0,3,0,median,1
+1,1,1.0,0,3,0,parity,1
+2,1,1.0,0,5,0,median,1
+3,1,1.0,0,5,0,parity,1
+4,1,1.0,0,7,0,median,1
+5,1,1.0,0,7,0,parity,1
+6,1,1.0,0,9,0,median,1
+7,1,1.0,0,9,0,parity,1

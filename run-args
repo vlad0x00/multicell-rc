@@ -5,7 +5,7 @@
 """
 
 import os
-from os.path import realpath, dirname, join, isfile
+from os.path import realpath, dirname, join, isfile, abspath
 import sys
 import shutil
 import subprocess
@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import math
-import multicell_rc_params
+from multicell_rc_utils import multicell_rc_params
 from multiprocessing import Pool
 import argparse
 sns.set(font_scale=1.1)
@@ -28,8 +28,7 @@ parser.add_argument('-p', '--processes', type=int, default=2, help="Number of pa
 parser.add_argument('-t', '--threads', type=int, default=2, help="Number of threads per process.")
 cli_args = parser.parse_args()
 
-this_dir = dirname(realpath(__file__))
-root_dir = dirname(this_dir)
+root_dir = abspath(dirname(__file__))
 executable = join(root_dir, "run")
 
 # Build the Biocellion model if it hasn't been built.
@@ -37,7 +36,7 @@ if not isfile(join(root_dir, "model/libmodel.DP.SPAGENT.so")):
   subprocess.run([ "cd " + join(root_dir, "model") + "; make" ], shell=True)
 
 # Remove the results dir of any previous runs.
-results_dir = join(this_dir, "results")
+results_dir = join(root_dir, "results")
 shutil.rmtree(results_dir, ignore_errors=True)
 os.mkdir(results_dir)
 
@@ -60,7 +59,7 @@ def do_run(arg_set):
 
 # Loads the args
 args = []
-with open(join(this_dir, "args.csv"), 'r') as f:
+with open(join(root_dir, "args.csv"), 'r') as f:
   csv_reader = csv.reader(f, delimiter=',')
   for i, row in enumerate(csv_reader):
     if i == 0:
@@ -90,7 +89,7 @@ valid_files = 0
 data = { 'Accuracy' : [], 'Lambda ESM' : [] }
 
 # Iterate the results dir for output files
-for dirpath, dirnames, filenames in os.walk(join(this_dir, 'results')):
+for dirpath, dirnames, filenames in os.walk(join(root_dir, 'results')):
   for filename in filenames:
     if os.path.basename(filename).endswith('stdout'):
       total_files += 1
@@ -134,4 +133,4 @@ print("Valid / total files: {} / {} ({}%)".format(valid_files, total_files, vali
 
 # Save to CSV
 data = pd.DataFrame(data)
-data.to_csv(join(this_dir, 'results.csv'))
+data.to_csv(join(root_dir, 'results.csv'))
