@@ -24,7 +24,7 @@ Within the boolean network, the first gene is reserved for the input signal valu
 
 ## Manuscript data and plots
 
-`multicell_rc_utils/` directory contains all the simulation generated data in `*.csv` files and plots in `*.png` files. To regenerate the plots, run `multicell_rc_utils/plot-all`. Plotting requires the following software:
+`multicell_rc_utils/` directory contains all the simulation generated data for the manuscript in `*.csv` files and plots in `*.png` files. To regenerate the plots, run `multicell_rc_utils/plot-all`. Plotting requires the following software:
 - Unix-like OS
 - R (Tested with version 4.1.3) with tidyverse and stringi packages
 - Python 3 (Tested with version 3.8; package requirements in requirements.txt)
@@ -40,17 +40,21 @@ Within the boolean network, the first gene is reserved for the input signal valu
 
 In the root directory, `run` is the main driver script for running a simulation. Passing `--help` option will display all the configurable parameters. `run` will automatically build the the simulation before running it. You can also build it yourself by running `make` in the `model/` directory.
 
+The following describes how to run the simulations to generate the manuscript data. However, the data generated for the manuscript was run on powerful HPC machines and took a number of days. Running it on a personal computer is unlikely to be feasible.
+
 ## Running sensitivity analysis
 
 In the `multicell_rc_utils/` directory, run the scripts in the following order:
 
-- `generate-args sensitivity_analysis` to generate arguments for a number of simulations using Latin Hypercube Sampling.
+- `generate-args sensitivity_analysis` to generate arguments (in `args.csv` file) for a number of simulations using Latin Hypercube Sampling.
 - `run-args` to run simulations in parallel. Adjust the number of processes and threads to the capabilities of the machine (`run-args --help for extra information`). The results are stored in `results.csv`.
-- `sensitivity-analysis` to perform the analysis.
+- `sensitivity-analysis results.csv` to perform the analysis.
 
 ### Other analyses
 
 In the `multicell_rc_utils/` directory:
 
-- `generate-args parameter_combination` to generate arguments for all combinations of provided parameters. Run `generate-args --help` for information on how to provide the parameters.
+- `generate-args parameter_combination` to generate arguments (in `args.csv` file) for all combinations of provided parameters. Run `generate-args --help` for information on how to provide the parameters.
 - `run-args` to run simulations in parallel. Adjust the number of processes and threads to the capabilities of the machine (`run-args --help for extra information`) The results are stored in `results.csv`.
+- Plot the data using the plotting scripts in the `multicell_rc_utils/` directory. `multicell_rc_utils/plot-all` runs all the necessary scripts for plotting, but requires the following results files:
+  * 

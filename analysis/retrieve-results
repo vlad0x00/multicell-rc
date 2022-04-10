@@ -1,0 +1,14 @@
+#!/bin/bash
+
+function retrieve {
+  for r in "$@"; do
+    scp vnikolic@xfer.bcgsc.ca:/projects/btl_scratch/vnikolic/multicells/multicell-rc-${r}/multicell_rc_utils/results.csv results-${r}.csv
+  done
+}
+
+retrieve \
+  genes cells strains esms \
+  proof-of-concept proof-of-concept-1cell proof-of-concept-no-comm \
+  proof-of-concept-half-strains \
+  3layer-better \
+  sensitivity-analysis

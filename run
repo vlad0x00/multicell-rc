@@ -102,6 +102,7 @@ LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 
 # Build the Biocellion model if it hasn't been built. 
 script_dir = os.path.dirname(os.path.realpath(__file__))
+os.chdir(script_dir)
 if not os.path.exists(os.path.join(script_dir, MODEL_DIR, "libmodel.DP.SPAGENT.so")):
   subprocess.run([ "cd " + os.path.join(script_dir, MODEL_DIR) + "; make" ], shell=True)
 

@@ -2,6 +2,6 @@
 output*
 model/*.o
 model/*.so
-multicell_rc_utils/results
-multicell_rc_utils/args.csv
-multicell_rc_utils/Rplots.pdf
+data/results
+data/args.csv
+data/Rplots.pdf
