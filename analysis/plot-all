@@ -4,23 +4,23 @@ cd data
 
 pids=()
 
-./plot-combined results-proof-of-concept-combined.csv System blue grey50 & pids+=( $! )
+../plot-combined results-proof-of-concept-combined.csv System blue grey50 & pids+=( $! )
 
-./sensitivity-analysis results-sensitivity-analysis.csv & pids+=( $! )
+../sensitivity-analysis results-sensitivity-analysis.csv & pids+=( $! )
 
-./plot-single-param results-genes.csv Genes showacc "A)" "# of Genes" & pids+=( $! )
+../plot-single-param results-genes.csv Genes showacc "A)" "# of Genes" & pids+=( $! )
 
-{ ./plot-single-param results-cells.csv Cells hideacc "B)" "# of Cells" && convert results-cells.csv.png -crop 1400x1500+100+0 +repage results-cells.csv.png.tmp && mv -f results-cells.csv.png.tmp results-cells.csv.png; } & pids+=( $! )
+{ ../plot-single-param results-cells.csv Cells hideacc "B)" "# of Cells" && convert results-cells.csv.png -crop 1400x1500+100+0 +repage results-cells.csv.png.tmp && mv -f results-cells.csv.png.tmp results-cells.csv.png; } & pids+=( $! )
 
-{ ./plot-single-param results-strains.csv Strains hideacc "C)" "# of Strains" && convert results-strains.csv.png -crop 1400x1500+100+0 +repage results-strains.csv.png.tmp && mv -f results-strains.csv.png.tmp results-strains.csv.png; } & pids+=( $! )
+{ ../plot-single-param results-strains.csv Strains hideacc "C)" "# of Strains" && convert results-strains.csv.png -crop 1400x1500+100+0 +repage results-strains.csv.png.tmp && mv -f results-strains.csv.png.tmp results-strains.csv.png; } & pids+=( $! )
 
-{ ./plot-single-param results-esms.csv ESMs hideacc "D)" "# of ESMs" && convert results-esms.csv.png -crop 1400x1500+100+0 +repage results-esms.csv.png.tmp && mv -f results-esms.csv.png.tmp results-esms.csv.png; } & pids+=( $! )
+{ ../plot-single-param results-esms.csv ESMs hideacc "D)" "# of ESMs" && convert results-esms.csv.png -crop 1400x1500+100+0 +repage results-esms.csv.png.tmp && mv -f results-esms.csv.png.tmp results-esms.csv.png; } & pids+=( $! )
 
-./plot-combined results-proof-of-concept-no-comm-combined.csv ESM.Communication & pids+=( $! )
+../plot-combined results-proof-of-concept-no-comm-combined.csv ESM.Communication & pids+=( $! )
 
-./plot-combined results-proof-of-concept-half-strains-combined.csv System blue grey50 & pids+=( $! )
+../plot-combined results-proof-of-concept-half-strains-combined.csv System blue grey50 & pids+=( $! )
 
-./plot-combined results-3layer-better-combined.csv System blue grey50 & pids+=( $! )
+../plot-combined results-3layer-better-combined.csv System blue grey50 & pids+=( $! )
 
 for pid in "${pids[@]}"; do
   wait "$pid" || exit -1
