@@ -55,7 +55,7 @@ In the root directory, run the scripts in the following order:
 ### Other analyses
 
 In the `multicell_rc_utils/` directory:
-- `generate-args parameter_combination` to generate arguments (in `args.csv` file) for all combinations of provided parameters. For the data showed in the manuscript, the arguments used are in the `args/` directory.
+- `generate-args parameter_combination` to generate arguments (in `args.csv` file) for all combinations of provided parameters. This requires specifying the parameters and the value ranges. For the data showed in the manuscript, the arguments used are in the `args/` directory.
 - `run-args` to run simulations in parallel. Adjust the number of processes and threads to the capabilities of the machine (`run-args --help for extra information`) The results are stored in `results.csv`.
 - `mv results.csv analysis/` to move the results to the `analysis/` directory. The `results.csv` files used for manuscript plots can be found in `analysis/data` directory.
 - Plot the data using the plotting scripts in the `analysis/` directory. `analysis/plot-all` runs all the necessary scripts for plotting and requires the `.csv` files to be in `analysis/data` directory.
