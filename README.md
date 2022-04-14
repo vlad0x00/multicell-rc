@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/270886541.svg)](https://zenodo.org/badge/latestdoi/270886541)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6450660.svg)](https://doi.org/10.5281/zenodo.6450660)
 
 # Multicellular Reservoir Computer
 
