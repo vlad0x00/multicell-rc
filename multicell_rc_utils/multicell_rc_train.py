@@ -9,9 +9,16 @@ import numpy as np
 import random
 import pandas as pd
 import seaborn as sns
+import itertools
+
+from sklearn.linear_model import Lasso, LassoCV
+from sklearn.model_selection import train_test_split
+from sklearn.utils import parallel_backend
 
 from vtk import vtkXMLPolyDataReader
 from vtk.util.numpy_support import vtk_to_numpy
+
+from multicell_rc_params import Function
 
 STATES_FILE = "states"
 
@@ -114,6 +121,33 @@ def get_strains(output_file):
                 strain = int(tokens[1].split(":")[1])
                 strain_map[cell] = strain
     return strain_map
+
+
+recursive_functions_initialized = False
+recursive_functions = []
+
+
+def get_recursive_function(fi):
+    global recursive_functions_initialized, recursive_functions
+    if not recursive_functions_initialized:
+        all_inputs = [x for x in itertools.product([0, 1], repeat=3)]
+        all_outputs = [x for x in itertools.product([0, 1], repeat=8)]
+        for output_set in all_outputs:
+            table = {}
+            for idx, input_set in enumerate(all_inputs):
+                table[input_set] = output_set[idx]
+
+            def make_recursive_function(table):
+                def recursive_function(input_set):
+                    return table[input_set]
+
+                return recursive_function
+
+            recursive_functions.append(make_recursive_function(table))
+
+        recursive_functions_initialized = True
+
+    return recursive_functions[fi]
 
 
 def process_output(
@@ -235,7 +269,7 @@ def process_output(
         sys.exit(1)
     x = output_states
 
-    if function == "parity":
+    if function == Function.PARITY:
         parity = [0] * (len(input_signal) + 1 - window_size)
         for i, j in enumerate(range(window_size, len(input_signal) + 1)):
             bitsum = 0
@@ -247,7 +281,7 @@ def process_output(
                 parity[i] = 1
         assert len(input_signal) == len(parity) + window_size - 1
         y = parity
-    elif function == "median":
+    elif function == Function.MEDIAN:
         median = [0] * (len(input_signal) + 1 - window_size)
         for i, j in enumerate(range(window_size, len(input_signal) + 1)):
             bitsum = 0
@@ -259,20 +293,69 @@ def process_output(
                 median[i] = 0
         assert len(input_signal) == len(median) + window_size - 1
         y = median
+    elif function == Function.RECURSIVE:
+        recursive = [([0] * (len(input_signal) + 1 - window_size)) for _ in range(256)]
+        for fi in range(256):
+            f = get_recursive_function(fi)
+            f_output = 0
+            for i, j in enumerate(range(window_size, len(input_signal) + 1)):
+                bits = (f_output,) + tuple(input_signal[(j - window_size + 1) : j])
+                f_output = f(bits)
+                recursive[fi][i] = f_output
+            assert len(input_signal) == len(recursive[fi]) + window_size - 1
+        y = recursive
+    else:
+        assert False, "Invalid function"
 
     if delay > 0:
         x = x[delay:]
-        y = y[:-delay]
+        # For recursive functions, we get a list of arrays instead of a single array
+        if type(y[0]) == list:
+            for i in range(len(y)):
+                y[i] = y[i][:-delay]
+        else:
+            y = y[:-delay]
 
     if warmup_steps > 0:
         x = x[warmup_steps:]
-        y = y[warmup_steps:]
+        if type(y[0]) == list:
+            for i in range(len(y)):
+                y[i] = y[i][warmup_steps:]
+        else:
+            y = y[warmup_steps:]
 
-    assert len(x) == len(y)
+    if type(y[0]) == list:
+        for i in range(len(y)):
+            assert len(x) == len(y[i])
+    else:
+        assert len(x) == len(y)
+
     for s in x:
         assert len(s) == len(output_cells) * num_output_genes
 
     return x, y, input_signal_info, output_cells
+
+
+def run_lasso(x, y, threads):
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
+
+    lasso = LassoCV(n_jobs=threads, selection="random", tol=0.05)
+    lasso.fit(x_train, y_train)
+
+    train_predicted = [1 if x > 0.5 else 0 for x in lasso.predict(x_train)]
+    test_predicted = [1 if x > 0.5 else 0 for x in lasso.predict(x_test)]
+
+    train_score = lasso.score(x_train, y_train)
+    test_score = lasso.score(x_test, y_test)
+
+    train_accuracy = sum(
+        [1 if a == b else 0 for a, b in zip(train_predicted, y_train)]
+    ) / len(train_predicted)
+    test_accuracy = sum(
+        [1 if a == b else 0 for a, b in zip(test_predicted, y_test)]
+    ) / len(test_predicted)
+
+    return train_accuracy, test_accuracy
 
 
 def train_lasso(
@@ -294,27 +377,19 @@ def train_lasso(
     """
     Train Lasso on the provided x and y lists and plots a histogram of features used from each cell and strain.
     """
-    from sklearn.linear_model import Lasso, LassoCV
-    from sklearn.model_selection import train_test_split
-    from sklearn.utils import parallel_backend
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
-
-    lasso = LassoCV(n_jobs=threads, selection="random", tol=0.05)
-    lasso.fit(x_train, y_train)
-
-    train_predicted = [1 if x > 0.5 else 0 for x in lasso.predict(x_train)]
-    test_predicted = [1 if x > 0.5 else 0 for x in lasso.predict(x_test)]
-
-    train_score = lasso.score(x_train, y_train)
-    test_score = lasso.score(x_test, y_test)
-
-    train_accuracy = sum(
-        [1 if a == b else 0 for a, b in zip(train_predicted, y_train)]
-    ) / len(train_predicted)
-    test_accuracy = sum(
-        [1 if a == b else 0 for a, b in zip(test_predicted, y_test)]
-    ) / len(test_predicted)
+    # In case of recursive functions, we have a list of functions instead of a single function
+    if type(y[0]) == list:
+        train_accuracies = []
+        test_accuracies = []
+        for i in range(len(y)):
+            train_accuracy, test_accuracy = run_lasso(x, y[i], threads)
+            train_accuracies.append(train_accuracy)
+            test_accuracies.append(test_accuracy)
+        train_accuracy = sum(train_accuracies) / len(train_accuracies)
+        test_accuracy = sum(test_accuracies) / len(test_accuracies)
+    else:
+        train_accuracy, test_accuracy = run_lasso(x, y, threads)
 
     cell_layer_map = get_cell_layers(
         num_cells, x_layers, y_layers, z_layers, cells_per_layer

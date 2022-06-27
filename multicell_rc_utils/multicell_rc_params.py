@@ -4,6 +4,14 @@
 
 import argparse
 from functools import partial
+from enum import Enum
+
+
+class Function(Enum):
+    PARITY = "parity"
+    MEDIAN = "median"
+    RECURSIVE = "recursive"
+
 
 # Parse the arguments
 def parse_args(args=None):
@@ -184,9 +192,9 @@ def parse_args(args=None):
     parser.add_argument(
         "-f",
         "--function",
-        choices=["median", "parity"],
-        default="parity",
-        help="Function to learn",
+        choices=[Function.MEDIAN, Function.PARITY, Function.RECURSIVE],
+        default=Function.PARITY,
+        help="Function to learn.",
     )
     parser.add_argument(
         "-w",
