@@ -400,7 +400,6 @@ def train_lasso(
             if i == 0:
                 # The output is all zeroes. LassoCV takes forever to train, while the coefficients are trivial: all zeroes
                 train_accuracy, test_accuracy, lasso = 1.0, 1.0, None
-                continue
             else:
                 train_accuracy, test_accuracy, lasso = run_lasso(x, y[i], threads)
             boolean_functions_train_accuracies.append(train_accuracy)
