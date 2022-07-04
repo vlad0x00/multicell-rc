@@ -397,10 +397,17 @@ def train_lasso(
         boolean_functions_test_accuracies = []
         boolean_functions_lassos = []
         for i in range(len(y)):
-            train_accuracy, test_accuracy, lasso = run_lasso(x, y[i], threads)
+            if i == 0:
+                # The output is all zeroes. LassoCV takes forever to train, while the coefficients are trivial: all zeroes
+                train_accuracy, test_accuracy, lasso = 1.0, 1.0, None
+                continue
+            else:
+                train_accuracy, test_accuracy, lasso = run_lasso(x, y[i], threads)
             boolean_functions_train_accuracies.append(train_accuracy)
             boolean_functions_test_accuracies.append(test_accuracy)
             boolean_functions_lassos.append(lasso)
+            if (i % 10 == 0) and (i != 0):
+                print(f"LASSO finished for {i}/{len(y)}")
         train_accuracy = sum(boolean_functions_train_accuracies) / len(
             boolean_functions_train_accuracies
         )

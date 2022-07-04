@@ -260,3 +260,8 @@ if LASSO_WEIGHTS:
     weights = cell_weights[cell]
     if any([ w != 0 for w in weights ]):
       print("{}: {}".format(cell, ' '.join([ str(w) for w in weights ])))
+
+if boolean_function_test_accuracies != None:
+  print("Boolean function test accuracies:")
+  for i, acc in enumerate(boolean_function_test_accuracies):
+    print(f"{i}: {acc}")
