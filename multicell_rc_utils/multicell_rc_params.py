@@ -257,4 +257,13 @@ def parse_args(args=None):
         help="Number of threads to use for the run.",
     )
 
-    return parser.parse_args(args)
+    parsed_args = parser.parse_args(args)
+
+    if (
+        parsed_args.function == Function.ALL_THREE_BIT
+        or parsed_args.function == Function.ALL_THREE_BIT_RECURSIVE
+    ):
+        if parsed_args.window_size != 3:
+            raise ValueError("Window size must be 3 for 256 functions.")
+
+    return parsed_args
