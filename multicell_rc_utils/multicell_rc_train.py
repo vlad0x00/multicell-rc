@@ -1,7 +1,5 @@
 import os
 import sys
-import shutil
-import subprocess
 import struct
 import math
 import matplotlib.pyplot as plt
@@ -18,7 +16,7 @@ from sklearn.utils import parallel_backend
 from vtk import vtkXMLPolyDataReader
 from vtk.util.numpy_support import vtk_to_numpy
 
-from multicell_rc_params import Function
+from .multicell_rc_params import Function
 
 STATES_FILE = "states"
 
@@ -123,13 +121,13 @@ def get_strains(output_file):
     return strain_map
 
 
-recursive_functions_initialized = False
-recursive_functions = []
+boolean_functions_initialized = False
+boolean_functions = []
 
 
-def get_recursive_function(fi):
-    global recursive_functions_initialized, recursive_functions
-    if not recursive_functions_initialized:
+def get_boolean_function(fi):
+    global boolean_functions_initialized, boolean_functions
+    if not boolean_functions_initialized:
         all_inputs = [x for x in itertools.product([0, 1], repeat=3)]
         all_outputs = [x for x in itertools.product([0, 1], repeat=8)]
         for output_set in all_outputs:
@@ -137,17 +135,17 @@ def get_recursive_function(fi):
             for idx, input_set in enumerate(all_inputs):
                 table[input_set] = output_set[idx]
 
-            def make_recursive_function(table):
-                def recursive_function(input_set):
+            def make_boolean_function(table):
+                def boolean_function(input_set):
                     return table[input_set]
 
-                return recursive_function
+                return boolean_function
 
-            recursive_functions.append(make_recursive_function(table))
+            boolean_functions.append(make_boolean_function(table))
 
-        recursive_functions_initialized = True
+        boolean_functions_initialized = True
 
-    return recursive_functions[fi]
+    return boolean_functions[fi]
 
 
 def process_output(
@@ -269,7 +267,7 @@ def process_output(
         sys.exit(1)
     x = output_states
 
-    if function == Function.PARITY:
+    if function == Function.PARITY.value:
         parity = [0] * (len(input_signal) + 1 - window_size)
         for i, j in enumerate(range(window_size, len(input_signal) + 1)):
             bitsum = 0
@@ -281,7 +279,7 @@ def process_output(
                 parity[i] = 1
         assert len(input_signal) == len(parity) + window_size - 1
         y = parity
-    elif function == Function.MEDIAN:
+    elif function == Function.MEDIAN.value:
         median = [0] * (len(input_signal) + 1 - window_size)
         for i, j in enumerate(range(window_size, len(input_signal) + 1)):
             bitsum = 0
@@ -293,10 +291,10 @@ def process_output(
                 median[i] = 0
         assert len(input_signal) == len(median) + window_size - 1
         y = median
-    elif function == Function.RECURSIVE:
+    elif function == Function.ALL_THREE_BIT_RECURSIVE.value:
         recursive = [([0] * (len(input_signal) + 1 - window_size)) for _ in range(256)]
         for fi in range(256):
-            f = get_recursive_function(fi)
+            f = get_boolean_function(fi)
             f_output = 0
             for i, j in enumerate(range(window_size, len(input_signal) + 1)):
                 bits = (f_output,) + tuple(input_signal[(j - window_size + 1) : j])
@@ -304,8 +302,19 @@ def process_output(
                 recursive[fi][i] = f_output
             assert len(input_signal) == len(recursive[fi]) + window_size - 1
         y = recursive
+    elif function == Function.ALL_THREE_BIT.value:
+        nonrecursive = [
+            ([0] * (len(input_signal) + 1 - window_size)) for _ in range(256)
+        ]
+        for fi in range(256):
+            f = get_boolean_function(fi)
+            for i, j in enumerate(range(window_size, len(input_signal) + 1)):
+                bits = tuple(input_signal[(j - window_size) : j])
+                nonrecursive[fi][i] = f(bits)
+            assert len(input_signal) == len(nonrecursive[fi]) + window_size - 1
+        y = nonrecursive
     else:
-        assert False, "Invalid function"
+        assert False, f"Invalid function: {function}"
 
     if delay > 0:
         x = x[delay:]
@@ -355,7 +364,7 @@ def run_lasso(x, y, threads):
         [1 if a == b else 0 for a, b in zip(test_predicted, y_test)]
     ) / len(test_predicted)
 
-    return train_accuracy, test_accuracy
+    return train_accuracy, test_accuracy, lasso
 
 
 def train_lasso(
@@ -378,18 +387,28 @@ def train_lasso(
     Train Lasso on the provided x and y lists and plots a histogram of features used from each cell and strain.
     """
 
+    boolean_functions_train_accuracies = None
+    boolean_functions_test_accuracies = None
+    boolean_functions_lassos = None
+
     # In case of recursive functions, we have a list of functions instead of a single function
     if type(y[0]) == list:
-        train_accuracies = []
-        test_accuracies = []
+        boolean_functions_train_accuracies = []
+        boolean_functions_test_accuracies = []
+        boolean_functions_lassos = []
         for i in range(len(y)):
-            train_accuracy, test_accuracy = run_lasso(x, y[i], threads)
-            train_accuracies.append(train_accuracy)
-            test_accuracies.append(test_accuracy)
-        train_accuracy = sum(train_accuracies) / len(train_accuracies)
-        test_accuracy = sum(test_accuracies) / len(test_accuracies)
+            train_accuracy, test_accuracy, lasso = run_lasso(x, y[i], threads)
+            boolean_functions_train_accuracies.append(train_accuracy)
+            boolean_functions_test_accuracies.append(test_accuracy)
+            boolean_functions_lassos.append(lasso)
+        train_accuracy = sum(boolean_functions_train_accuracies) / len(
+            boolean_functions_train_accuracies
+        )
+        test_accuracy = sum(boolean_functions_test_accuracies) / len(
+            boolean_functions_test_accuracies
+        )
     else:
-        train_accuracy, test_accuracy = run_lasso(x, y, threads)
+        train_accuracy, test_accuracy, lasso = run_lasso(x, y, threads)
 
     cell_layer_map = get_cell_layers(
         num_cells, x_layers, y_layers, z_layers, cells_per_layer
@@ -400,58 +419,69 @@ def train_lasso(
     for rank, cell in enumerate(output_cells):
         output_cells_rank[cell] = rank
 
-    cell_feature_data = {"index": [], "cell": [], "features": [], "layer": []}
-    cell_weights = {}
-    strain_feature_data = {"index": [], "strain": [], "features": []}
-    for cell in output_cells:
-        cell_layer = cell_layer_map[cell]
-        strain = strain_map[cell]
-        cell_rank = output_cells_rank[cell]
-        if strain >= num_output_strains:
-            assert False
-        coeff_start = cell_rank * num_output_genes
-        coeff_end = (cell_rank + 1) * num_output_genes
-        cell_weights[cell] = []
-        for weight in lasso.coef_[coeff_start:coeff_end]:
-            cell_weights[cell].append(weight)
-        feature_count = np.sum(lasso.coef_[coeff_start:coeff_end] != 0)
-        if feature_count > 0:
-            cell_feature_data["cell"].append(cell)
-            cell_feature_data["features"].append(feature_count)
-            cell_feature_data["layer"].append(cell_layer)
-            if strain in strain_feature_data["strain"]:
-                idx = strain_feature_data["strain"].index(strain)
-                strain_feature_data["features"][idx] += feature_count
-            else:
-                strain_feature_data["strain"].append(strain)
-                strain_feature_data["features"].append(feature_count)
-    cell_feature_data["index"] = [num for num in range(len(cell_feature_data["cell"]))]
-    strain_feature_data["index"] = [
-        num for num in range(len(strain_feature_data["strain"]))
-    ]
+    if type(y[0]) == list:
+        cell_feature_data = pd.DataFrame()
+        cell_weights = None
+        strain_feature_data = pd.DataFrame()
+    else:
+        cell_feature_data = {"index": [], "cell": [], "features": [], "layer": []}
+        cell_weights = {}
+        strain_feature_data = {"index": [], "strain": [], "features": []}
+        for cell in output_cells:
+            cell_layer = cell_layer_map[cell]
+            strain = strain_map[cell]
+            cell_rank = output_cells_rank[cell]
+            if strain >= num_output_strains:
+                assert False
+            coeff_start = cell_rank * num_output_genes
+            coeff_end = (cell_rank + 1) * num_output_genes
+            cell_weights[cell] = []
+            for weight in lasso.coef_[coeff_start:coeff_end]:
+                cell_weights[cell].append(weight)
+            feature_count = np.sum(lasso.coef_[coeff_start:coeff_end] != 0)
+            if feature_count > 0:
+                cell_feature_data["cell"].append(cell)
+                cell_feature_data["features"].append(feature_count)
+                cell_feature_data["layer"].append(cell_layer)
+                if strain in strain_feature_data["strain"]:
+                    idx = strain_feature_data["strain"].index(strain)
+                    strain_feature_data["features"][idx] += feature_count
+                else:
+                    strain_feature_data["strain"].append(strain)
+                    strain_feature_data["features"].append(feature_count)
+        cell_feature_data["index"] = [
+            num for num in range(len(cell_feature_data["cell"]))
+        ]
+        strain_feature_data["index"] = [
+            num for num in range(len(strain_feature_data["strain"]))
+        ]
 
-    cell_feature_data = pd.DataFrame(cell_feature_data)
-    strain_feature_data = pd.DataFrame(strain_feature_data)
+        cell_feature_data = pd.DataFrame(cell_feature_data)
+        strain_feature_data = pd.DataFrame(strain_feature_data)
 
-    if len(cell_feature_data) > 0:
-        plt.figure()
-        sns.barplot(
-            data=cell_feature_data, x="index", y="features", hue="layer", dodge=False
-        )
-        plt.xticks([])
-        plt.xlabel("Cell")
-        plt.ylabel("Features", rotation=0, labelpad=30)
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, "cell_feature_count.png"))
+        if len(cell_feature_data) > 0:
+            plt.figure()
+            sns.barplot(
+                data=cell_feature_data,
+                x="index",
+                y="features",
+                hue="layer",
+                dodge=False,
+            )
+            plt.xticks([])
+            plt.xlabel("Cell")
+            plt.ylabel("Features", rotation=0, labelpad=30)
+            plt.tight_layout()
+            plt.savefig(os.path.join(output_dir, "cell_feature_count.png"))
 
-    if len(strain_feature_data) > 0:
-        plt.figure()
-        sns.barplot(data=strain_feature_data, x="index", y="features", dodge=False)
-        plt.xticks([])
-        plt.xlabel("Strain")
-        plt.ylabel("Features", rotation=0, labelpad=30)
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, "strain_feature_count.png"))
+        if len(strain_feature_data) > 0:
+            plt.figure()
+            sns.barplot(data=strain_feature_data, x="index", y="features", dodge=False)
+            plt.xticks([])
+            plt.xlabel("Strain")
+            plt.ylabel("Features", rotation=0, labelpad=30)
+            plt.tight_layout()
+            plt.savefig(os.path.join(output_dir, "strain_feature_count.png"))
 
     max_features = len(x[0])
     return (
@@ -461,4 +491,6 @@ def train_lasso(
         strain_feature_data,
         max_features,
         cell_weights,
+        boolean_functions_train_accuracies,
+        boolean_functions_test_accuracies,
     )

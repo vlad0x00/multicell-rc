@@ -1,5 +1,5 @@
 BootStrap: docker
-From: ubuntu:20.04
+From: ubuntu:21.10
 
 %post
     export LC_ALL=C
@@ -30,4 +30,4 @@ From: ubuntu:20.04
 
 %labels
     Author Vladimir Nikolic
-    Version 1.0.0
+    Version 1.1.0

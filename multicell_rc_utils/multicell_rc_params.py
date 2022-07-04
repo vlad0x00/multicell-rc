@@ -10,7 +10,8 @@ from enum import Enum
 class Function(Enum):
     PARITY = "parity"
     MEDIAN = "median"
-    RECURSIVE = "recursive"
+    ALL_THREE_BIT_RECURSIVE = "256-recursive"
+    ALL_THREE_BIT = "256-nonrecursive"
 
 
 # Parse the arguments
@@ -192,8 +193,13 @@ def parse_args(args=None):
     parser.add_argument(
         "-f",
         "--function",
-        choices=[Function.MEDIAN, Function.PARITY, Function.RECURSIVE],
-        default=Function.PARITY,
+        choices=[
+            Function.MEDIAN.value,
+            Function.PARITY.value,
+            Function.ALL_THREE_BIT_RECURSIVE.value,
+            Function.ALL_THREE_BIT.value,
+        ],
+        default=Function.PARITY.value,
         help="Function to learn.",
     )
     parser.add_argument(
