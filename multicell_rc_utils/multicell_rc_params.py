@@ -15,6 +15,7 @@ class Function(Enum):
     FIVE_BIT_RECURSIVE = "5bit-recursive"
     FIVE_BIT = "5bit"
 
+
 # Parse the arguments
 def parse_args(args=None):
     def int_range(strval, minval=0, maxval=2**64):
@@ -197,9 +198,10 @@ def parse_args(args=None):
         choices=[
             Function.MEDIAN.value,
             Function.PARITY.value,
-            Function.ALL_THREE_BIT_RECURSIVE.value,
-            Function.ALL_THREE_BIT.value,
-
+            Function.THREE_BIT.value,
+            Function.THREE_BIT_RECURSIVE.value,
+            Function.FIVE_BIT.value,
+            Function.FIVE_BIT_RECURSIVE.value,
         ],
         default=Function.PARITY.value,
         help="Function to learn.",
