@@ -10,9 +10,10 @@ from enum import Enum
 class Function(Enum):
     PARITY = "parity"
     MEDIAN = "median"
-    ALL_THREE_BIT_RECURSIVE = "256-recursive"
-    ALL_THREE_BIT = "256-nonrecursive"
-
+    THREE_BIT_RECURSIVE = "3bit-recursive"
+    THREE_BIT = "3bit"
+    FIVE_BIT_RECURSIVE = "5bit-recursive"
+    FIVE_BIT = "5bit"
 
 # Parse the arguments
 def parse_args(args=None):
@@ -198,6 +199,7 @@ def parse_args(args=None):
             Function.PARITY.value,
             Function.ALL_THREE_BIT_RECURSIVE.value,
             Function.ALL_THREE_BIT.value,
+
         ],
         default=Function.PARITY.value,
         help="Function to learn.",
@@ -260,10 +262,17 @@ def parse_args(args=None):
     parsed_args = parser.parse_args(args)
 
     if (
-        parsed_args.function == Function.ALL_THREE_BIT
-        or parsed_args.function == Function.ALL_THREE_BIT_RECURSIVE
+        parsed_args.function == Function.THREE_BIT
+        or parsed_args.function == Function.THREE_BIT_RECURSIVE
     ):
         if parsed_args.window_size != 3:
-            raise ValueError("Window size must be 3 for 256 functions.")
+            raise ValueError("Window size must be 3 for 3 bit functions.")
+
+    if (
+        parsed_args.function == Function.FIVE_BIT
+        or parsed_args.function == Function.FIVE_BIT_RECURSIVE
+    ):
+        if parsed_args.window_size != 5:
+            raise ValueError("Window size must be 5 for 5 bit functions.")
 
     return parsed_args

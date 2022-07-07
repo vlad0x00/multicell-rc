@@ -7,7 +7,6 @@ import numpy as np
 import random
 import pandas as pd
 import seaborn as sns
-import itertools
 
 from sklearn.linear_model import Lasso, LassoCV
 from sklearn.model_selection import train_test_split
@@ -17,8 +16,10 @@ from vtk import vtkXMLPolyDataReader
 from vtk.util.numpy_support import vtk_to_numpy
 
 from .multicell_rc_params import Function
+from .boolean_functions import get_boolean_function
 
 STATES_FILE = "states"
+BOOLEAN_FUNCTIONS_LASSO_MAX_ITERS = 10
 
 
 def get_gene_values(output_file, num_genes, num_cells):
@@ -119,33 +120,6 @@ def get_strains(output_file):
                 strain = int(tokens[1].split(":")[1])
                 strain_map[cell] = strain
     return strain_map
-
-
-boolean_functions_initialized = False
-boolean_functions = []
-
-
-def get_boolean_function(fi):
-    global boolean_functions_initialized, boolean_functions
-    if not boolean_functions_initialized:
-        all_inputs = [x for x in itertools.product([0, 1], repeat=3)]
-        all_outputs = [x for x in itertools.product([0, 1], repeat=8)]
-        for output_set in all_outputs:
-            table = {}
-            for idx, input_set in enumerate(all_inputs):
-                table[input_set] = output_set[idx]
-
-            def make_boolean_function(table):
-                def boolean_function(input_set):
-                    return table[input_set]
-
-                return boolean_function
-
-            boolean_functions.append(make_boolean_function(table))
-
-        boolean_functions_initialized = True
-
-    return boolean_functions[fi]
 
 
 def process_output(
@@ -267,6 +241,26 @@ def process_output(
         sys.exit(1)
     x = output_states
 
+    def calc_boolean_outputs(window_size, num_functions, input_signal, window_values):
+        max_functions = 2 ** (2**window_size)
+        fn_indices = list(range(max_functions))
+        if num_functions < max_functions:
+            random.shuffle(fn_indices)
+            fn_indices = fn_indices[:num_functions]
+
+        outputs = [
+            ([0] * (len(input_signal) + 1 - window_size)) for _ in range(num_functions)
+        ]
+        for fi in range(num_functions):
+            f = get_boolean_function(fn_indices[fi])
+            f_output = 0
+            for i, j in enumerate(range(window_size, len(input_signal) + 1)):
+                bits = window_values(f_output, input_signal, j)
+                f_output = f(bits)
+                outputs[fi][i] = f_output
+            assert len(input_signal) == len(outputs[fi]) + window_size - 1
+        return outputs, fn_indices
+
     if function == Function.PARITY.value:
         parity = [0] * (len(input_signal) + 1 - window_size)
         for i, j in enumerate(range(window_size, len(input_signal) + 1)):
@@ -291,28 +285,26 @@ def process_output(
                 median[i] = 0
         assert len(input_signal) == len(median) + window_size - 1
         y = median
-    elif function == Function.ALL_THREE_BIT_RECURSIVE.value:
-        recursive = [([0] * (len(input_signal) + 1 - window_size)) for _ in range(256)]
-        for fi in range(256):
-            f = get_boolean_function(fi)
-            f_output = 0
-            for i, j in enumerate(range(window_size, len(input_signal) + 1)):
-                bits = (f_output,) + tuple(input_signal[(j - window_size + 1) : j])
-                f_output = f(bits)
-                recursive[fi][i] = f_output
-            assert len(input_signal) == len(recursive[fi]) + window_size - 1
-        y = recursive
-    elif function == Function.ALL_THREE_BIT.value:
-        nonrecursive = [
-            ([0] * (len(input_signal) + 1 - window_size)) for _ in range(256)
-        ]
-        for fi in range(256):
-            f = get_boolean_function(fi)
-            for i, j in enumerate(range(window_size, len(input_signal) + 1)):
-                bits = tuple(input_signal[(j - window_size) : j])
-                nonrecursive[fi][i] = f(bits)
-            assert len(input_signal) == len(nonrecursive[fi]) + window_size - 1
-        y = nonrecursive
+    elif function == Function.THREE_BIT.value or function == Function.FIVE_BIT.value:
+        y = calc_boolean_outputs(
+            window_size,
+            256,
+            input_signal,
+            lambda f_output, input_signal, j: tuple(
+                input_signal[(j - window_size) : j]
+            ),
+        )
+    elif (
+        function == Function.THREE_BIT_RECURSIVE.value
+        or function == Function.FIVE_BIT_RECURSIVE.value
+    ):
+        y = calc_boolean_outputs(
+            window_size,
+            256,
+            input_signal,
+            lambda f_output, input_signal, j: (f_output,)
+            + tuple(input_signal[(j - window_size + 1) : j]),
+        )
     else:
         assert False, f"Invalid function: {function}"
 
@@ -397,7 +389,9 @@ def train_lasso(
         boolean_functions_test_accuracies = []
         boolean_functions_lassos = []
         for i in range(len(y)):
-            train_accuracy, test_accuracy, lasso = run_lasso(x, y[i], threads, 50)
+            train_accuracy, test_accuracy, lasso = run_lasso(
+                x, y[i], threads, BOOLEAN_FUNCTIONS_LASSO_MAX_ITERS
+            )
             boolean_functions_train_accuracies.append(train_accuracy)
             boolean_functions_test_accuracies.append(test_accuracy)
             boolean_functions_lassos.append(lasso)
