@@ -345,10 +345,10 @@ def process_output(
     return x, y, input_signal_info, output_cells
 
 
-def run_lasso(x, y, threads):
+def run_lasso(x, y, threads, max_iter=1000):
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
 
-    lasso = LassoCV(n_jobs=threads, selection="random", tol=0.05)
+    lasso = LassoCV(n_jobs=threads, selection="random", tol=0.05, max_iter=max_iter)
     lasso.fit(x_train, y_train)
 
     train_predicted = [1 if x > 0.5 else 0 for x in lasso.predict(x_train)]
@@ -397,11 +397,7 @@ def train_lasso(
         boolean_functions_test_accuracies = []
         boolean_functions_lassos = []
         for i in range(len(y)):
-            if i == 0:
-                # The output is all zeroes. LassoCV takes forever to train, while the coefficients are trivial: all zeroes
-                train_accuracy, test_accuracy, lasso = 1.0, 1.0, None
-            else:
-                train_accuracy, test_accuracy, lasso = run_lasso(x, y[i], threads)
+            train_accuracy, test_accuracy, lasso = run_lasso(x, y[i], threads, 50)
             boolean_functions_train_accuracies.append(train_accuracy)
             boolean_functions_test_accuracies.append(test_accuracy)
             boolean_functions_lassos.append(lasso)
