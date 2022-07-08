@@ -252,7 +252,7 @@ def process_output(
             ([0] * (len(input_signal) + 1 - window_size)) for _ in range(num_functions)
         ]
         for fi in range(num_functions):
-            f = get_boolean_function(fn_indices[fi])
+            f = get_boolean_function(window_size, fn_indices[fi])
             f_output = 0
             for i, j in enumerate(range(window_size, len(input_signal) + 1)):
                 bits = window_values(f_output, input_signal, j)
