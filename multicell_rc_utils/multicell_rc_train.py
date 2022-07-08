@@ -286,7 +286,7 @@ def process_output(
         assert len(input_signal) == len(median) + window_size - 1
         y = median
     elif function == Function.THREE_BIT.value or function == Function.FIVE_BIT.value:
-        y = calc_boolean_outputs(
+        y, fn_indices = calc_boolean_outputs(
             window_size,
             256,
             input_signal,
@@ -294,17 +294,19 @@ def process_output(
                 input_signal[(j - window_size) : j]
             ),
         )
+        print(f"Boolean function indices: {fn_indices}")
     elif (
         function == Function.THREE_BIT_RECURSIVE.value
         or function == Function.FIVE_BIT_RECURSIVE.value
     ):
-        y = calc_boolean_outputs(
+        y, fn_indices = calc_boolean_outputs(
             window_size,
             256,
             input_signal,
             lambda f_output, input_signal, j: (f_output,)
             + tuple(input_signal[(j - window_size + 1) : j]),
         )
+        print(f"Boolean function indices: {fn_indices}")
     else:
         assert False, f"Invalid function: {function}"
 
