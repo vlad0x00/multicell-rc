@@ -243,10 +243,11 @@ def process_output(
 
     def calc_boolean_outputs(window_size, num_functions, input_signal, window_values):
         max_functions = 2 ** (2**window_size)
-        fn_indices = list(range(max_functions))
-        if num_functions < max_functions:
-            random.shuffle(fn_indices)
-            fn_indices = fn_indices[:num_functions]
+        assert num_functions <= max_functions
+        fn_indices = random.sample(range(max_functions), num_functions)
+
+        if num_functions == max_functions:
+            fn_indices = sorted(fn_indices)
 
         outputs = [
             ([0] * (len(input_signal) + 1 - window_size)) for _ in range(num_functions)
@@ -261,6 +262,7 @@ def process_output(
             assert len(input_signal) == len(outputs[fi]) + window_size - 1
         return outputs, fn_indices
 
+    fn_indices = None
     if function == Function.PARITY.value:
         parity = [0] * (len(input_signal) + 1 - window_size)
         for i, j in enumerate(range(window_size, len(input_signal) + 1)):
@@ -294,7 +296,6 @@ def process_output(
                 input_signal[(j - window_size) : j]
             ),
         )
-        print(f"Boolean function indices: {fn_indices}")
     elif (
         function == Function.THREE_BIT_RECURSIVE.value
         or function == Function.FIVE_BIT_RECURSIVE.value
@@ -306,7 +307,6 @@ def process_output(
             lambda f_output, input_signal, j: (f_output,)
             + tuple(input_signal[(j - window_size + 1) : j]),
         )
-        print(f"Boolean function indices: {fn_indices}")
     else:
         assert False, f"Invalid function: {function}"
 
@@ -336,7 +336,7 @@ def process_output(
     for s in x:
         assert len(s) == len(output_cells) * num_output_genes
 
-    return x, y, input_signal_info, output_cells
+    return x, y, input_signal_info, output_cells, fn_indices
 
 
 def run_lasso(x, y, threads, max_iter=1000):

@@ -33,13 +33,20 @@ NUM_GENES = 1 + args.esms * 2 + args.genes
 NUM_CELLS = args.cells
 NUM_STRAINS = args.strains
 if args.tissue_depth > 0 and NUM_CELLS < args.tissue_depth:
-  print("Number of cells ({}) is smaller than the required number of layers ({}). Exiting...".format(NUM_CELLS, args.tissue_depth))
-  sys.exit(0)
-TISSUE_DEPTH = min(NUM_CELLS, args.tissue_depth if args.tissue_depth > 0 else math.ceil(NUM_CELLS ** (1. / 3.)))
+    print(
+        "Number of cells ({}) is smaller than the required number of layers ({}). Exiting...".format(
+            NUM_CELLS, args.tissue_depth
+        )
+    )
+    sys.exit(0)
+TISSUE_DEPTH = min(
+    NUM_CELLS,
+    args.tissue_depth if args.tissue_depth > 0 else math.ceil(NUM_CELLS ** (1.0 / 3.0)),
+)
 CONNECTIVITY = args.in_degree
 INPUT_SIGNAL_DEPTH = args.input_signal_depth
 DIRICHLET_BOUNDARY = 100_000
-INPUT_THRESHOLD = -1.0 # To be numerically calculated
+INPUT_THRESHOLD = -1.0  # To be numerically calculated
 ALPHA_INPUT = 0.2
 BETA_INPUT = 5
 ALPHA_ESM = args.alpha_esm
@@ -80,105 +87,232 @@ ESM_NORMALIZATION_NUM_GENES = 3
 ESM_NORMALIZATION_UNIVERSE_SIZE = 20
 ESM_NORMALIZATION_SIMULATION_STEPS = 2
 ESM_NORMALIZATION_INPUT_SIGNAL_LENGTH = ESM_NORMALIZATION_SIMULATION_STEPS + 1
-ESM_NORMALIZATION = -1.0 # To be numerically calculated
+ESM_NORMALIZATION = -1.0  # To be numerically calculated
 
 assert SIMULATION_STEPS > WARMUP_STEPS
 assert CELL_RADIUS <= IF_GRID_SPACING
 
-'''
+"""
   These must be setup before importing numpy in order to work.
   Scipy LassoCV does not always respect the njobs (threads) parameter,
   hence the need for the environment variables.
-'''
-os.environ['OPENBLAS_NUM_THREADS'] = str(args.threads)
-os.environ['OMP_NUM_THREADS'] = str(args.threads)
-os.environ['MKL_NUM_THREADS'] = str(args.threads)
-os.environ['BLIS_NUM_THREADS'] = str(args.threads)
-os.environ['NUMEXPR_NUM_THREADS'] = str(args.threads)
-os.environ['VECLIB_MAXIMUM_THREADS'] = str(args.threads)
+"""
+os.environ["OPENBLAS_NUM_THREADS"] = str(args.threads)
+os.environ["OMP_NUM_THREADS"] = str(args.threads)
+os.environ["MKL_NUM_THREADS"] = str(args.threads)
+os.environ["BLIS_NUM_THREADS"] = str(args.threads)
+os.environ["NUMEXPR_NUM_THREADS"] = str(args.threads)
+os.environ["VECLIB_MAXIMUM_THREADS"] = str(args.threads)
 
 # Include Biocellion .so files before running
 LD_CMD = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:" + MODEL_DIR
 
-# Build the Biocellion model if it hasn't been built. 
+# Build the Biocellion model if it hasn't been built.
 script_dir = os.path.dirname(os.path.realpath(__file__))
 os.chdir(script_dir)
 if not os.path.exists(os.path.join(script_dir, MODEL_DIR, "libmodel.DP.SPAGENT.so")):
-  subprocess.run([ "cd " + os.path.join(script_dir, MODEL_DIR) + "; make" ], shell=True)
+    subprocess.run(["cd " + os.path.join(script_dir, MODEL_DIR) + "; make"], shell=True)
 
 # Remove generated auxilliary files from previous simulation, if any
 if not AUXILIARY_FILES:
-  if os.path.isfile(DOT_FILE):
-      filename, file_extension = os.path.splitext(DOT_FILE)
-      os.remove(DOT_FILE)
-      os.remove(filename + ".png")
-  DOT_FILE = None
+    if os.path.isfile(DOT_FILE):
+        filename, file_extension = os.path.splitext(DOT_FILE)
+        os.remove(DOT_FILE)
+        os.remove(filename + ".png")
+    DOT_FILE = None
 
 # These have to be imported after the export of the environment vars, as they import numpy
 from multicell_rc_utils import multicell_rc_gen
 from multicell_rc_utils import multicell_rc_train
 
 # Run Biocellion to numerically normalize secretion level and calculate input signal threshold
-print("Running numerical analysis for parameters... ", end='', flush=True)
+print("Running numerical analysis for parameters... ", end="", flush=True)
 t1 = time.time()
 
 # Arguments passed to Biocellion directly
-ESM_NORMALIZATION_ADDITIONAL_PARAMS = str(ESM_NORMALIZATION_NUM_GENES) + " 1 1 " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_ESM) + " " + str(BETA_ESM) + " 1 " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(ESM_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " 1 1 1 " + str(KAPPA) + " " + str(True) + " " + str(ESM_NORMALIZATION_UNIVERSE_SIZE // 2) + " 1.0 " + str(True) + " " + str(CELLS_PER_LAYER)
+ESM_NORMALIZATION_ADDITIONAL_PARAMS = (
+    str(ESM_NORMALIZATION_NUM_GENES)
+    + " 1 1 "
+    + NV_FILE
+    + " "
+    + VARF_FILE
+    + " "
+    + TT_FILE
+    + " "
+    + GENE_INITIAL_STATES_FILE
+    + " "
+    + INPUT_SIGNAL_FILE
+    + " "
+    + str(ALPHA_ESM)
+    + " "
+    + str(BETA_ESM)
+    + " 1 "
+    + str(SECRETION_LOW)
+    + " "
+    + str(SECRETION_HIGH)
+    + " "
+    + str(ESM_THRESHOLD)
+    + " "
+    + str(CELL_RADIUS)
+    + " "
+    + str(IF_GRID_SPACING)
+    + " "
+    + str(DIRICHLET_BOUNDARY)
+    + " "
+    + str(INPUT_THRESHOLD)
+    + " "
+    + str(ALPHA_INPUT)
+    + " "
+    + str(BETA_INPUT)
+    + " 1 1 1 "
+    + str(KAPPA)
+    + " "
+    + str(True)
+    + " "
+    + str(ESM_NORMALIZATION_UNIVERSE_SIZE // 2)
+    + " 1.0 "
+    + str(True)
+    + " "
+    + str(CELLS_PER_LAYER)
+)
 
 # Remove the output dir of a previous run, if any, and create a new one
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
 os.makedirs(OUTPUT_DIR)
 
-multicell_rc_gen.generate_ESM_normalization_files(ESM_NORMALIZATION_NUM_GENES, NV_FILE, VARF_FILE, TT_FILE, INPUT_SIGNAL_FILE, ESM_NORMALIZATION_INPUT_SIGNAL_LENGTH, GENE_INITIAL_STATES_FILE)
-multicell_rc_gen.make_params_xml(PARAMS_FILE, OUTPUT_DIR, ESM_NORMALIZATION_SIMULATION_STEPS, ESM_NORMALIZATION_ADDITIONAL_PARAMS, THREADS, ESM_NORMALIZATION_UNIVERSE_SIZE, ESM_NORMALIZATION_UNIVERSE_SIZE)
+multicell_rc_gen.generate_ESM_normalization_files(
+    ESM_NORMALIZATION_NUM_GENES,
+    NV_FILE,
+    VARF_FILE,
+    TT_FILE,
+    INPUT_SIGNAL_FILE,
+    ESM_NORMALIZATION_INPUT_SIGNAL_LENGTH,
+    GENE_INITIAL_STATES_FILE,
+)
+multicell_rc_gen.make_params_xml(
+    PARAMS_FILE,
+    OUTPUT_DIR,
+    ESM_NORMALIZATION_SIMULATION_STEPS,
+    ESM_NORMALIZATION_ADDITIONAL_PARAMS,
+    THREADS,
+    ESM_NORMALIZATION_UNIVERSE_SIZE,
+    ESM_NORMALIZATION_UNIVERSE_SIZE,
+)
 
-os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE)
+os.system(
+    LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE
+)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
+
 
 def nested_dict(n, type):
     if n == 1:
         return defaultdict(type)
     else:
         return defaultdict(lambda: nested_dict(n - 1, type))
+
+
 input_vals = nested_dict(3, float)
 
-with open(BIOCELLION_OUTPUT_FILE, 'r') as f:
-  counter = 0
-  for line in f:
-    if 'ESM0_max' in line:
-      counter += 1
-      if counter == 2: ESM_NORMALIZATION = float(line.split(':')[1])
-    elif 'Input signal val' in line:
-      tokens = line.split()
-      x, y, z = [ int(coord) for coord in tokens[3][1:-1].split(',') ]
-      val = float(tokens[5])
-      input_vals[x][y][z] = val
+with open(BIOCELLION_OUTPUT_FILE, "r") as f:
+    counter = 0
+    for line in f:
+        if "ESM0_max" in line:
+            counter += 1
+            if counter == 2:
+                ESM_NORMALIZATION = float(line.split(":")[1])
+        elif "Input signal val" in line:
+            tokens = line.split()
+            x, y, z = [int(coord) for coord in tokens[3][1:-1].split(",")]
+            val = float(tokens[5])
+            input_vals[x][y][z] = val
 
 for x in input_vals.keys():
-  assert len(input_vals.keys()) == len(input_vals[x].keys())
-  for y in input_vals[x].keys():
-    assert len(input_vals[x].keys()) == len(input_vals[x][y].keys())
+    assert len(input_vals.keys()) == len(input_vals[x].keys())
+    for y in input_vals[x].keys():
+        assert len(input_vals[x].keys()) == len(input_vals[x][y].keys())
 
 for z in input_vals[0][0].keys():
-  current_input_val = input_vals[0][0][z]
-  for x in input_vals.keys():
-    for y in input_vals[x].keys():
-      assert current_input_val == input_vals[x][y][z]
+    current_input_val = input_vals[0][0][z]
+    for x in input_vals.keys():
+        for y in input_vals[x].keys():
+            assert current_input_val == input_vals[x][y][z]
 
 for x in input_vals.keys():
-  for y in input_vals[x].keys():
-    input_vals[x][y][-1] = DIRICHLET_BOUNDARY
-    input_vals[x][y][len(input_vals.keys())] = 0
+    for y in input_vals[x].keys():
+        input_vals[x][y][-1] = DIRICHLET_BOUNDARY
+        input_vals[x][y][len(input_vals.keys())] = 0
 
-INPUT_THRESHOLD = (input_vals[0][0][SOURCE_DIST - 1 + INPUT_SIGNAL_DEPTH] + input_vals[0][0][SOURCE_DIST - 1 + INPUT_SIGNAL_DEPTH + 1]) / 2
+INPUT_THRESHOLD = (
+    input_vals[0][0][SOURCE_DIST - 1 + INPUT_SIGNAL_DEPTH]
+    + input_vals[0][0][SOURCE_DIST - 1 + INPUT_SIGNAL_DEPTH + 1]
+) / 2
 assert INPUT_THRESHOLD > 0.0
 assert ESM_NORMALIZATION > 0.0
 
 print("Tissue shape: {} x {} x {}".format(X_LAYERS, Y_LAYERS, Z_LAYERS))
 
 # Arguments passed to Biocellion directly
-ADDITIONAL_PARAMS = str(NUM_GENES) + " " + str(NUM_CELLS) + " " + str(NUM_STRAINS) + " " + NV_FILE + " " + VARF_FILE + " " + TT_FILE + " " + GENE_INITIAL_STATES_FILE + " " + INPUT_SIGNAL_FILE + " " + str(ALPHA_ESM) + " " + str(BETA_ESM) + " " + str(NUM_ESMS) + " " + str(SECRETION_LOW) + " " + str(SECRETION_HIGH) + " " + str(ESM_THRESHOLD) + " " + str(CELL_RADIUS) + " " + str(IF_GRID_SPACING) + " " + str(DIRICHLET_BOUNDARY) + " " + str(INPUT_THRESHOLD) + " " + str(ALPHA_INPUT) + " " + str(BETA_INPUT) + " " + str(Z_LAYERS) + " " + str(Y_LAYERS) + " " + str(X_LAYERS) + " " + str(KAPPA) + " " + str(SUMMARY) + " " + str(SOURCE_DIST) + " " + str(ESM_NORMALIZATION) + " " + str(False) + " " + str(CELLS_PER_LAYER)
+ADDITIONAL_PARAMS = (
+    str(NUM_GENES)
+    + " "
+    + str(NUM_CELLS)
+    + " "
+    + str(NUM_STRAINS)
+    + " "
+    + NV_FILE
+    + " "
+    + VARF_FILE
+    + " "
+    + TT_FILE
+    + " "
+    + GENE_INITIAL_STATES_FILE
+    + " "
+    + INPUT_SIGNAL_FILE
+    + " "
+    + str(ALPHA_ESM)
+    + " "
+    + str(BETA_ESM)
+    + " "
+    + str(NUM_ESMS)
+    + " "
+    + str(SECRETION_LOW)
+    + " "
+    + str(SECRETION_HIGH)
+    + " "
+    + str(ESM_THRESHOLD)
+    + " "
+    + str(CELL_RADIUS)
+    + " "
+    + str(IF_GRID_SPACING)
+    + " "
+    + str(DIRICHLET_BOUNDARY)
+    + " "
+    + str(INPUT_THRESHOLD)
+    + " "
+    + str(ALPHA_INPUT)
+    + " "
+    + str(BETA_INPUT)
+    + " "
+    + str(Z_LAYERS)
+    + " "
+    + str(Y_LAYERS)
+    + " "
+    + str(X_LAYERS)
+    + " "
+    + str(KAPPA)
+    + " "
+    + str(SUMMARY)
+    + " "
+    + str(SOURCE_DIST)
+    + " "
+    + str(ESM_NORMALIZATION)
+    + " "
+    + str(False)
+    + " "
+    + str(CELLS_PER_LAYER)
+)
 
 # Remove the output dir of a previous run, if any, and create a new one
 shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
@@ -186,45 +320,141 @@ os.makedirs(OUTPUT_DIR)
 
 # Should new input signal, boolean networks, and initial states be generated?
 if NEW:
-  print("Generating initial gene network(s) state(s), functions, and input signal... ", end='', flush=True)
-  t1 = time.time()
-  multicell_rc_gen.generate_gene_functions(NUM_STRAINS, NUM_GENES, CONNECTIVITY, INPUT_CONNECTIONS, NUM_ESMS, NV_FILE, VARF_FILE, TT_FILE, DOT_FILE)
-  multicell_rc_gen.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
-  multicell_rc_gen.generate_gene_initial_states(NUM_GENES, NUM_CELLS, NUM_ESMS, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE)
-  t2 = time.time()
-  print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
+    print(
+        "Generating initial gene network(s) state(s), functions, and input signal... ",
+        end="",
+        flush=True,
+    )
+    t1 = time.time()
+    multicell_rc_gen.generate_gene_functions(
+        NUM_STRAINS,
+        NUM_GENES,
+        CONNECTIVITY,
+        INPUT_CONNECTIONS,
+        NUM_ESMS,
+        NV_FILE,
+        VARF_FILE,
+        TT_FILE,
+        DOT_FILE,
+    )
+    multicell_rc_gen.generate_input_signal(INPUT_SIGNAL_LENGTH, INPUT_SIGNAL_FILE)
+    multicell_rc_gen.generate_gene_initial_states(
+        NUM_GENES, NUM_CELLS, NUM_ESMS, INPUT_SIGNAL_FILE, GENE_INITIAL_STATES_FILE
+    )
+    t2 = time.time()
+    print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 # Generate the Biocellion XML
-multicell_rc_gen.make_params_xml(PARAMS_FILE, OUTPUT_DIR, SIMULATION_STEPS, ADDITIONAL_PARAMS, THREADS, UNIVERSE_LENGTH, UNIVERSE_WIDTH)
+multicell_rc_gen.make_params_xml(
+    PARAMS_FILE,
+    OUTPUT_DIR,
+    SIMULATION_STEPS,
+    ADDITIONAL_PARAMS,
+    THREADS,
+    UNIVERSE_LENGTH,
+    UNIVERSE_WIDTH,
+)
 
 # Run and time the Biocellion executable
-print("Running Biocellion... ", end='', flush=True)
+print("Running Biocellion... ", end="", flush=True)
 t1 = time.time()
-os.system(LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE)
+os.system(
+    LD_CMD + " " + BIOCELLION_BIN + " " + PARAMS_FILE + " >" + BIOCELLION_OUTPUT_FILE
+)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
 # Load gene states from files of all simulation steps
-print("Processing output... ", end='', flush=True)
+print("Processing output... ", end="", flush=True)
 t1 = time.time()
-x, y, input_signal_info, output_cells = multicell_rc_train.process_output(INPUT_SIGNAL_FILE, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, NUM_GENES, NUM_CELLS, NUM_OUTPUT_GENES, NUM_OUTPUT_CELLS, NUM_OUTPUT_STRAINS, OUTPUT_CELLS_RANDOM, WINDOW_SIZE, DELAY, SIMULATION_STEPS, FUNCTION, AUXILIARY_FILES, THREADS, WARMUP_STEPS, Z_LAYERS, Y_LAYERS, X_LAYERS, INPUT_SIGNAL_DEPTH, CELLS_PER_LAYER)
+x, y, input_signal_info, output_cells, fn_indices = multicell_rc_train.process_output(
+    INPUT_SIGNAL_FILE,
+    BIOCELLION_OUTPUT_FILE,
+    OUTPUT_DIR,
+    NUM_GENES,
+    NUM_CELLS,
+    NUM_OUTPUT_GENES,
+    NUM_OUTPUT_CELLS,
+    NUM_OUTPUT_STRAINS,
+    OUTPUT_CELLS_RANDOM,
+    WINDOW_SIZE,
+    DELAY,
+    SIMULATION_STEPS,
+    FUNCTION,
+    AUXILIARY_FILES,
+    THREADS,
+    WARMUP_STEPS,
+    Z_LAYERS,
+    Y_LAYERS,
+    X_LAYERS,
+    INPUT_SIGNAL_DEPTH,
+    CELLS_PER_LAYER,
+)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
+if fn_indices != None:
+    print(f"Boolean function indices: {fn_indices}", flush=True)
 
 # Print the number of cells that have received the input signal, fully or partially
 correct_input = input_signal_info["correct_input"]
 bad_input = input_signal_info["bad_input"]
-print("Cell input signal: {} / {} ({:.2f}%) correct, {} / {} ({:.2f}%) bad".format(correct_input, NUM_CELLS, correct_input / NUM_CELLS * 100.0, bad_input, NUM_CELLS, bad_input / NUM_CELLS * 100.0))
-if correct_input == 0: print("WARNING: no cell has received input signal fully or at all.", file=sys.stderr)
+print(
+    "Cell input signal: {} / {} ({:.2f}%) correct, {} / {} ({:.2f}%) bad".format(
+        correct_input,
+        NUM_CELLS,
+        correct_input / NUM_CELLS * 100.0,
+        bad_input,
+        NUM_CELLS,
+        bad_input / NUM_CELLS * 100.0,
+    )
+)
+if correct_input == 0:
+    print(
+        "WARNING: no cell has received input signal fully or at all.", file=sys.stderr
+    )
 for layer in range(Z_LAYERS):
-  correct_cells = input_signal_info[layer]["correct_cells"]
-  bad_cells = input_signal_info[layer]["bad_cells"]
-  total_cells = input_signal_info[layer]["total_cells"]
-  print("Layer {}: {} / {} ({:.2f}%) correct, {} / {} ({:.2f}%) bad".format(layer, correct_cells, total_cells, correct_cells / total_cells * 100.0, bad_cells, total_cells, bad_cells / total_cells * 100.0))
+    correct_cells = input_signal_info[layer]["correct_cells"]
+    bad_cells = input_signal_info[layer]["bad_cells"]
+    total_cells = input_signal_info[layer]["total_cells"]
+    print(
+        "Layer {}: {} / {} ({:.2f}%) correct, {} / {} ({:.2f}%) bad".format(
+            layer,
+            correct_cells,
+            total_cells,
+            correct_cells / total_cells * 100.0,
+            bad_cells,
+            total_cells,
+            bad_cells / total_cells * 100.0,
+        )
+    )
 
 # Train Lasso on gene states
-print("Training LASSO... ", end='', flush=True)
+print("Training LASSO... ", end="", flush=True)
 t1 = time.time()
-train_accuracy, test_accuracy, cell_feature_data, strain_feature_data, max_features, cell_weights, boolean_functions_train_accuracies, boolean_function_test_accuracies = multicell_rc_train.train_lasso(x, y, NUM_CELLS, NUM_OUTPUT_CELLS, NUM_OUTPUT_STRAINS, NUM_OUTPUT_GENES, BIOCELLION_OUTPUT_FILE, OUTPUT_DIR, THREADS, output_cells, X_LAYERS, Y_LAYERS, Z_LAYERS, CELLS_PER_LAYER)
+(
+    train_accuracy,
+    test_accuracy,
+    cell_feature_data,
+    strain_feature_data,
+    max_features,
+    cell_weights,
+    boolean_functions_train_accuracies,
+    boolean_function_test_accuracies,
+) = multicell_rc_train.train_lasso(
+    x,
+    y,
+    NUM_CELLS,
+    NUM_OUTPUT_CELLS,
+    NUM_OUTPUT_STRAINS,
+    NUM_OUTPUT_GENES,
+    BIOCELLION_OUTPUT_FILE,
+    OUTPUT_DIR,
+    THREADS,
+    output_cells,
+    X_LAYERS,
+    Y_LAYERS,
+    Z_LAYERS,
+    CELLS_PER_LAYER,
+)
 t2 = time.time()
 print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
 
@@ -233,35 +463,43 @@ print("Training accuracy:", train_accuracy)
 print("Testing accuracy:", test_accuracy)
 
 if cell_feature_data.empty:
-  print("Cell feature data not available.", file=sys.stderr)
+    print("Cell feature data not available.", file=sys.stderr)
 else:
-  features_used = int(cell_feature_data['features'].sum())
-  if max_features > 0:
-    features_used_percent = features_used / max_features * 100.0
-  else:
-    features_used_percent = 0.0
-  print("LASSO features used: {} / {} ({:.2f}%)".format(features_used, max_features, features_used_percent))
-  for layer in range(Z_LAYERS):
-    layer_cells = cell_feature_data[cell_feature_data['layer'] == layer]
-    layer_features = int(layer_cells['features'].sum())
-    if features_used > 0:
-      layer_features_percent = layer_features / features_used * 100.0
+    features_used = int(cell_feature_data["features"].sum())
+    if max_features > 0:
+        features_used_percent = features_used / max_features * 100.0
     else:
-      layer_features_percent = 0.0
-    print("Layer {}: {} / {} ({:.2f}%)".format(layer, layer_features, features_used, layer_features_percent))
+        features_used_percent = 0.0
+    print(
+        "LASSO features used: {} / {} ({:.2f}%)".format(
+            features_used, max_features, features_used_percent
+        )
+    )
+    for layer in range(Z_LAYERS):
+        layer_cells = cell_feature_data[cell_feature_data["layer"] == layer]
+        layer_features = int(layer_cells["features"].sum())
+        if features_used > 0:
+            layer_features_percent = layer_features / features_used * 100.0
+        else:
+            layer_features_percent = 0.0
+        print(
+            "Layer {}: {} / {} ({:.2f}%)".format(
+                layer, layer_features, features_used, layer_features_percent
+            )
+        )
 
 if LASSO_WEIGHTS:
-  if cell_weights == None:
-    assert False, "Cell weights not available."
-  output_cells = list(cell_weights.keys())
-  print("Output cells: {}".format(' '.join([ str(c) for c in output_cells ])))
-  print("Output cell weights (cells with all 0 weights omitted):")
-  for cell in output_cells:
-    weights = cell_weights[cell]
-    if any([ w != 0 for w in weights ]):
-      print("{}: {}".format(cell, ' '.join([ str(w) for w in weights ])))
+    if cell_weights == None:
+        assert False, "Cell weights not available."
+    output_cells = list(cell_weights.keys())
+    print("Output cells: {}".format(" ".join([str(c) for c in output_cells])))
+    print("Output cell weights (cells with all 0 weights omitted):")
+    for cell in output_cells:
+        weights = cell_weights[cell]
+        if any([w != 0 for w in weights]):
+            print("{}: {}".format(cell, " ".join([str(w) for w in weights])))
 
 if boolean_function_test_accuracies != None:
-  print("Boolean function test accuracies:")
-  for i, acc in enumerate(boolean_function_test_accuracies):
-    print(f"{i}: {acc}")
+    print("Boolean function test accuracies:")
+    for i, acc in enumerate(boolean_function_test_accuracies):
+        print(f"{i}: {acc}")

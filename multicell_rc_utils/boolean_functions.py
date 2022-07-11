@@ -11,6 +11,22 @@ def make_boolean_function(table):
     return boolean_function
 
 
+def nth_output_set(window_size, n):
+    input_combinations = 2**window_size
+    max_n = 2**input_combinations
+    assert n < max_n
+    bit = input_combinations
+    output_set = []
+    while bit > 0:
+        if n % 2 == 1:
+            output_set += [1]
+        else:
+            output_set += [0]
+        n = n // 2
+        bit -= 1
+    return tuple(reversed(output_set))
+
+
 def get_boolean_function(window_size, fi):
     global boolean_functions, all_outputs
 
@@ -23,10 +39,7 @@ def get_boolean_function(window_size, fi):
         ]
 
     if fi not in boolean_functions[window_size]:
-        all_outputs = itertools.product([0, 1], repeat=(2**window_size))
-        for _ in range(fi):
-            next(all_outputs)
-        output_set = next(all_outputs)
+        output_set = nth_output_set(window_size, fi)
 
         table = {}
         for idx, input_set in enumerate(all_inputs[window_size]):
