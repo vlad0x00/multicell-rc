@@ -71,6 +71,7 @@ SOURCE_DIST = args.source_dist
 INPUT_SIGNAL_FILE = os.path.join(OUTPUT_DIR, "input_signal")
 INPUT_SIGNAL_LENGTH = SIMULATION_STEPS
 FUNCTION = args.function
+RECURSIVE = args.recursive
 AUXILIARY_FILES = args.auxiliary
 LASSO_WEIGHTS = args.lasso_weights
 NEW = not args.reuse
@@ -380,6 +381,7 @@ x, y, input_signal_info, output_cells, fn_indices = multicell_rc_train.process_o
     DELAY,
     SIMULATION_STEPS,
     FUNCTION,
+    RECURSIVE,
     AUXILIARY_FILES,
     THREADS,
     WARMUP_STEPS,

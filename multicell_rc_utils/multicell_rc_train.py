@@ -136,6 +136,7 @@ def process_output(
     delay,
     timesteps,
     function,
+    recursive,
     auxiliary_files,
     threads,
     warmup_steps,
@@ -262,57 +263,65 @@ def process_output(
             assert len(input_signal) == len(outputs[fi]) + window_size - 1
         return outputs, fn_indices
 
-    fn_indices = None
-    if function == Function.PARITY.value:
-        parity = [0] * (len(input_signal) + 1 - window_size)
+    def calc_median_outputs(window_size, input_signal, window_values):
+        outputs = [0] * (len(input_signal) + 1 - window_size)
+        f_output = 0
         for i, j in enumerate(range(window_size, len(input_signal) + 1)):
             bitsum = 0
-            for bit in input_signal[(j - window_size) : j]:
-                bitsum += bit
-            if bitsum % 2 == 0:
-                parity[i] = 0
-            else:
-                parity[i] = 1
-        assert len(input_signal) == len(parity) + window_size - 1
-        y = parity
-    elif function == Function.MEDIAN.value:
-        median = [0] * (len(input_signal) + 1 - window_size)
-        for i, j in enumerate(range(window_size, len(input_signal) + 1)):
-            bitsum = 0
-            for bit in input_signal[(j - window_size) : j]:
+            bits = window_values(f_output, input_signal, j)
+            for bit in bits:
                 bitsum += bit
             if bitsum > window_size // 2:
-                median[i] = 1
+                f_output = 1
             else:
-                median[i] = 0
-        assert len(input_signal) == len(median) + window_size - 1
-        y = median
+                f_output = 0
+            outputs[i] = f_output
+        assert len(input_signal) == len(outputs) + window_size - 1
+        return outputs
+
+    def calc_parity_outputs(window_size, input_signal, window_values):
+        outputs = [0] * (len(input_signal) + 1 - window_size)
+        f_output = 0
+        for i, j in enumerate(range(window_size, len(input_signal) + 1)):
+            bitsum = 0
+            bits = window_values(f_output, input_signal, j)
+            for bit in bits:
+                bitsum += bit
+            if bitsum % 2 == 0:
+                f_output = 0
+            else:
+                f_output = 1
+            outputs[i] = f_output
+        assert len(input_signal) == len(outputs) + window_size - 1
+        return outputs
+
+    if recursive:
+        window_values = lambda f_output, input_signal, j: (f_output,) + tuple(
+            input_signal[(j - window_size + 1) : j]
+        )
+    else:
+        window_values = lambda f_output, input_signal, j: tuple(
+            input_signal[(j - window_size) : j]
+        )
+
+    fn_indices = None
+    if function == Function.PARITY.value:
+        y = calc_parity_outputs(window_size, input_signal, window_values)
+    elif function == Function.MEDIAN.value:
+        y = calc_median_outputs(window_size, input_signal, window_values)
     elif function == Function.THREE_BIT.value or function == Function.FIVE_BIT.value:
         y, fn_indices = calc_boolean_outputs(
             window_size,
             256,
             input_signal,
-            lambda f_output, input_signal, j: tuple(
-                input_signal[(j - window_size) : j]
-            ),
-        )
-    elif (
-        function == Function.THREE_BIT_RECURSIVE.value
-        or function == Function.FIVE_BIT_RECURSIVE.value
-    ):
-        y, fn_indices = calc_boolean_outputs(
-            window_size,
-            256,
-            input_signal,
-            lambda f_output, input_signal, j: (f_output,)
-            + tuple(input_signal[(j - window_size + 1) : j]),
+            window_values,
         )
     else:
         assert False, f"Invalid function: {function}"
 
     if delay > 0:
         x = x[delay:]
-        # For recursive functions, we get a list of arrays instead of a single array
+        # For 3bit and 5bit functions, we get a list of arrays instead of a single array
         if type(y[0]) == list:
             for i in range(len(y)):
                 y[i] = y[i][:-delay]
@@ -385,7 +394,7 @@ def train_lasso(
     boolean_functions_test_accuracies = None
     boolean_functions_lassos = None
 
-    # In case of recursive functions, we have a list of functions instead of a single function
+    # In case of 3bit and 5bit functions, we have a list of functions instead of a single function
     if type(y[0]) == list:
         boolean_functions_train_accuracies = []
         boolean_functions_test_accuracies = []
