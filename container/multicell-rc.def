@@ -1,5 +1,5 @@
 BootStrap: docker
-From: ubuntu:21.10
+From: ubuntu:22.10
 
 %post
     export LC_ALL=C
