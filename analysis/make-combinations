@@ -13,6 +13,8 @@ pids=()
 
 ../combine-results results-proof-of-concept-1cell.csv results-3layer-better.csv results-3layer-better-combined.csv System Unicellular "Layered Multicellular" & pids+=( $! )
 
+../combine-results results-bool-fn-nonrecursive.csv results-bool-fn-recursive.csv results-bool-fn.csv Placeholder Placeholder Placeholder & pids+=( $! )
+
 for pid in "${pids[@]}"; do
   wait "$pid" || exit -1
 done

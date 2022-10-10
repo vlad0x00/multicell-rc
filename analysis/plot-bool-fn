@@ -7,7 +7,7 @@ alpha <- 0.5
 bins <- 30
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 3) {
+if (length(args) < 1) {
   cat("Missing args.")
   q()
 }
