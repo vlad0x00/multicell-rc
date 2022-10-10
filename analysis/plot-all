@@ -23,7 +23,7 @@ pids=()
 
 ../plot-combined results-3layer-better-combined.csv System steelblue1 gray30 & pids+=( $! )
 
-./plot-bool-fn results-bool-fn.csv & pids+=( $! )
+../plot-bool-fn results-bool-fn.csv & pids+=( $! )
 
 for pid in "${pids[@]}"; do
   wait "$pid" || exit -1
