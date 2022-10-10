@@ -5,7 +5,7 @@ cd ${SCRIPT_DIR}/data
 
 pids=()
 
-../plot-combined results-proof-of-concept-combined.csv System blue grey50 & pids+=( $! )
+../plot-combined results-proof-of-concept-combined.csv System steelblue1 gray30 & pids+=( $! )
 
 ../sensitivity-analysis results-sensitivity-analysis.csv & pids+=( $! )
 
@@ -19,9 +19,9 @@ pids=()
 
 ../plot-combined results-proof-of-concept-no-comm-combined.csv ESM.Communication & pids+=( $! )
 
-../plot-combined results-proof-of-concept-half-strains-combined.csv System blue grey50 & pids+=( $! )
+../plot-combined results-proof-of-concept-half-strains-combined.csv System steelblue1 gray30 & pids+=( $! )
 
-../plot-combined results-3layer-better-combined.csv System blue grey50 & pids+=( $! )
+../plot-combined results-3layer-better-combined.csv System steelblue1 gray30 & pids+=( $! )
 
 ./plot-bool-fn results-bool-fn.csv & pids+=( $! )
 
