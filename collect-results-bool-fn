@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+
+"""
+  Loads the args.csv file and run parallel simulations on them. Outputs a results.csv file in the end.
+"""
+
+import os
+from os.path import realpath, dirname, join, isfile, abspath
+import sys
+import shutil
+import subprocess
+import csv
+import uuid
+import base64
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import math
+from multicell_rc_utils import multicell_rc_params
+from multiprocessing import Pool
+import argparse
+sns.set(font_scale=1.1)
+
+root_dir = abspath(dirname(__file__))
+results_dir = join(root_dir, "results")
+os.chdir(root_dir)
+
+print("Gathering results... ", end='', flush=True)
+total_files = 0
+valid_files = 0
+
+# Save all data into the dictionary
+data = { 'Accuracy' : [], 'Lambda ESM' : [] }
+
+def is_float(s):
+  try:
+    float(s)
+    return True
+  except ValueError:
+    return False
+
+def is_int(s):
+  try:
+    int(s)
+    return True
+  except ValueError:
+    return False
+
+bool_fn_array_fmt = False
+in_boolean_functions = False
+# Iterate the results dir for output files
+for dirpath, dirnames, filenames in os.walk(join(root_dir, 'results')):
+  for filename in filenames:
+    if os.path.basename(filename).endswith('stdout'):
+      total_files += 1
+      with open(os.path.join(dirpath, filename), 'r') as f:
+        args_found = False
+        accuracy_found = False
+        for line in f:
+          if line.startswith('Args: '):
+            # Loads the arguments provided in the output file instead of assuming which ones exist
+            args = multicell_rc_params.parse_args(line.replace('Args: ', '').split())
+            args_found = True
+          elif line.strip() == 'Boolean function test accuracies:':
+            bool_fn_array_fmt = True
+            in_boolean_functions = True
+          elif in_boolean_functions:
+            tokens = line.split(':')
+            if len(tokens) == 2 and is_int(tokens[0]) and is_float(tokens[1]):
+              assert args_found
+              # Load the arg values every time Testing accuracy is encountered for multiple iteration simulations
+              for arg in vars(args):
+                argname = arg.replace('_', ' ').replace('esm', 'ESM')
+                argname = argname[0].upper() + argname[1:]
+                argval = getattr(args, arg)
+                if argname in data:
+                  data[argname].append(argval)
+                else:
+                  data[argname] = [ argval ]
+
+              lambda_ESM = math.sqrt(data['Beta ESM'][-1] / data['Alpha ESM'][-1])
+              data['Lambda ESM'].append(lambda_ESM)
+
+              accuracy = float(tokens[1])
+              assert 0.0 <= accuracy <= 1.0
+              data['Accuracy'].append(accuracy)
+              accuracy_found = True
+            else:
+              in_boolean_functions = False
+
+        # Keep track of how many simulations were successful
+        if args_found and accuracy_found: valid_files += 1
+assert bool_fn_array_fmt
+
+# These are unnecessary, as lambda can substitute for both
+data.pop('Alpha ESM', None)
+data.pop('Beta ESM', None)
+
+print("Done!")
+print("Valid / total files: {} / {} ({}%)".format(valid_files, total_files, valid_files / total_files * 100))
+
+# Save to CSV
+data = pd.DataFrame(data)
+data.to_csv(join(root_dir, 'results-bool-fn.csv'))

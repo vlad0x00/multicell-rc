@@ -1,0 +1,70 @@
+#!/usr/bin/env Rscript
+
+# Load ggplot
+library(ggplot2)
+
+alpha <- 0.5
+bins <- 30
+
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) < 3) {
+  cat("Missing args.")
+  q()
+}
+
+# Load data from CSV named "results-bool-fn.csv"
+results <- read.csv(args[1])
+
+# Split rows into recursive and nonrecursive
+recursive <- results[results$Recursive == "True",]
+nonrecursive <- results[results$Recursive == "False",]
+
+# Append " recursive" to recrusive function
+recursive$Function <- paste(recursive$Function, "recursive")
+
+# Append " nonrecursive" to nonrecursive function
+nonrecursive$Function <- paste(nonrecursive$Function, "nonrecursive")
+
+# Combine the two
+results <- rbind(recursive, nonrecursive)
+
+# Get the rows where "Cells" is 1
+results.1cell <- results[results$Cells == 1,]
+
+# Get the rows where "Delay" is 0 and "Cells" is >1
+results.cubic <- results[results$Delay == 0 & results$Cells > 1,]
+# Append 1 cell rows to cubic rows
+results.cubic <- rbind(results.cubic, results.1cell)
+
+# Get the rows where "Delay" is 2 and "Cells" >1
+results.layered <- results[results$Delay == 2 & results$Cells > 1,]
+# Append 1 cell rows to layered rows
+results.layered <- rbind(results.layered, results.1cell)
+
+# Convert Cells to factor
+results.cubic$Cells <- as.factor(results.cubic$Cells)
+results.layered$Cells <- as.factor(results.layered$Cells)
+
+# Convert Genes to string and append " genes"
+results.cubic$Genes <- as.character(results.cubic$Genes)
+results.layered$Genes <- as.character(results.layered$Genes)
+results.cubic$Genes <- paste(results.cubic$Genes, "genes")
+results.layered$Genes <- paste(results.layered$Genes, "genes")
+
+# Make genes a factor with levels 10, 20, 30, 100
+results.cubic$Genes <- factor(results.cubic$Genes, levels=c("10 genes", "20 genes", "30 genes", "100 genes"))
+results.layered$Genes <- factor(results.layered$Genes, levels=c("10 genes", "20 genes", "30 genes", "100 genes"))
+
+# Make a histogram of "Accuracy" column in results.cubic, color by "Cells"
+ggplot(results.cubic, aes(x=Accuracy, fill=Cells)) +
+  geom_histogram(bins=bins, alpha=alpha, position="identity") +
+  # In a facet grid with "Genes" on the x-axis and "Function" on the y-axis
+  facet_grid(Genes ~ Function)
+# Save to a file called "results-bool-fn.png"
+ggsave(paste0(args[1], ".cubic.png"))
+
+# Do the same for results.layered
+ggplot(results.layered, aes(x=Accuracy, fill=Cells)) +
+  geom_histogram(bins=bins, alpha=alpha, position="identity") +
+  facet_grid(Genes ~ Function)
+ggsave(paste0(args[1], "layered.png"))
