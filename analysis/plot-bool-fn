@@ -68,7 +68,7 @@ if (length(args) == 3) {
   g + scale_fill_manual(values=c(args[2], args[3]))
 }
 # Save to a file called "results-bool-fn.png"
-ggsave(paste0(args[1], ".cubic.png"))
+ggsave(paste0(args[1], ".cubic.png"), width = 10.0, height = 7.0)
 
 # Do the same for results.layered
 g <- ggplot(results.layered, aes(x=Accuracy, fill=System)) +
@@ -77,4 +77,4 @@ g <- ggplot(results.layered, aes(x=Accuracy, fill=System)) +
 if (length(args) == 3) {
   g + scale_fill_manual(values=c(args[2], args[3]))
 }
-ggsave(paste0(args[1], ".layered.png"))
+ggsave(paste0(args[1], ".layered.png"), width = 9.0, height = 7.0)
