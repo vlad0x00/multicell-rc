@@ -1,11 +1,14 @@
 #!/bin/bash
 
+MULTICELLULAR_COLOR=steelblue1
+UNICELLULAR_COLOR=gray30
+
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd ${SCRIPT_DIR}/data
 
 pids=()
 
-../plot-combined results-proof-of-concept-combined.csv System steelblue1 gray30 & pids+=( $! )
+../plot-combined results-proof-of-concept-combined.csv System ${MULTICELLULAR_COLOR} ${UNICELLULAR_COLOR} & pids+=( $! )
 
 ../sensitivity-analysis results-sensitivity-analysis.csv & pids+=( $! )
 
@@ -19,11 +22,11 @@ pids=()
 
 ../plot-combined results-proof-of-concept-no-comm-combined.csv ESM.Communication & pids+=( $! )
 
-../plot-combined results-proof-of-concept-half-strains-combined.csv System steelblue1 gray30 & pids+=( $! )
+../plot-combined results-proof-of-concept-half-strains-combined.csv System ${MULTICELLULAR_COLOR} ${UNICELLULAR_COLOR} & pids+=( $! )
 
-../plot-combined results-3layer-better-combined.csv System steelblue1 gray30 & pids+=( $! )
+../plot-combined results-3layer-better-combined.csv System ${MULTICELLULAR_COLOR} ${UNICELLULAR_COLOR} & pids+=( $! )
 
-../plot-bool-fn results-bool-fn.csv & pids+=( $! )
+../plot-bool-fn results-bool-fn.csv ${MULTICELLULAR_COLOR} ${UNICELLULAR_COLOR} & pids+=( $! )
 
 for pid in "${pids[@]}"; do
   wait "$pid" || exit -1

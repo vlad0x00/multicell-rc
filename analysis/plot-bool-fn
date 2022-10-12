@@ -41,9 +41,13 @@ results.layered <- results[results$Delay == 2 & results$Cells > 1,]
 # Append 1 cell rows to layered rows
 results.layered <- rbind(results.layered, results.1cell)
 
-# Convert Cells to factor
-results.cubic$Cells <- as.factor(results.cubic$Cells)
-results.layered$Cells <- as.factor(results.layered$Cells)
+# Make a System column where the value is "Multicellular" if the Cells column is >1 and "Unicellular otherwise"
+results.cubic$System <- ifelse(results.cubic$Cells > 1, "Multicellular", "Unicellular")
+results.layered$System <- ifelse(results.layered$Cells > 1, "Multicellular", "Unicellular")
+
+# Make System a factor
+results.cubic$System <- factor(results.cubic$System, levels = c("Multicellular", "Unicellular"))
+results.layered$System <- factor(results.layered$System, levels = c("Multicellular", "Unicellular"))
 
 # Convert Genes to string and append " genes"
 results.cubic$Genes <- as.character(results.cubic$Genes)
@@ -55,16 +59,22 @@ results.layered$Genes <- paste(results.layered$Genes, "genes")
 results.cubic$Genes <- factor(results.cubic$Genes, levels=c("10 genes", "20 genes", "30 genes", "100 genes"))
 results.layered$Genes <- factor(results.layered$Genes, levels=c("10 genes", "20 genes", "30 genes", "100 genes"))
 
-# Make a histogram of "Accuracy" column in results.cubic, color by "Cells"
-ggplot(results.cubic, aes(x=Accuracy, fill=Cells)) +
+# Make a histogram of "Accuracy" column in results.cubic, color by "System"
+g <- ggplot(results.cubic, aes(x=Accuracy, fill=System)) +
   geom_histogram(bins=bins, alpha=alpha, position="identity") +
   # In a facet grid with "Genes" on the x-axis and "Function" on the y-axis
   facet_grid(Genes ~ Function)
+if (length(args) == 3) {
+  g + scale_fill_manual(values=c(args[2], args[3]))
+}
 # Save to a file called "results-bool-fn.png"
 ggsave(paste0(args[1], ".cubic.png"))
 
 # Do the same for results.layered
-ggplot(results.layered, aes(x=Accuracy, fill=Cells)) +
+g <- ggplot(results.layered, aes(x=Accuracy, fill=System)) +
   geom_histogram(bins=bins, alpha=alpha, position="identity") +
   facet_grid(Genes ~ Function)
-ggsave(paste0(args[1], "layered.png"))
+if (length(args) == 3) {
+  g + scale_fill_manual(values=c(args[2], args[3]))
+}
+ggsave(paste0(args[1], ".layered.png"))
