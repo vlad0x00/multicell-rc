@@ -16,7 +16,7 @@ From: ubuntu:22.10
 
     # Some Python packages are unavailable through apt-get, so we use pip for all of them
     pip3 install wheel
-    pip3 install pyDOE numpy pandas scipy matplotlib seaborn networkx sklearn vtk
+    pip3 install pyDOE numpy pandas scipy matplotlib seaborn networkx sklearn vtk pydot
     
     # Install the necessary R packages
     Rscript -e 'install.packages(c("tidyverse", "stringi"))'
