@@ -206,7 +206,7 @@ def parse_args(args=None):
         "-u",
         "--recursive",
         action="store_true",
-        help="Function to learn.",
+        help="Should the function be recursive.",
     )
     parser.add_argument(
         "-w",
