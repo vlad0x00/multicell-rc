@@ -122,6 +122,19 @@ if not AUXILIARY_FILES:
         os.remove(filename + ".png")
     DOT_FILE = None
 
+if not NEW:
+    # Save the content of files: NV_FILE, VARF_FILE, TT_FILE, GENE_INITIAL_STATES_FILE, INPUT_SIGNAL_FILE
+    with open(NV_FILE, "r") as f:
+        nv_file_content = f.read()
+    with open(VARF_FILE, "r") as f:
+        varf_file_content = f.read()
+    with open(TT_FILE, "r") as f:
+        tt_file_content = f.read()
+    with open(GENE_INITIAL_STATES_FILE, "r") as f:
+        gene_initial_states_file_content = f.read()
+    with open(INPUT_SIGNAL_FILE, "r") as f:
+        input_signal_file_content = f.read()
+
 # These have to be imported after the export of the environment vars, as they import numpy
 from multicell_rc_utils import multicell_rc_gen
 from multicell_rc_utils import multicell_rc_train
@@ -344,6 +357,19 @@ if NEW:
     )
     t2 = time.time()
     print("Done (in {}s)!".format(round(t2 - t1, 2)), flush=True)
+else:
+    # Restore the content of files: NV_FILE, VARF_FILE, TT_FILE, GENE_INITIAL_STATES_FILE, INPUT_SIGNAL_FILE
+    with open(NV_FILE, "w") as f:
+        f.write(nv_file_content)
+    with open(VARF_FILE, "w") as f:
+        f.write(varf_file_content)
+    with open(TT_FILE, "w") as f:
+        f.write(tt_file_content)
+    with open(GENE_INITIAL_STATES_FILE, "w") as f:
+        f.write(gene_initial_states_file_content)
+    with open(INPUT_SIGNAL_FILE, "w") as f:
+        f.write(input_signal_file_content)
+
 # Generate the Biocellion XML
 multicell_rc_gen.make_params_xml(
     PARAMS_FILE,
