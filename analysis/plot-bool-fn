@@ -7,26 +7,22 @@ alpha <- 0.5
 bins <- 30
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 1) {
+if (length(args) < 2) {
   cat("Missing args.")
   q()
 }
 
-# Load data from CSV named "results-bool-fn.csv"
-results <- read.csv(args[1])
-
-# Split rows into recursive and non-recursive
-recursive <- results[results$Recursive == "True",]
-nonrecursive <- results[results$Recursive == "False",]
+results.nonrecursive <- read.csv(args[1])
+results.recursive <- read.csv(args[2])
 
 # Append " recursive" to recrusive function
-recursive$Function <- paste(recursive$Function, "recursive")
+results.recursive$Function <- paste(results.recursive$Function, "recursive")
 
 # Append " non-recursive" to non-recursive function
-nonrecursive$Function <- paste(nonrecursive$Function, "non-recursive")
+results.nonrecursive$Function <- paste(results.nonrecursive$Function, "non-recursive")
 
 # Combine the two
-results <- rbind(recursive, nonrecursive)
+results <- rbind(results.recursive, results.nonrecursive)
 
 # Get the rows where "Cells" is 1
 results.1cell <- results[results$Cells == 1,]

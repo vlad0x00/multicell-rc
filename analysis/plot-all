@@ -26,7 +26,7 @@ pids=()
 
 ../plot-combined results-3layer-better-combined.csv System ${MULTICELLULAR_COLOR} ${UNICELLULAR_COLOR} & pids+=( $! )
 
-../plot-bool-fn results-bool-fn.csv ${MULTICELLULAR_COLOR} ${UNICELLULAR_COLOR} & pids+=( $! )
+../plot-bool-fn results-bool-fn-nonrecursive.csv results-bool-fn-recursive.csv ${MULTICELLULAR_COLOR} ${UNICELLULAR_COLOR} & pids+=( $! )
 
 for pid in "${pids[@]}"; do
   wait "$pid" || exit -1
