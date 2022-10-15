@@ -60,8 +60,8 @@ g <- ggplot(results.cubic, aes(x=Accuracy, fill=System)) +
   geom_histogram(bins=bins, alpha=alpha, position="identity") +
   # In a facet grid with "Genes" on the x-axis and "Function" on the y-axis
   facet_grid(Genes ~ Function)
-if (length(args) == 3) {
-  g + scale_fill_manual(values=c(args[2], args[3]))
+if (length(args) == 4) {
+  g + scale_fill_manual(values=c(args[3], args[4]))
 }
 # Save to a file called "results-bool-fn.png"
 ggsave("results-bool-fn.cubic.png", width = 9.0, height = 7.0)
@@ -70,7 +70,7 @@ ggsave("results-bool-fn.cubic.png", width = 9.0, height = 7.0)
 g <- ggplot(results.layered, aes(x=Accuracy, fill=System)) +
   geom_histogram(bins=bins, alpha=alpha, position="identity") +
   facet_grid(Genes ~ Function)
-if (length(args) == 3) {
-  g + scale_fill_manual(values=c(args[2], args[3]))
+if (length(args) == 4) {
+  g + scale_fill_manual(values=c(args[3], args[4]))
 }
 ggsave("results-bool-fn.layered.png", width = 9.0, height = 7.0)
