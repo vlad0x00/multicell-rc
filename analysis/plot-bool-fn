@@ -15,15 +15,15 @@ if (length(args) < 1) {
 # Load data from CSV named "results-bool-fn.csv"
 results <- read.csv(args[1])
 
-# Split rows into recursive and nonrecursive
+# Split rows into recursive and non-recursive
 recursive <- results[results$Recursive == "True",]
 nonrecursive <- results[results$Recursive == "False",]
 
 # Append " recursive" to recrusive function
 recursive$Function <- paste(recursive$Function, "recursive")
 
-# Append " nonrecursive" to nonrecursive function
-nonrecursive$Function <- paste(nonrecursive$Function, "nonrecursive")
+# Append " non-recursive" to non-recursive function
+nonrecursive$Function <- paste(nonrecursive$Function, "non-recursive")
 
 # Combine the two
 results <- rbind(recursive, nonrecursive)
